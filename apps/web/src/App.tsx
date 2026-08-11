@@ -1,28 +1,15 @@
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { APP_NAME, type HealthResponse } from "@note2action/shared";
 
-type State =
-  | { status: "loading" }
-  | { status: "ok"; data: HealthResponse }
-  | { status: "error"; message: string };
-
 export function App() {
-  const [state, setState] = useState<State>({ status: "loading" });
-
-  useEffect(() => {
-    fetch("/api/health")
-      .then(async (res) => {
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        return (await res.json()) as HealthResponse;
-      })
-      .then((data) => setState({ status: "ok", data }))
-      .catch((err: unknown) =>
-        setState({
-          status: "error",
-          message: err instanceof Error ? err.message : String(err),
-        }),
-      );
-  }, []);
+  const { data, status, error } = useQuery({
+    queryKey: ["health"],
+    queryFn: async () => {
+      const res = await fetch("/api/health");
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return (await res.json()) as HealthResponse;
+    },
+  });
 
   return (
     <main
@@ -42,14 +29,16 @@ export function App() {
       <section
         style={{ padding: "1rem", border: "1px solid #ccc", borderRadius: 8 }}
       >
-        {state.status === "loading" && <p>Checking API health…</p>}
-        {state.status === "error" && (
-          <p style={{ color: "crimson" }}>API unreachable: {state.message}</p>
+        {status === "pending" && <p>Checking API health…</p>}
+        {status === "error" && (
+          <p style={{ color: "crimson" }}>
+            API unreachable: {error instanceof Error ? error.message : String(error)}
+          </p>
         )}
-        {state.status === "ok" && (
+        {status === "success" && data && (
           <>
             <p style={{ color: "green", fontWeight: 600 }}>
-              API is {state.data.status} ✅
+              API is {data.status} ✅
             </p>
             <pre
               style={{
@@ -59,7 +48,7 @@ export function App() {
                 overflowX: "auto",
               }}
             >
-              {JSON.stringify(state.data, null, 2)}
+              {JSON.stringify(data, null, 2)}
             </pre>
           </>
         )}
