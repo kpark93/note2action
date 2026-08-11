@@ -1,6 +1,7 @@
 # Dev-oriented image for the Next.js app in the pnpm workspace.
 # Build context is the repo root (see docker-compose.yml).
-FROM node:20-slim
+# pnpm@11 (packageManager in root package.json) needs Node >= 22.13.
+FROM node:22-slim
 
 ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0
 RUN corepack enable

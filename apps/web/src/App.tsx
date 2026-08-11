@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { APP_NAME, type HealthResponse } from "@note2action/shared";
+import { APP_NAME, HealthResponse } from "@note2action/shared";
 
 export function App() {
   const { data, status, error } = useQuery({
@@ -7,7 +7,10 @@ export function App() {
     queryFn: async () => {
       const res = await fetch("/api/health");
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      return (await res.json()) as HealthResponse;
+      // `.parse` validates the payload at runtime and returns it typed as
+      // HealthResponse. If the API drifts from the contract, this throws and
+      // useQuery surfaces it as `status === "error"` — no silent bad data.
+      return HealthResponse.parse(await res.json());
     },
   });
 
