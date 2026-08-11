@@ -1,0 +1,15 @@
+# JS/TS apps + shared package live in the pnpm workspace.
+# apps/api is intentionally NOT here — it is a Python app managed by uv.
+packages:
+  - "apps/web"
+  - "apps/ai"
+  - "packages/shared"
+allowBuilds:
+  esbuild: true
+  sharp: true
+minimumReleaseAgeExclude:
+  - '@ai-sdk/anthropic@3.0.108'
+  - '@ai-sdk/gateway@3.0.167'
+  - '@ai-sdk/provider-utils@4.0.43'
+  - '@ai-sdk/react@3.0.249'
+  - ai@6.0.247

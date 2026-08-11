@@ -1,0 +1,30 @@
+services:
+  api:
+    build:
+      context: ./apps/api
+    ports:
+      - "8000:8000"
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    ports:
+      - "5173:5173"
+    environment:
+      # In Compose, /api/* is proxied to the `api` service (not localhost).
+      - VITE_API_PROXY_TARGET=http://api:8000
+    depends_on:
+      - api
+
+  ai:
+    build:
+      context: .
+      dockerfile: apps/ai/Dockerfile
+    ports:
+      - "3000:3000"
+    # Loads ANTHROPIC_API_KEY (and optional CHAT_MODEL). Optional so the stack
+    # still starts without it — chat just won't work until you add the key.
+    env_file:
+      - path: apps/ai/.env
+        required: false

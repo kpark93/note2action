@@ -1,0 +1,25 @@
+# dependencies
+node_modules/
+
+# builds
+dist/
+.next/
+out/
+build/
+*.tsbuildinfo
+
+# python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+
+# env files (keep .env.example checked in)
+.env
+.env.*
+!.env.example
+
+# editor / os
+.DS_Store
+*.log
