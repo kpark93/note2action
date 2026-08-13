@@ -77,7 +77,7 @@ export function HistoryView() {
                     <span className="flex h-[22px] w-[22px] flex-none items-center justify-center rounded-full bg-primary text-[11px] font-bold text-primary-foreground">
                       ✓
                     </span>
-                    <span className="overflow-hidden text-[14.5px] font-medium text-ellipsis whitespace-nowrap text-muted-foreground line-through decoration-[rgba(154,164,214,.5)]">
+                    <span className="overflow-hidden text-[14.5px] font-medium text-ellipsis whitespace-nowrap text-muted-foreground line-through decoration-muted-foreground/50">
                       {h.title}
                     </span>
                   </span>

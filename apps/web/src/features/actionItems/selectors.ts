@@ -8,36 +8,36 @@ import { LOW_CONFIDENCE_THRESHOLD, TODAY } from "./constants";
 // Pill text colors are theme-aware (see --pill-* / --muted-foreground in
 // index.css): dark & saturated on light backgrounds, pastel on dark ones.
 export const PRIORITY_STYLE: Record<Priority, { bg: string; fg: string }> = {
-  High: { bg: "rgba(233,48,192,.16)", fg: "hsl(var(--pill-magenta))" },
-  Medium: { bg: "rgba(77,95,232,.22)", fg: "hsl(var(--pill-blue))" },
-  Low: { bg: "rgba(255,255,255,.07)", fg: "hsl(var(--muted-foreground))" },
+  High: { bg: "hsl(var(--magenta) / 0.16)", fg: "hsl(var(--pill-magenta))" },
+  Medium: { bg: "hsl(var(--primary) / 0.22)", fg: "hsl(var(--pill-blue))" },
+  Low: { bg: "hsl(var(--foreground) / 0.07)", fg: "hsl(var(--muted-foreground))" },
 };
 
 export const STATUS_STYLE: Record<
   Status,
   { bg: string; fg: string; border: string }
 > = {
-  "Not started": { bg: "rgba(255,255,255,.05)", fg: "hsl(var(--muted-foreground))", border: "rgba(255,255,255,.14)" },
-  "In progress": { bg: "rgba(77,95,232,.24)", fg: "hsl(var(--pill-blue))", border: "rgba(122,140,255,.45)" },
-  Blocked: { bg: "rgba(233,48,192,.16)", fg: "hsl(var(--pill-magenta))", border: "rgba(233,48,192,.4)" },
-  Done: { bg: "rgba(255,255,255,.1)", fg: "hsl(var(--foreground))", border: "rgba(255,255,255,.2)" },
+  "Not started": { bg: "hsl(var(--foreground) / 0.06)", fg: "hsl(var(--muted-foreground))", border: "hsl(var(--foreground) / 0.14)" },
+  "In progress": { bg: "hsl(var(--primary) / 0.24)", fg: "hsl(var(--pill-blue))", border: "hsl(var(--primary) / 0.45)" },
+  Blocked: { bg: "hsl(var(--magenta) / 0.16)", fg: "hsl(var(--pill-magenta))", border: "hsl(var(--magenta) / 0.4)" },
+  Done: { bg: "hsl(var(--foreground) / 0.1)", fg: "hsl(var(--foreground))", border: "hsl(var(--foreground) / 0.2)" },
 };
 
 /** Card + badge styling for a review item, keyed on whether it's low-confidence. */
 export function reviewStyle(low: boolean) {
   return {
     label: low ? "needs review" : "confident",
-    pillBg: low ? "hsl(var(--primary) / 0.14)" : "rgba(255,255,255,.06)",
-    pillFg: low ? "hsl(var(--pill-blue))" : "#a7b1e4",
-    pillBorder: low ? "hsl(var(--primary) / 0.4)" : "rgba(255,255,255,.1)",
-    dot: low ? "hsl(var(--primary))" : "#4d5fe8",
-    cardBorder: low ? "hsl(var(--primary) / 0.45)" : "rgba(255,255,255,.09)",
+    pillBg: low ? "hsl(var(--primary) / 0.14)" : "hsl(var(--foreground) / 0.06)",
+    pillFg: low ? "hsl(var(--pill-blue))" : "hsl(var(--muted-foreground))",
+    pillBorder: low ? "hsl(var(--primary) / 0.4)" : "hsl(var(--foreground) / 0.1)",
+    dot: "hsl(var(--primary))",
+    cardBorder: low ? "hsl(var(--primary) / 0.45)" : "hsl(var(--border))",
     cardShadow: low ? "0 10px 30px hsl(var(--primary) / 0.16)" : "none",
     hoverShadow: low
       ? "0 16px 38px hsl(var(--primary) / 0.26)"
-      : "0 12px 30px rgba(5,9,26,.5)",
-    hoverBorder: low ? "hsl(var(--primary) / 0.65)" : "rgba(255,255,255,.18)",
-    noteFg: low ? "#c6cdf3" : "#7c88b8",
+      : "0 12px 30px hsl(0 0% 0% / 0.35)",
+    hoverBorder: low ? "hsl(var(--primary) / 0.65)" : "hsl(var(--foreground) / 0.18)",
+    noteFg: low ? "hsl(var(--foreground))" : "hsl(var(--muted-foreground))",
   };
 }
 

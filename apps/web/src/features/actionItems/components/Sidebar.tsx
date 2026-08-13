@@ -25,10 +25,10 @@ export function Sidebar() {
   const health = useHealth();
   const healthColor =
     health.status === "success"
-      ? "#3ddc97"
+      ? "hsl(var(--success))"
       : health.status === "error"
-        ? "#e93055"
-        : "#f5b544";
+        ? "hsl(var(--destructive))"
+        : "hsl(var(--warning))";
   const healthLabel =
     health.status === "success"
       ? "API online"

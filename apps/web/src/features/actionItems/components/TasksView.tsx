@@ -6,7 +6,7 @@ import type { TaskRowVM } from "../selectors";
 import { playPop } from "../sound";
 import type { Status } from "../types";
 
-const COLS = "grid-cols-[minmax(0,1fr)_96px_88px_132px]";
+const COLS = "grid-cols-[minmax(0,1fr)_96px_88px_132px_34px]";
 const OPEN_STATUSES = STATUSES.slice(0, 3);
 // Tasks are grouped into these sections, most-active first.
 const STATUS_SECTIONS: Status[] = ["In progress", "Blocked", "Not started"];
@@ -19,6 +19,7 @@ export function TasksView() {
   const setFilterStatus = useActionItems((s) => s.setFilterStatus);
   const clearFilters = useActionItems((s) => s.clearFilters);
   const update = useActionItems((s) => s.update);
+  const sendToReview = useActionItems((s) => s.sendToReview);
   const goTo = useActionItems((s) => s.goTo);
 
   // Track the row being completed so it stays mounted long enough to play the
@@ -93,6 +94,27 @@ export function TasksView() {
             </option>
           ))}
         </select>
+        <button
+          onClick={() => sendToReview(row.id)}
+          title="Send back to Review"
+          aria-label="Send back to Review"
+          className="flex h-7 w-7 items-center justify-center justify-self-center rounded-[9px] border border-border bg-transparent text-muted-foreground"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            width="13"
+            height="13"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M9 14 4 9l5-5" />
+            <path d="M4 9h11a5 5 0 0 1 0 10h-1" />
+          </svg>
+        </button>
       </div>
     );
   };

@@ -59,6 +59,8 @@ interface ActionItemsState {
   applyExtraction: (extracted: ExtractedItem[]) => void;
   /** Move all pending Review items into the Tasks list; they leave Review. */
   saveToTasks: () => void;
+  /** Send a saved task back to the Review queue (unsave it). */
+  sendToReview: (id: number) => void;
   /**
    * Run an AI extraction. Lives in the store (not a component) so it keeps
    * running — and applies its result — even if the user leaves the Capture tab.
@@ -168,6 +170,13 @@ export const useActionItems = create<ActionItemsState>((set, get) => ({
       ),
       screen: "tasks",
       onlyLow: false,
+    })),
+
+  sendToReview: (id) =>
+    set((s) => ({
+      items: s.items.map((it) =>
+        it.id === id ? { ...it, saved: false } : it,
+      ),
     })),
 
   extractNotes: async (payload) => {

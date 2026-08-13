@@ -25,6 +25,9 @@
     --input: 0 0% 90%;
     --ring: 232 74% 55%; /* brand blue */
     --destructive: 0 72% 46%;
+    --success: 152 58% 40%;
+    --warning: 38 90% 48%;
+    --magenta: 318 72% 50%; /* High priority / Blocked status accent */
     /* Priority/status pill text — dark & saturated for light backgrounds. */
     --pill-magenta: 313 74% 40%;
     --pill-blue: 232 64% 48%;
@@ -52,6 +55,9 @@
     --input: 0 0% 20%;
     --ring: 232 76% 61%; /* brand blue */
     --destructive: 0 70% 55%;
+    --success: 152 66% 52%;
+    --warning: 40 90% 60%;
+    --magenta: 314 80% 58%; /* High priority / Blocked status accent */
     /* Lighter pastels that read on the dark pill tints (unchanged look). */
     --pill-magenta: 313 86% 73%;
     --pill-blue: 231 100% 82%;
@@ -83,6 +89,9 @@
   --color-input: hsl(var(--input));
   --color-ring: hsl(var(--ring));
   --color-destructive: hsl(var(--destructive));
+  --color-success: hsl(var(--success));
+  --color-warning: hsl(var(--warning));
+  --color-magenta: hsl(var(--magenta));
 }
 
 /* Base document styles. */
