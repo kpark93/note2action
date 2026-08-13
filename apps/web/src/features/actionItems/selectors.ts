@@ -5,20 +5,22 @@
 import type { ActionItem, Priority, Status } from "./types";
 import { LOW_CONFIDENCE_THRESHOLD, TODAY } from "./constants";
 
+// Pill text colors are theme-aware (see --pill-* / --muted-foreground in
+// index.css): dark & saturated on light backgrounds, pastel on dark ones.
 export const PRIORITY_STYLE: Record<Priority, { bg: string; fg: string }> = {
-  High: { bg: "rgba(233,48,192,.16)", fg: "#f77fe0" },
-  Medium: { bg: "rgba(77,95,232,.22)", fg: "#a5b0ff" },
-  Low: { bg: "rgba(255,255,255,.07)", fg: "#a7b1e4" },
+  High: { bg: "rgba(233,48,192,.16)", fg: "hsl(var(--pill-magenta))" },
+  Medium: { bg: "rgba(77,95,232,.22)", fg: "hsl(var(--pill-blue))" },
+  Low: { bg: "rgba(255,255,255,.07)", fg: "hsl(var(--muted-foreground))" },
 };
 
 export const STATUS_STYLE: Record<
   Status,
   { bg: string; fg: string; border: string }
 > = {
-  "Not started": { bg: "rgba(255,255,255,.05)", fg: "#c6cdf3", border: "rgba(255,255,255,.14)" },
-  "In progress": { bg: "rgba(77,95,232,.24)", fg: "#b6c0ff", border: "rgba(122,140,255,.45)" },
-  Blocked: { bg: "rgba(233,48,192,.16)", fg: "#f77fe0", border: "rgba(233,48,192,.4)" },
-  Done: { bg: "rgba(255,255,255,.1)", fg: "#ffffff", border: "rgba(255,255,255,.2)" },
+  "Not started": { bg: "rgba(255,255,255,.05)", fg: "hsl(var(--muted-foreground))", border: "rgba(255,255,255,.14)" },
+  "In progress": { bg: "rgba(77,95,232,.24)", fg: "hsl(var(--pill-blue))", border: "rgba(122,140,255,.45)" },
+  Blocked: { bg: "rgba(233,48,192,.16)", fg: "hsl(var(--pill-magenta))", border: "rgba(233,48,192,.4)" },
+  Done: { bg: "rgba(255,255,255,.1)", fg: "hsl(var(--foreground))", border: "rgba(255,255,255,.2)" },
 };
 
 /** Card + badge styling for a review item, keyed on whether it's low-confidence. */
@@ -75,6 +77,14 @@ export const openItems = (items: ActionItem[]) =>
 export const doneItems = (items: ActionItem[]) =>
   items.filter((i) => i.status === "Done");
 
+/** Extracted but not yet saved — the Review queue. */
+export const pendingItems = (items: ActionItem[]) =>
+  items.filter((i) => i.status !== "Done" && !i.saved);
+
+/** Saved and still open — the Tasks list (accumulates across saves). */
+export const savedTasks = (items: ActionItem[]) =>
+  items.filter((i) => i.status !== "Done" && i.saved);
+
 // ---- Review screen ---------------------------------------------------------
 
 export interface ReviewItemVM extends ActionItem {
@@ -88,7 +98,7 @@ export function reviewItems(
   items: ActionItem[],
   threshold = LOW_CONFIDENCE_THRESHOLD,
 ): ReviewItemVM[] {
-  return openItems(items).map((it, idx) => ({
+  return pendingItems(items).map((it, idx) => ({
     ...it,
     low: isLow(it, threshold),
     pct: it.confidence + "%",
@@ -117,7 +127,7 @@ export function taskRows(
   filterOwner: string,
   filterStatus: string,
 ): TaskRowVM[] {
-  return openItems(items)
+  return savedTasks(items)
     .filter(
       (it) =>
         (filterOwner === "All" || it.owner === filterOwner) &&
@@ -186,9 +196,9 @@ export function historyStats(items: ActionItem[]): StatVM[] {
   const onTimePct = done.length ? Math.round((onTime / done.length) * 100) : 0;
 
   return [
-    { label: "Completed all time", value: done.length, bar: donePct, barColor: "#e930c0", delta: "across 4 meetings" },
-    { label: "Closed on or before due date", value: done.length ? onTimePct + "%" : "—", bar: onTimePct + "%", barColor: "#4d5fe8", delta: onTime + " of " + done.length },
-    { label: "Still open", value: open.length, bar: total ? Math.round((open.length / total) * 100) + "%" : "0%", barColor: "#7a8cff", delta: "in Tasks" },
+    { label: "Completed all time", value: done.length, bar: donePct, barColor: "hsl(var(--primary))", delta: "across 4 meetings" },
+    { label: "Closed on or before due date", value: done.length ? onTimePct + "%" : "—", bar: onTimePct + "%", barColor: "hsl(var(--primary) / 0.65)", delta: onTime + " of " + done.length },
+    { label: "Still open", value: open.length, bar: total ? Math.round((open.length / total) * 100) + "%" : "0%", barColor: "hsl(var(--muted-foreground))", delta: "in Tasks" },
   ];
 }
 
@@ -212,6 +222,7 @@ export function summary(
     donePct: total ? Math.round((done.length / total) * 100) + "%" : "0%",
     doneCount: done.length,
     openCount: open.length,
-    flagCount: open.filter((i) => isLow(i, threshold)).length,
+    // The Review nav badge counts only items still awaiting review.
+    flagCount: pendingItems(items).filter((i) => isLow(i, threshold)).length,
   };
 }

@@ -1,6 +1,8 @@
+import { useState } from "react";
 import { useActionItems } from "../store";
 import { OWNERS, STATUSES } from "../constants";
-import { PRIORITY_STYLE, STATUS_STYLE, openItems, taskRows } from "../selectors";
+import { PRIORITY_STYLE, STATUS_STYLE, savedTasks, taskRows } from "../selectors";
+import { playPop } from "../sound";
 import type { Status } from "../types";
 
 const COLS = "grid-cols-[minmax(0,1fr)_88px_132px]";
@@ -16,8 +18,25 @@ export function TasksView() {
   const update = useActionItems((s) => s.update);
   const goTo = useActionItems((s) => s.goTo);
 
+  // Track the row being completed so it stays mounted long enough to play the
+  // pop animation before it leaves the list for History.
+  const [completingId, setCompletingId] = useState<number | null>(null);
+
+  const handleStatus = (id: number, value: Status) => {
+    if (value === "Done") {
+      playPop();
+      setCompletingId(id);
+      window.setTimeout(() => {
+        update(id, "status", "Done");
+        setCompletingId((cur) => (cur === id ? null : cur));
+      }, 500);
+    } else {
+      update(id, "status", value);
+    }
+  };
+
   const rows = taskRows(items, filterOwner, filterStatus);
-  const savedCount = openItems(items).length;
+  const savedCount = savedTasks(items).length;
 
   return (
     <div className="n2a-view flex min-h-0 flex-1 flex-col overflow-hidden">
@@ -26,7 +45,7 @@ export function TasksView() {
           <h1 className="text-[25px] font-bold leading-[1.12] tracking-[-0.03em]">
             Tasks
           </h1>
-          <p className="mt-[7px] text-[13px] text-[#c6cdf3]">
+          <p className="mt-[7px] text-[13px] text-muted-foreground">
             {rows.length} of {savedCount} open items · completed work moves to{" "}
             <a
               href="#"
@@ -41,8 +60,8 @@ export function TasksView() {
         </div>
         <button
           onClick={() => goTo("capture")}
-          className="h-10 flex-none rounded-[13px] border-0 bg-[#e930c0] px-[18px] text-[13.5px] font-semibold text-white"
-          style={{ boxShadow: "0 8px 22px rgba(233,48,192,.32)" }}
+          className="h-10 flex-none rounded-[13px] border-0 bg-primary px-[18px] text-[13.5px] font-semibold text-primary-foreground"
+          style={{ boxShadow: "0 8px 22px hsl(var(--primary) / 0.3)" }}
         >
           New capture
         </button>
@@ -52,7 +71,7 @@ export function TasksView() {
         <select
           value={filterOwner}
           onChange={(e) => setFilterOwner(e.target.value)}
-          className="h-[38px] min-w-[164px] rounded-[12px] border border-white/[0.16] bg-[#0a1030] px-[13px] text-[13px] text-[#eaeefc]"
+          className="h-[38px] min-w-[164px] rounded-[12px] border border-border bg-card px-[13px] text-[13px] text-foreground"
         >
           <option value="All">All owners</option>
           {OWNERS.map((o) => (
@@ -64,7 +83,7 @@ export function TasksView() {
         <select
           value={filterStatus}
           onChange={(e) => setFilterStatus(e.target.value)}
-          className="h-[38px] min-w-[164px] rounded-[12px] border border-white/[0.16] bg-[#0a1030] px-[13px] text-[13px] text-[#eaeefc]"
+          className="h-[38px] min-w-[164px] rounded-[12px] border border-border bg-card px-[13px] text-[13px] text-foreground"
         >
           <option value="All">All statuses</option>
           {OPEN_STATUSES.map((s) => (
@@ -75,14 +94,14 @@ export function TasksView() {
         </select>
         <button
           onClick={clearFilters}
-          className="h-[38px] rounded-[12px] border border-transparent bg-transparent px-[13px] text-[13px] font-medium text-[#b8c2f2]"
+          className="h-[38px] rounded-[12px] border border-transparent bg-transparent px-[13px] text-[13px] font-medium text-muted-foreground"
         >
           Clear
         </button>
       </div>
 
       <div
-        className={`grid ${COLS} gap-[14px] px-[18px] pb-[10px] text-[11px] font-semibold tracking-[0.1em] text-[#b8c2f2]`}
+        className={`grid ${COLS} gap-[14px] px-[18px] pb-[10px] text-[11px] font-semibold tracking-[0.1em] text-muted-foreground`}
       >
         <span>ACTION ITEM</span>
         <span>PRIORITY</span>
@@ -92,21 +111,29 @@ export function TasksView() {
         {rows.map((row) => {
           const pr = PRIORITY_STYLE[row.priority];
           const sc = STATUS_STYLE[row.status];
+          const isCompleting = completingId === row.id;
           return (
             <div
               key={row.id}
-              className={`task-row n2a-row grid ${COLS} items-center gap-[14px] rounded-[14px] bg-[#0a1030] px-4 py-[10px]`}
-              style={{ animationDelay: row.delay }}
+              className={`task-row grid ${COLS} items-center gap-[14px] rounded-[14px] bg-card px-4 py-[10px] ${
+                isCompleting ? "task-complete" : "n2a-row"
+              }`}
+              style={isCompleting ? undefined : { animationDelay: row.delay }}
             >
+              {isCompleting && (
+                <span className="task-burst" aria-hidden="true">
+                  ✓
+                </span>
+              )}
               <span className="flex min-w-0 items-center gap-[11px]">
-                <span className="flex h-7 w-7 flex-none items-center justify-center rounded-[9px] bg-white/[0.09] text-[10.5px] font-semibold text-[#c6cdf3]">
+                <span className="flex h-7 w-7 flex-none items-center justify-center rounded-[9px] bg-secondary text-[10.5px] font-semibold text-muted-foreground">
                   {row.initials}
                 </span>
                 <span className="flex min-w-0 flex-col gap-[3px]">
                   <span className="overflow-hidden text-[14.5px] font-semibold tracking-[-0.015em] text-ellipsis whitespace-nowrap">
                     {row.title}
                   </span>
-                  <span className="overflow-hidden text-[12px] text-ellipsis whitespace-nowrap text-[#8b96c8]">
+                  <span className="overflow-hidden text-[12px] text-ellipsis whitespace-nowrap text-muted-foreground">
                     {row.owner} ·{" "}
                     <span className="tabular-nums" style={{ color: row.dueFg }}>
                       {row.dueMeta}
@@ -123,7 +150,7 @@ export function TasksView() {
               <select
                 value={row.status}
                 onChange={(e) =>
-                  update(row.id, "status", e.target.value as Status)
+                  handleStatus(row.id, e.target.value as Status)
                 }
                 className="h-[34px] w-full rounded-[11px] px-[11px] text-[12.5px] font-semibold"
                 style={{
@@ -142,8 +169,10 @@ export function TasksView() {
           );
         })}
         {rows.length === 0 && (
-          <div className="rounded-[16px] bg-[#0a1030] px-5 py-[52px] text-center text-[13.5px] text-[#a7b1e4]">
-            No open items match these filters.
+          <div className="rounded-[16px] bg-card px-5 py-[52px] text-center text-[13.5px] text-muted-foreground">
+            {savedCount === 0
+              ? "No tasks yet — save items from the Review tab."
+              : "No open items match these filters."}
           </div>
         )}
       </div>

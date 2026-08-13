@@ -20,6 +20,8 @@ export interface ActionItem {
   /** Extraction confidence, 0–100. Below the threshold → "needs review". */
   confidence: number;
   status: Status;
+  /** True once saved from Review into the Tasks list (accumulates there). */
+  saved: boolean;
   /** Supporting quote / rationale from the transcript. */
   note?: string;
   /** Meeting the item was extracted from. */
