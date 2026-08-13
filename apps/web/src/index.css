@@ -1,1 +1,206 @@
 @import "tailwindcss";
+
+/* Design palette (v2), exposed as Tailwind theme tokens. */
+@theme {
+  --font-sans: "Inter", system-ui, sans-serif;
+  --color-ink: #0a1030;
+  --color-raised: #111a45;
+  --color-panel: #38499b;
+  --color-brand: #4d5fe8;
+  --color-accent: #e930c0;
+}
+
+/* Global look ported from the v2 design's document styles. */
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  overflow: hidden;
+  background: #0a1030;
+  color: #f2f4fb;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: #8ea2ff;
+  text-decoration: none;
+  font-weight: 500;
+}
+a:hover {
+  color: #b6c2ff;
+}
+
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+button:focus-visible {
+  outline: 2px solid rgba(122, 140, 255, 0.6);
+  outline-offset: 1px;
+}
+
+select {
+  -webkit-appearance: none;
+  appearance: none;
+}
+select option {
+  background: #0a1030;
+  color: #f2f4fb;
+}
+
+::placeholder {
+  color: #7c88b8;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1) opacity(0.55);
+}
+
+/* Inline-editable title on the Review cards (hover affordance). */
+.review-title:hover {
+  border-color: rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+*::-webkit-scrollbar {
+  width: 9px;
+  height: 9px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+*::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.22);
+  border-radius: 999px;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.34);
+}
+
+/* ---- Motion (v2 revised) ------------------------------------------------- */
+@keyframes n2aFade {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes n2aCard {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes n2aRow {
+  from {
+    opacity: 0;
+    transform: translateX(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes n2aBar {
+  from {
+    width: 0;
+  }
+}
+
+button {
+  transition:
+    background 0.16s ease,
+    color 0.16s ease,
+    border-color 0.16s ease,
+    transform 0.12s ease,
+    box-shadow 0.16s ease;
+}
+button:hover {
+  transform: translateY(-1px);
+}
+button:active {
+  transform: translateY(0) scale(0.975);
+}
+button:disabled {
+  transform: none;
+}
+
+select,
+input,
+textarea {
+  transition:
+    background 0.16s ease,
+    border-color 0.16s ease,
+    box-shadow 0.16s ease;
+}
+select:hover,
+input:hover {
+  border-color: rgba(255, 255, 255, 0.28);
+}
+
+article {
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease,
+    border-color 0.18s ease;
+}
+article:hover {
+  transform: translateY(-2px);
+}
+
+/* Entrance animations (staggered via inline animation-delay). */
+.n2a-view {
+  animation: n2aFade 0.3s ease both;
+}
+.n2a-card {
+  animation: n2aCard 0.34s ease both;
+}
+.n2a-row {
+  animation: n2aRow 0.3s ease both;
+}
+.n2a-overlay {
+  animation: n2aFade 0.18s ease both;
+}
+.n2a-modal {
+  animation: n2aCard 0.22s ease both;
+}
+.n2a-bar {
+  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: n2aBar 0.7s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+/* Data-dependent hover treatments (values passed in via CSS variables). */
+.review-card:hover {
+  box-shadow: var(--hover-shadow);
+  border-color: var(--hover-border);
+}
+.task-row {
+  transition:
+    background 0.16s ease,
+    transform 0.16s ease;
+}
+.task-row:hover {
+  background: #111a45;
+  transform: translateX(2px);
+}
+.history-row {
+  transition: background 0.16s ease;
+}
+.history-row:hover {
+  background: #111a45;
+}
+.recent-btn:hover {
+  background: #111a45;
+  border-color: rgba(255, 255, 255, 0.2);
+}

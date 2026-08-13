@@ -1,0 +1,23 @@
+---
+description: Never attribute Cursor/AI as git co-author or helper in commits
+alwaysApply: true
+---
+
+# Git commit authorship
+
+When creating git commits:
+
+- Do **not** add `Co-Authored-By`, `Signed-off-by`, or any trailer that names Cursor, Copilot, Claude, or other AI tools
+- Do **not** mention Cursor, AI, or an assistant in the commit message body or subject
+- Commit messages should read as authored solely by the human user
+- Use only the message content the user requested (or a normal project-style message); no attribution footnotes
+
+```text
+# ❌ BAD
+feat: add health hook
+
+Co-Authored-By: Cursor <cursoragent@cursor.com>
+
+# ✅ GOOD
+feat: add health hook
+```
