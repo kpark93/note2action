@@ -16,6 +16,7 @@ export function Sidebar() {
   const goTo = useActionItems((s) => s.goTo);
   const items = useActionItems((s) => s.items);
   const { donePct, doneCount, openCount, flagCount } = summary(items);
+  const pct = parseInt(donePct, 10) || 0;
   const theme = useTheme((s) => s.theme);
   const setTheme = useTheme((s) => s.setTheme);
 
@@ -81,7 +82,7 @@ export function Sidebar() {
       <div className="rounded-[16px] bg-secondary p-[14px]">
         <div className="text-[11.5px] text-muted-foreground">Completion this month</div>
         <div className="mt-[7px] text-[24px] font-bold tracking-[-0.03em] tabular-nums">
-          {donePct}
+          <SlotNumber value={pct} />
         </div>
         <div className="mt-3 h-[5px] overflow-hidden rounded-full bg-muted">
           <div
@@ -132,5 +133,67 @@ export function Sidebar() {
         />
       </div>
     </aside>
+  );
+}
+
+const DIGITS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+
+/**
+ * Slot-machine percentage. Each digit is a 0–9 reel translated to the current
+ * value; the CSS transition rolls through the in-between digits — up when the
+ * number grows (a task completed), down when it shrinks (added/uncompleted).
+ */
+function SlotNumber({ value }: { value: number }) {
+  const clamped = Math.max(0, Math.min(100, Math.round(value)));
+  const digits = String(clamped).split("");
+  return (
+    <span
+      className="inline-flex items-center"
+      style={{ height: "1em", lineHeight: 1 }}
+      aria-label={`${clamped}%`}
+    >
+      {digits.map((d, i) => (
+        // Key from the right so lower places keep their reel across carries.
+        <SlotDigit key={digits.length - 1 - i} digit={Number(d)} />
+      ))}
+      <span
+        aria-hidden="true"
+        style={{ display: "flex", height: "1em", alignItems: "center" }}
+      >
+        %
+      </span>
+    </span>
+  );
+}
+
+function SlotDigit({ digit }: { digit: number }) {
+  return (
+    <span
+      aria-hidden="true"
+      style={{ display: "block", height: "1em", overflow: "hidden" }}
+    >
+      <span
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          transform: `translateY(-${digit}em)`,
+          transition: "transform 0.7s cubic-bezier(0.16, 1, 0.3, 1)",
+        }}
+      >
+        {DIGITS.map((n) => (
+          <span
+            key={n}
+            style={{
+              display: "flex",
+              height: "1em",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            {n}
+          </span>
+        ))}
+      </span>
+    </span>
   );
 }

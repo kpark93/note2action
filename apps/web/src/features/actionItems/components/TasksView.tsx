@@ -2,11 +2,14 @@ import { useState } from "react";
 import { useActionItems } from "../store";
 import { OWNERS, STATUSES } from "../constants";
 import { PRIORITY_STYLE, STATUS_STYLE, savedTasks, taskRows } from "../selectors";
+import type { TaskRowVM } from "../selectors";
 import { playPop } from "../sound";
 import type { Status } from "../types";
 
-const COLS = "grid-cols-[minmax(0,1fr)_88px_132px]";
+const COLS = "grid-cols-[minmax(0,1fr)_96px_88px_132px]";
 const OPEN_STATUSES = STATUSES.slice(0, 3);
+// Tasks are grouped into these sections, most-active first.
+const STATUS_SECTIONS: Status[] = ["In progress", "Blocked", "Not started"];
 
 export function TasksView() {
   const items = useActionItems((s) => s.items);
@@ -33,6 +36,65 @@ export function TasksView() {
     } else {
       update(id, "status", value);
     }
+  };
+
+  const renderRow = (row: TaskRowVM) => {
+    const pr = PRIORITY_STYLE[row.priority];
+    const sc = STATUS_STYLE[row.status];
+    const isCompleting = completingId === row.id;
+    return (
+      <div
+        key={row.id}
+        className={`task-row grid ${COLS} items-center gap-[14px] rounded-[14px] bg-card px-4 py-[10px] ${
+          isCompleting ? "task-complete" : "n2a-row"
+        }`}
+        style={isCompleting ? undefined : { animationDelay: row.delay }}
+      >
+        {isCompleting && (
+          <span className="task-burst" aria-hidden="true">
+            ✓
+          </span>
+        )}
+        <span className="flex min-w-0 items-center gap-[11px]">
+          <span className="flex h-7 w-7 flex-none items-center justify-center rounded-[9px] bg-secondary text-[10.5px] font-semibold text-muted-foreground">
+            {row.initials}
+          </span>
+          <span className="flex min-w-0 flex-col gap-[3px]">
+            <span className="overflow-hidden text-[14.5px] font-semibold tracking-[-0.015em] text-ellipsis whitespace-nowrap">
+              {row.title}
+            </span>
+            <span className="overflow-hidden text-[12px] text-ellipsis whitespace-nowrap text-muted-foreground">
+              {row.owner}
+            </span>
+          </span>
+        </span>
+        <span className="text-[12px] tabular-nums whitespace-nowrap text-muted-foreground">
+          {row.dueLabel}
+        </span>
+        <span
+          className="inline-flex justify-self-start rounded-full px-[10px] py-[3px] text-[11.5px] font-semibold"
+          style={{ background: pr.bg, color: pr.fg }}
+        >
+          {row.priority}
+        </span>
+        <select
+          value={row.status}
+          onChange={(e) => handleStatus(row.id, e.target.value as Status)}
+          className="h-[34px] w-full rounded-[11px] px-[11px] text-[12.5px] font-semibold"
+          style={{
+            background: sc.bg,
+            color: sc.fg,
+            border: `1px solid ${sc.border}`,
+          }}
+        >
+          {STATUSES.map((s) => (
+            <option key={s} value={s}>
+              {s}
+            </option>
+          ))}
+        </select>
+      </div>
+    );
   };
 
   const rows = taskRows(items, filterOwner, filterStatus);
@@ -100,80 +162,34 @@ export function TasksView() {
         </button>
       </div>
 
-      <div
-        className={`grid ${COLS} gap-[14px] px-[18px] pb-[10px] text-[11px] font-semibold tracking-[0.1em] text-muted-foreground`}
-      >
-        <span>ACTION ITEM</span>
-        <span>PRIORITY</span>
-        <span>STATUS</span>
-      </div>
-      <div className="flex min-h-0 flex-1 flex-col gap-[7px] overflow-x-hidden overflow-y-auto -mr-1 pr-1">
-        {rows.map((row) => {
-          const pr = PRIORITY_STYLE[row.priority];
-          const sc = STATUS_STYLE[row.status];
-          const isCompleting = completingId === row.id;
-          return (
-            <div
-              key={row.id}
-              className={`task-row grid ${COLS} items-center gap-[14px] rounded-[14px] bg-card px-4 py-[10px] ${
-                isCompleting ? "task-complete" : "n2a-row"
-              }`}
-              style={isCompleting ? undefined : { animationDelay: row.delay }}
-            >
-              {isCompleting && (
-                <span className="task-burst" aria-hidden="true">
-                  ✓
-                </span>
-              )}
-              <span className="flex min-w-0 items-center gap-[11px]">
-                <span className="flex h-7 w-7 flex-none items-center justify-center rounded-[9px] bg-secondary text-[10.5px] font-semibold text-muted-foreground">
-                  {row.initials}
-                </span>
-                <span className="flex min-w-0 flex-col gap-[3px]">
-                  <span className="overflow-hidden text-[14.5px] font-semibold tracking-[-0.015em] text-ellipsis whitespace-nowrap">
-                    {row.title}
-                  </span>
-                  <span className="overflow-hidden text-[12px] text-ellipsis whitespace-nowrap text-muted-foreground">
-                    {row.owner} ·{" "}
-                    <span className="tabular-nums" style={{ color: row.dueFg }}>
-                      {row.dueMeta}
-                    </span>
-                  </span>
-                </span>
-              </span>
-              <span
-                className="inline-flex justify-self-start rounded-full px-[10px] py-[3px] text-[11.5px] font-semibold"
-                style={{ background: pr.bg, color: pr.fg }}
-              >
-                {row.priority}
-              </span>
-              <select
-                value={row.status}
-                onChange={(e) =>
-                  handleStatus(row.id, e.target.value as Status)
-                }
-                className="h-[34px] w-full rounded-[11px] px-[11px] text-[12.5px] font-semibold"
-                style={{
-                  background: sc.bg,
-                  color: sc.fg,
-                  border: `1px solid ${sc.border}`,
-                }}
-              >
-                {STATUSES.map((s) => (
-                  <option key={s} value={s}>
-                    {s}
-                  </option>
-                ))}
-              </select>
-            </div>
-          );
-        })}
-        {rows.length === 0 && (
+      <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-x-hidden overflow-y-auto -mr-1 pr-1">
+        {rows.length === 0 ? (
           <div className="rounded-[16px] bg-card px-5 py-[52px] text-center text-[13.5px] text-muted-foreground">
             {savedCount === 0
               ? "No tasks yet — save items from the Review tab."
               : "No open items match these filters."}
           </div>
+        ) : (
+          STATUS_SECTIONS.map((status) => {
+            const sectionRows = rows.filter((r) => r.status === status);
+            if (sectionRows.length === 0) return null;
+            return (
+              <section key={status}>
+                <div className="mb-[7px] flex items-center gap-3">
+                  <h2 className="text-[11px] font-semibold tracking-[0.14em] text-muted-foreground uppercase">
+                    {status}
+                  </h2>
+                  <span className="h-px flex-1 bg-border" />
+                  <span className="text-[12px] text-muted-foreground">
+                    {sectionRows.length}
+                  </span>
+                </div>
+                <div className="flex flex-col gap-[7px]">
+                  {sectionRows.map(renderRow)}
+                </div>
+              </section>
+            );
+          })
         )}
       </div>
     </div>

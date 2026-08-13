@@ -68,9 +68,9 @@ export function ReviewView() {
           onClick={toggleOnlyLow}
           className="h-[31px] rounded-full px-[13px] text-[12.5px] font-medium"
           style={{
-            background: onlyLow ? "rgba(233,48,192,.18)" : "transparent",
-            color: onlyLow ? "#f9a3e9" : "hsl(var(--muted-foreground))",
-            border: `1px solid ${onlyLow ? "rgba(233,48,192,.5)" : "hsl(var(--border))"}`,
+            background: onlyLow ? "hsl(var(--primary) / 0.15)" : "transparent",
+            color: onlyLow ? "hsl(var(--pill-blue))" : "hsl(var(--muted-foreground))",
+            border: `1px solid ${onlyLow ? "hsl(var(--primary) / 0.5)" : "hsl(var(--border))"}`,
           }}
         >
           Only low confidence

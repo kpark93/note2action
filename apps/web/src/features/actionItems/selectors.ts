@@ -27,16 +27,16 @@ export const STATUS_STYLE: Record<
 export function reviewStyle(low: boolean) {
   return {
     label: low ? "needs review" : "confident",
-    pillBg: low ? "rgba(233,48,192,.14)" : "rgba(255,255,255,.06)",
-    pillFg: low ? "#f77fe0" : "#a7b1e4",
-    pillBorder: low ? "rgba(233,48,192,.4)" : "rgba(255,255,255,.1)",
-    dot: low ? "#e930c0" : "#4d5fe8",
-    cardBorder: low ? "rgba(233,48,192,.45)" : "rgba(255,255,255,.09)",
-    cardShadow: low ? "0 10px 30px rgba(233,48,192,.16)" : "none",
+    pillBg: low ? "hsl(var(--primary) / 0.14)" : "rgba(255,255,255,.06)",
+    pillFg: low ? "hsl(var(--pill-blue))" : "#a7b1e4",
+    pillBorder: low ? "hsl(var(--primary) / 0.4)" : "rgba(255,255,255,.1)",
+    dot: low ? "hsl(var(--primary))" : "#4d5fe8",
+    cardBorder: low ? "hsl(var(--primary) / 0.45)" : "rgba(255,255,255,.09)",
+    cardShadow: low ? "0 10px 30px hsl(var(--primary) / 0.16)" : "none",
     hoverShadow: low
-      ? "0 16px 38px rgba(233,48,192,.26)"
+      ? "0 16px 38px hsl(var(--primary) / 0.26)"
       : "0 12px 30px rgba(5,9,26,.5)",
-    hoverBorder: low ? "rgba(233,48,192,.65)" : "rgba(255,255,255,.18)",
+    hoverBorder: low ? "hsl(var(--primary) / 0.65)" : "rgba(255,255,255,.18)",
     noteFg: low ? "#c6cdf3" : "#7c88b8",
   };
 }
@@ -116,10 +116,17 @@ export function flagSentence(flagCount: number): string {
 
 export interface TaskRowVM extends ActionItem {
   initials: string;
-  dueMeta: string;
-  dueFg: string;
+  /** Formatted due date, e.g. "Aug 14", or "—" when none. */
+  dueLabel: string;
   /** Staggered entrance delay, e.g. "105ms". */
   delay: string;
+}
+
+/** Earliest due date first; undated items sort last (ISO strings compare chronologically). */
+function byDueAsc(a: ActionItem, b: ActionItem): number {
+  if (!a.due) return b.due ? 1 : 0;
+  if (!b.due) return -1;
+  return a.due.localeCompare(b.due);
 }
 
 export function taskRows(
@@ -133,11 +140,11 @@ export function taskRows(
         (filterOwner === "All" || it.owner === filterOwner) &&
         (filterStatus === "All" || it.status === filterStatus),
     )
+    .sort(byDueAsc)
     .map((it, idx) => ({
       ...it,
       initials: initials(it.owner),
-      dueMeta: it.due ? "Due " + formatDate(it.due) : "No date",
-      dueFg: it.due ? "#a7b1e4" : "#6d7ab0",
+      dueLabel: formatDate(it.due),
       delay: idx * 35 + "ms",
     }));
 }
