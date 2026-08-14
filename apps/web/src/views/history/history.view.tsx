@@ -3,6 +3,8 @@ import { useHistoryStore } from "./history.store";
 import { OWNERS } from "@/store/actionItems.constants";
 import { historyGroups, historyStats } from "./history.utils";
 import { Button } from "@/components/ui/button";
+import { SectionHeading } from "@/components/SectionHeading";
+import { EmptyState } from "@/components/EmptyState";
 import {
   Select,
   SelectContent,
@@ -70,13 +72,7 @@ export function HistoryView() {
       <div className="flex min-h-0 flex-1 flex-col gap-[14px] overflow-x-hidden overflow-y-auto -mr-1 pr-1">
         {groups.map((g) => (
           <section key={g.key}>
-            <div className="mb-[7px] flex items-center gap-3">
-              <h2 className="text-[11px] font-semibold tracking-[0.14em] text-muted-foreground uppercase">
-                {g.label}
-              </h2>
-              <span className="h-px flex-1 bg-white/[0.14]" />
-              <span className="text-[12px] text-muted-foreground">{g.count}</span>
-            </div>
+            <SectionHeading label={g.label} count={g.count} />
             <div className="flex flex-col gap-[6px]">
               {g.items.map((h) => (
                 <div
@@ -110,12 +106,9 @@ export function HistoryView() {
           </section>
         ))}
         {groups.length === 0 && (
-          <div className="rounded-[20px] border border-dashed border-border bg-card px-5 py-[60px] text-center">
-            <div className="text-[15px] font-semibold">Nothing completed yet</div>
-            <p className="mt-2 text-[13px] text-muted-foreground">
-              Mark a task Done and it lands here with the date it was closed.
-            </p>
-          </div>
+          <EmptyState title="Nothing completed yet">
+            Mark a task Done and it lands here with the date it was closed.
+          </EmptyState>
         )}
       </div>
     </div>
