@@ -1,14 +1,7 @@
 import type { ActionItem } from "@/store/actionItems.types";
 import { TODAY } from "@/store/actionItems.constants";
-import { doneItems, formatDate, openItems } from "@/lib/items";
-
-/** ISO date of the Monday that starts the week containing `d`. */
-function weekOf(d: string): string {
-  const t = new Date(d + "T00:00:00");
-  const monday = new Date(t);
-  monday.setDate(t.getDate() - ((t.getDay() + 6) % 7));
-  return monday.toISOString().slice(0, 10);
-}
+import { doneItems, openItems } from "@/lib/items";
+import { formatDate, weekOf } from "@/lib/dates";
 
 export interface HistoryGroupVM {
   key: string;

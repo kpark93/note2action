@@ -1,16 +1,8 @@
-// Shared, cross-view item selectors and helpers. View-specific derivations
-// (review cards, task rows, history groups) live in each view's *.utils.ts.
+// Shared, cross-view item selectors and helpers. Date helpers live in
+// lib/dates.ts; view-specific derivations (review cards, task rows, history
+// groups) live in each view's *.utils.ts.
 import type { ActionItem } from "@/store/actionItems.types";
 import { LOW_CONFIDENCE_THRESHOLD } from "@/store/actionItems.constants";
-
-/** "Aug 14", or "—" for an empty date. */
-export function formatDate(d: string): string {
-  if (!d) return "—";
-  return new Date(d + "T00:00:00").toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-  });
-}
 
 export function initials(owner: string): string {
   if (owner === "Unassigned") return "?";

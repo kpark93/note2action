@@ -1,5 +1,6 @@
 import type { ActionItem, Priority, Status } from "@/store/actionItems.types";
-import { formatDate, initials, savedTasks } from "@/lib/items";
+import { initials, savedTasks } from "@/lib/items";
+import { compareDueAsc, formatDate } from "@/lib/dates";
 
 // Pill colors are theme-aware (see --pill-* / --magenta in global.css):
 // dark & saturated on light backgrounds, pastel on dark ones.
@@ -27,13 +28,6 @@ export interface TaskRowVM extends ActionItem {
   delay: string;
 }
 
-/** Earliest due date first; undated items sort last (ISO strings compare chronologically). */
-function byDueAsc(a: ActionItem, b: ActionItem): number {
-  if (!a.due) return b.due ? 1 : 0;
-  if (!b.due) return -1;
-  return a.due.localeCompare(b.due);
-}
-
 export function taskRows(
   items: ActionItem[],
   filterOwner: string,
@@ -45,7 +39,7 @@ export function taskRows(
         (filterOwner === "All" || it.owner === filterOwner) &&
         (filterStatus === "All" || it.status === filterStatus),
     )
-    .sort(byDueAsc)
+    .sort((a, b) => compareDueAsc(a.due, b.due))
     .map((it, idx) => ({
       ...it,
       initials: initials(it.owner),
