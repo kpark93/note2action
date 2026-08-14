@@ -3,6 +3,7 @@ import { useHistoryStore } from "./history.store";
 import { OWNERS } from "@/store/actionItems.constants";
 import { historyGroups, historyStats } from "./history.utils";
 import { Button } from "@/components/ui/button";
+import { ViewHeader } from "@/components/ViewHeader";
 import { SectionHeading } from "@/components/SectionHeading";
 import { EmptyState } from "@/components/EmptyState";
 import {
@@ -26,30 +27,25 @@ export function HistoryView() {
 
   return (
     <div className="n2a-view flex min-h-0 flex-1 flex-col overflow-hidden">
-      <div className="flex items-start justify-between gap-10">
-        <div>
-          <h1 className="text-[25px] font-bold leading-[1.12] tracking-[-0.03em]">
-            History
-          </h1>
-          <p className="mt-[7px] max-w-[64ch] text-[13px] text-muted-foreground">
-            Completed action items, newest first. Nothing is deleted — reopen
-            anything that comes back.
-          </p>
-        </div>
-        <Select value={historyOwner} onValueChange={setHistoryOwner}>
-          <SelectTrigger className="min-w-[164px] flex-none rounded-[12px] border-border bg-card px-[13px] text-[13px] text-foreground data-[size=default]:h-[38px]">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="All">All owners</SelectItem>
-            {OWNERS.map((o) => (
-              <SelectItem key={o} value={o}>
-                {o}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+      <ViewHeader
+        title="History"
+        description="Completed action items, newest first. Nothing is deleted — reopen anything that comes back."
+        actions={
+          <Select value={historyOwner} onValueChange={setHistoryOwner}>
+            <SelectTrigger className="min-w-[164px] flex-none rounded-[12px] border-border bg-card px-[13px] text-[13px] text-foreground data-[size=default]:h-[38px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="All">All owners</SelectItem>
+              {OWNERS.map((o) => (
+                <SelectItem key={o} value={o}>
+                  {o}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        }
+      />
 
       <div className="my-4 grid flex-none grid-cols-3 gap-3">
         {stats.map((s) => (

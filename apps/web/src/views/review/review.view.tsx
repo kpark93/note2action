@@ -4,6 +4,7 @@ import { useReviewStore } from "./review.store";
 import { flagSentence, reviewItems } from "./review.utils";
 import { ReviewCard } from "./review-card";
 import { StepLabel } from "@/components/StepLabel";
+import { ViewHeader } from "@/components/ViewHeader";
 import { EmptyState } from "@/components/EmptyState";
 import { Button } from "@/components/ui/button";
 
@@ -20,50 +21,47 @@ export function ReviewView() {
 
   return (
     <div className="n2a-view flex min-h-0 flex-1 flex-col overflow-hidden">
-      <div className="flex items-start justify-between gap-10">
-        <div>
-          <StepLabel step={2} label="Review" />
-          <h1 className="mt-[7px] text-[25px] font-bold leading-[1.12] tracking-[-0.03em]">
-            {all.length} action items extracted
-          </h1>
-          <p className="mt-[7px] max-w-[70ch] text-[13px] leading-[1.5] text-muted-foreground">
-            Owners and dates were inferred from the transcript.{" "}
-            {flagSentence(flagCount)}
-          </p>
-        </div>
-        <div className="flex flex-none items-center gap-[10px]">
-          <Button
-            variant="outline"
-            onClick={() => navigate("/capture")}
-            className="h-10 rounded-[13px] border-border bg-transparent px-4 text-[13.5px] font-medium text-foreground shadow-none dark:border-border dark:bg-transparent"
-          >
-            Back to notes
-          </Button>
-          <Button
-            onClick={() => {
-              saveToTasks();
-              navigate("/tasks");
-            }}
-            disabled={all.length === 0}
-            className="h-10 rounded-[13px] px-[18px] text-[13.5px] font-semibold disabled:pointer-events-auto disabled:opacity-100"
-            style={{
-              background:
-                all.length === 0 ? "hsl(var(--muted))" : "hsl(var(--primary))",
-              color:
-                all.length === 0
-                  ? "hsl(var(--muted-foreground))"
-                  : "hsl(var(--primary-foreground))",
-              cursor: all.length === 0 ? "not-allowed" : "pointer",
-              boxShadow:
-                all.length === 0
-                  ? "none"
-                  : "0 8px 22px hsl(var(--primary) / 0.3)",
-            }}
-          >
-            Save {all.length} to Tasks
-          </Button>
-        </div>
-      </div>
+      <ViewHeader
+        eyebrow={<StepLabel step={2} label="Review" />}
+        title={`${all.length} action items extracted`}
+        description={
+          <>Owners and dates were inferred from the transcript. {flagSentence(flagCount)}</>
+        }
+        actions={
+          <>
+            <Button
+              variant="outline"
+              onClick={() => navigate("/capture")}
+              className="h-10 rounded-[13px] border-border bg-transparent px-4 text-[13.5px] font-medium text-foreground shadow-none dark:border-border dark:bg-transparent"
+            >
+              Back to notes
+            </Button>
+            <Button
+              onClick={() => {
+                saveToTasks();
+                navigate("/tasks");
+              }}
+              disabled={all.length === 0}
+              className="h-10 rounded-[13px] px-[18px] text-[13.5px] font-semibold disabled:pointer-events-auto disabled:opacity-100"
+              style={{
+                background:
+                  all.length === 0 ? "hsl(var(--muted))" : "hsl(var(--primary))",
+                color:
+                  all.length === 0
+                    ? "hsl(var(--muted-foreground))"
+                    : "hsl(var(--primary-foreground))",
+                cursor: all.length === 0 ? "not-allowed" : "pointer",
+                boxShadow:
+                  all.length === 0
+                    ? "none"
+                    : "0 8px 22px hsl(var(--primary) / 0.3)",
+              }}
+            >
+              Save {all.length} to Tasks
+            </Button>
+          </>
+        }
+      />
 
       <div className="my-3 flex items-center gap-[14px]">
         <span className="text-[13px] text-muted-foreground">{flagCount} need review</span>

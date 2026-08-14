@@ -4,6 +4,7 @@ import { useActionItems } from "@/store/actionItems.store";
 import { OWNERS, RECENTS } from "@/store/actionItems.constants";
 import { todayISO } from "@/lib/dates";
 import { StepLabel } from "@/components/StepLabel";
+import { ViewHeader } from "@/components/ViewHeader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -42,16 +43,13 @@ export function CaptureView() {
 
   return (
     <div className="n2a-view flex min-h-0 max-w-[840px] flex-1 flex-col overflow-hidden">
-      <StepLabel step={1} label="Capture" />
-      <h1 className="mt-[7px] text-[25px] font-bold leading-[1.12] tracking-[-0.03em]">
-        Paste your meeting notes
-      </h1>
-      <p className="mt-[7px] mb-4 max-w-[64ch] text-[13px] leading-[1.5] text-muted-foreground">
-        Raw notes, a transcript, or a bulleted recap. Names and dates mentioned
-        anywhere in the text become owners and due dates.
-      </p>
+      <ViewHeader
+        eyebrow={<StepLabel step={1} label="Capture" />}
+        title="Paste your meeting notes"
+        description="Raw notes, a transcript, or a bulleted recap. Names and dates mentioned anywhere in the text become owners and due dates."
+      />
 
-      <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-[18px] border border-border bg-card">
+      <div className="mt-4 flex min-h-0 flex-1 flex-col overflow-hidden rounded-[18px] border border-border bg-card">
         <div className="flex items-center justify-between border-b border-border px-[18px] py-[14px]">
           <Input
             value={meetingTitle}

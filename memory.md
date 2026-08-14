@@ -1,0 +1,407 @@
+# Project Memory — Change Journal
+
+**What this file is:** a running diary of every change an AI agent (Claude Code)
+makes to this repository. Each entry explains, in plain language, WHAT changed,
+WHICH files were touched, and WHY — written for someone new to programming.
+Every technical term is defined the first time it appears in an entry.
+
+**How it stays up to date:** this repo has "hooks" configured in
+`.claude/settings.json` (a *hook* is a small script that Claude Code runs
+automatically at certain moments). One hook notices when the agent edits any
+file; another hook refuses to let the agent finish its turn until it has
+written an entry here. So the agent physically cannot forget to update this
+file.
+
+**Reading order:** new entries are added at the bottom, so read top-to-bottom
+for oldest-to-newest.
+
+---
+
+## 2026-08-14 — Created this journal and the automatic update system
+
+**What changed:** three files were created or edited to set up this journal.
+
+**Files touched:**
+- `memory.md` (this file) — created.
+- `.claude/settings.json` — created. This is a *configuration file* (a file
+  that stores settings, not program code) that Claude Code reads on startup.
+  It now contains two hooks, described below.
+- `.gitignore` — one line added. `.gitignore` is a list of files that *git*
+  (the version-control tool that tracks the history of this project) should
+  pretend do not exist, so temporary junk never gets saved into the project
+  history.
+
+**Why:** the project owner asked for `memory.md` to be updated automatically,
+with a student-friendly explanation, every time an AI agent changes something.
+
+**How the system works, step by step:**
+1. When the agent edits or writes any file, a **PostToolUse hook** fires.
+   ("PostToolUse" just means "runs right after the agent uses a tool" — here,
+   the file-editing tools.) It creates an empty marker file at
+   `.claude/.memory_pending`. This is called a *flag file*: its only job is to
+   exist or not exist, like a raised flag meaning "changes happened."
+2. When the agent tries to finish its turn, a **Stop hook** fires. It checks
+   whether the flag file exists. If it does, the hook deletes the flag and
+   *blocks* the agent — sending it back with instructions to append a
+   beginner-friendly entry to this file first.
+3. Edits to `memory.md` itself deliberately do NOT raise the flag. Without
+   that exception, writing a journal entry would raise the flag again, the
+   Stop hook would block again, and the agent would loop forever.
+4. The hooks are written in *shell* (the command language of the terminal) and
+   use a helper program called `jq`, which reads *JSON* — a standard text
+   format for structured data, made of `{"name": "value"}` pairs — because
+   Claude Code hands hooks their information as JSON.
+
+---
+
+## 2026-08-14 — Adopted shadcn/ui components in the web app
+
+**Plain-language summary:** the web app (`apps/web`, the part of the project
+that runs in a web browser) used to build its buttons, dropdowns, text boxes,
+and pop-up window "by hand" — every one was a raw HTML tag with its own styling.
+We replaced those hand-built controls with **shadcn/ui** components. *shadcn/ui*
+is not an installed library you import from; it is a collection of ready-made
+*React components* (a *component* is a reusable piece of user interface, like a
+button, written once and reused everywhere) whose source code you **copy into
+your own project** and then own and edit. The big win is consistency: keyboard
+navigation, focus rings, and accessibility come built-in, and every control
+behaves the same way.
+
+**The key idea that made this safe:** the app's colors and sizes are defined as
+**CSS design tokens** (named values like "the primary blue" stored once in a
+stylesheet, so the whole app changes if you change the one value) in
+`apps/web/src/global.css`. It turned out these token names already matched
+exactly what shadcn components expect. So the new components automatically wore
+the app's existing grey-and-indigo look **without changing a single color** — we
+only had to nudge a few sizes with extra styling classes.
+
+**What changed, file by file:**
+
+*Setup (new plumbing, no visual change):*
+- `apps/web/components.json` — created. A settings file that tells the shadcn
+  command-line tool where this project keeps its components and stylesheet.
+- `apps/web/src/lib/utils.ts` — created. Holds one small helper, `cn()`, that
+  merges lists of styling class names together and resolves conflicts (if two
+  classes both set the height, the last one wins).
+- `apps/web/src/components/ui/*.tsx` — created (button, card, dialog, input,
+  textarea, label, select, separator, badge). These are the copied-in shadcn
+  component source files. *Dialog* = a pop-up window; *badge* = a small pill
+  showing a count or label; *separator* = a thin divider line.
+- `apps/web/src/global.css` — one line added: `@import "tw-animate-css";`. This
+  pulls in the open/close *animations* (smooth motion effects) that the pop-up
+  window and dropdowns use. No colors were touched.
+- `apps/web/package.json` + `pnpm-lock.yaml` — recorded the new helper packages
+  the components need (for class merging, icons, and the Radix *primitives* —
+  low-level unstyled building blocks the components are built on). We also
+  removed some duplicate packages we didn't end up needing.
+
+*The five "views" (each view = one full screen/tab of the app):*
+- `apps/web/src/views/History/history.view.tsx` — the owner filter dropdown
+  became a `Select`; the "Reopen" button became a `Button`. (This was the
+  first, smallest screen we converted, to prove the approach before doing the
+  rest.)
+- `apps/web/src/views/Review/review.view.tsx` — owner/priority dropdowns →
+  `Select`, the due-date box → `Input`, the editable title box → `Textarea`,
+  and all the buttons → `Button`.
+- `apps/web/src/views/Tasks/tasks.view.tsx` — the filter dropdowns and the
+  per-row status dropdown → `Select`; the buttons → `Button`; and a
+  hand-drawn arrow icon was swapped for a ready-made "undo" icon from the
+  `lucide-react` icon set. The status dropdown keeps its color that changes with
+  the status (blue for "in progress", etc.).
+- `apps/web/src/views/Capture/capture.view.tsx` — the meeting-title box →
+  `Input`, the big notes box → `Textarea`, and the two buttons → `Button`.
+- `apps/web/src/views/Home/home.view.tsx` — the "New capture" button → `Button`.
+
+*Shared pieces used on every screen:*
+- `apps/web/src/components/Sidebar.tsx` — the little number showing how many
+  items need review became a `Badge`; the light/dark theme switch buttons became
+  `Button`s.
+- `apps/web/src/components/RecentModal.tsx` — the pop-up that previews a past
+  transcript was rebuilt on the shadcn `Dialog`, which adds proper behavior for
+  free: pressing Escape or clicking outside closes it, and keyboard focus is
+  trapped inside while it's open.
+- `apps/web/src/components/ui/dialog.tsx` — adjusted the pop-up's dimmed
+  background to match the app's original slightly-darker, blurred look.
+
+**What we deliberately kept hand-built:** a few things have no shadcn
+equivalent, so we left them as custom code — the animated "slot machine"
+percentage counter, the celebratory pop/burst effect when a task is completed,
+the "loading dots", the small colored dot showing whether the server is online,
+and the large clickable summary cards on the Home and Capture screens. The
+left-hand navigation links also stay as-is because they are tied to the app's
+*router* (the system that swaps screens when you click a tab).
+
+**Why:** the project owner asked to follow shadcn/ui best practices — use a
+ready-made component whenever one exists, and only write custom UI when it
+doesn't. This makes the app more consistent, more accessible, and easier to
+extend later.
+
+**How we checked nothing broke:** after each screen we ran the *type checker*
+(`tsc`, a tool that catches mismatched code before it runs) and a *build* (`vite
+build`, which compiles the app the way it would ship to real users). Both passed
+every time, and all five screens loaded successfully. Each screen was saved as
+its own *commit* (a labeled snapshot in git's history) so the changes are easy
+to review one at a time. The work lives on a *branch* (a separate line of
+history) called `refactor/web-restructure` and has not yet been pushed to the
+shared server.
+
+---
+
+## 2026-08-14 — Moved the data-fetching setup into its own providers file
+
+**Plain-language summary:** the web app's start-up file was doing two jobs at
+once — starting the app *and* setting up a tool called TanStack Query. We split
+the TanStack Query setup out into its own small file so each file has one clear
+job.
+
+**Background terms:**
+- *TanStack Query* — a library (reusable code written by someone else) that
+  fetches data from a server and remembers ("caches") the results so the app
+  doesn't re-download the same thing repeatedly.
+- *Provider* — in React (the framework this app is built with), a *provider* is
+  a wrapper component placed near the top of the app that makes some capability
+  available to every component inside it. TanStack Query needs its
+  `QueryClientProvider` wrapped around the app so any screen can fetch data.
+- *QueryClient* — the object that holds TanStack Query's cache and settings.
+  There should be exactly one, shared by the whole app.
+
+**What changed:**
+- `apps/web/src/providers.tsx` — **created.** It builds the single `QueryClient`
+  and exports a component called `AppProviders` that wraps whatever you put
+  inside it with `QueryClientProvider`. This is now the one place to add any
+  future app-wide providers (for example a theme or error-handling wrapper).
+- `apps/web/src/main.tsx` — **edited.** `main.tsx` is the app's *entry point*
+  (the very first file that runs in the browser). It used to create the
+  `QueryClient` and write out the provider itself; now it simply wraps the app
+  in `<AppProviders>`, so it only worries about starting the app.
+
+**Why the file ends in `.tsx`, not `.ts`:** the user asked for `providers.ts`,
+but the file contains *JSX* — the HTML-like syntax React uses to describe user
+interface, e.g. `<QueryClientProvider>`. TypeScript (the typed version of
+JavaScript this project uses) only allows JSX inside files ending in `.tsx`, so
+the file must be named `providers.tsx`.
+
+**Why:** keeping start-up code and provider setup in separate files makes each
+easier to read and gives one obvious home for adding more providers later,
+without cluttering the entry point.
+
+**How we checked nothing broke:** ran the type checker (`tsc`) and a build
+(`vite build`); both passed. This change is not yet committed.
+
+---
+
+## 2026-08-14 — Grouped date helpers, lowercased view folders, added a Step label
+
+Three related tidy-up changes to the web app (`apps/web`), all in one batch.
+
+**1. Put all the date helpers in one file.**
+A *helper* (or *utility*) is a small reusable function — a named piece of code
+you can call from many places. The date helpers were scattered: one lived in a
+general file, two were hidden *privately* inside single screens (*private* means
+only that one file could use it), and one was written *inline* (typed directly
+where it was used instead of given a name).
+- `apps/web/src/lib/dates.ts` — **created.** Now holds four date helpers:
+  `formatDate` (turns `"2026-08-14"` into `"Aug 14"`), `todayISO` (gives today's
+  date as text like `"2026-08-14"` — *ISO* is the international standard
+  year-month-day format), `weekOf` (finds the Monday that starts a given week),
+  and `compareDueAsc` (a *comparator* — a function that tells a sort which of two
+  dates comes first).
+- `apps/web/src/lib/items.ts` — **edited.** `formatDate` was removed from here
+  (it moved to `dates.ts`); this file keeps the helpers that pick and count
+  to-do items.
+- `apps/web/src/views/tasks/tasks.utils.ts` and
+  `apps/web/src/views/history/history.utils.ts` — **edited.** Deleted their
+  private date helpers and now import the shared ones from `dates.ts`.
+- `apps/web/src/views/capture/capture.view.tsx` — **edited.** Replaced the
+  inline "today" expression with a call to `todayISO()`.
+Why: keeping one kind of helper together makes each easy to find, reuse, and
+test, and removes duplicated code.
+
+**2. Made the view folder names lowercase.**
+A *view* is one full screen/tab of the app; each lives in its own *folder* (a
+named container for files). The folders were capitalized (`Capture`, `Home`,
+`Review`, `Tasks`, `History`) while the rest of the project uses lowercase, so
+they were renamed to `capture`, `home`, `review`, `tasks`, `history`. The files
+inside were already lowercase and did not change names.
+- All five folders under `apps/web/src/views/` — **renamed.**
+- `apps/web/src/App.tsx` — **edited.** This file lists which screen shows at
+  each web address (*routing*); its references were updated to the new
+  lowercase folder names. This matters because although Mac ignores
+  upper/lowercase in file names, the build servers that ship the app do not, so
+  the names must match exactly.
+Why: consistent naming across the project avoids confusion and prevents
+hard-to-spot bugs on case-sensitive systems.
+
+**3. Turned the "STEP 1 OF 3" label into a reusable component and added Step 3.**
+A *component* is a reusable piece of interface. The small "STEP 1 OF 3 —
+CAPTURE" label above each screen's title was copy-pasted in two screens, so it
+was extracted into one component you configure with a step number and a name.
+- `apps/web/src/components/StepLabel.tsx` — **created.** Renders text like
+  "STEP 2 OF 3 — REVIEW" from the `step` number and `label` you give it.
+- `apps/web/src/views/capture/capture.view.tsx` and
+  `apps/web/src/views/review/review.view.tsx` — **edited.** Replaced their
+  hand-written label with `<StepLabel step={1} label="Capture" />` and
+  `<StepLabel step={2} label="Review" />`.
+- `apps/web/src/views/tasks/tasks.view.tsx` — **edited.** Added a new
+  `<StepLabel step={3} label="Tasks" />`, so the three-step flow
+  Capture → Review → Tasks now shows its final step.
+Why: one component means the label looks and behaves the same everywhere, and a
+change only has to be made once.
+
+**How we checked nothing broke:** ran the type checker (`tsc`) and the build
+(`vite build`) — both passed — and loaded all five screens successfully. Not yet
+committed.
+
+---
+
+## 2026-08-14 — Split big screens into smaller components; removed two copy-pasted patterns
+
+Four related tidy-up changes to the web app (`apps/web`), continuing the
+restructure. A *component* is a named, reusable piece of user interface; the
+theme of this batch is moving big blocks of interface out of crowded files and
+into their own small, well-named components.
+
+**1. Moved the Review card into its own file.**
+The Review screen shows a grid of editable cards (one per extracted action
+item). The card's code — about 130 lines — lived at the bottom of the same file
+as the screen itself, making that file 263 lines long and hard to scan.
+- `apps/web/src/views/review/review-card.tsx` — **created.** Holds the
+  `ReviewCard` component, moved over unchanged.
+- `apps/web/src/views/review/review.view.tsx` — **edited.** Now imports
+  `ReviewCard` instead of defining it; shrank from 263 to 119 lines, and its
+  import list dropped the pieces only the card needed.
+
+**2. Turned the Tasks row into a `TaskRow` component.**
+The Tasks screen rendered each row with a 70-line *function* written inside the
+screen (a function is a named block of code; this one built the row's interface
+each time it was called).
+- `apps/web/src/views/tasks/task-row.tsx` — **created.** Holds the new
+  `TaskRow` component plus the column-width definition (`COLS`) that only rows
+  use. The row reads the "send back to Review" action from the shared store
+  itself; the screen passes in only what it alone knows — whether this row is
+  playing its "completed" animation, and what to do when the status changes.
+- `apps/web/src/views/tasks/tasks.view.tsx` — **edited.** Uses `<TaskRow>` and
+  shrank from 227 to about 160 lines.
+
+**3. One shared section heading — and a small bug fixed by it.**
+Tasks and History both draw the same "LABEL ───── count" heading above each
+group of rows, and the code was copy-pasted. The copies had already *drifted*
+(become subtly different): History's divider line was hard-coded to
+semi-transparent **white** (`bg-white/[0.14]`), which is invisible-to-wrong on
+the light theme, while Tasks correctly used the theme's border color.
+- `apps/web/src/components/SectionHeading.tsx` — **created.** Takes a `label`
+  and a `count` (a bare number like `3`, or ready-made text like `"3 items"`).
+- `apps/web/src/views/tasks/tasks.view.tsx` and
+  `apps/web/src/views/history/history.view.tsx` — **edited.** Both now use
+  `<SectionHeading>`; History's divider now follows the theme, fixing the
+  light-mode drift.
+
+**4. One shared "nothing here yet" card.**
+Review (twice) and History each hand-built the same dashed-border placeholder
+card shown when a list is empty.
+- `apps/web/src/components/EmptyState.tsx` — **created.** Shows a bold title
+  plus muted description, or a single muted line if no title is given.
+- `review.view.tsx` and `history.view.tsx` — **edited** to use it. History's
+  card had slightly different padding than Review's (60px tall vs 52px, and a
+  hair narrower); it now matches Review exactly — a deliberate, barely visible
+  normalization so all empty states look identical.
+
+**Why:** smaller files are easier to read; shared components mean a change is
+made once and every screen picks it up — and the drifted divider color shows
+exactly what goes wrong when the same code is maintained in two places.
+
+**How we checked nothing broke:** ran the type checker (`tsc`) — it caught one
+mistake mid-work (the heading's `count` was first typed as number-only, but
+History passes text like "3 items"; the type was widened to accept both) — and
+the production build (`vite build`); both pass. Not yet committed.
+
+---
+
+## 2026-08-14 — Saved a personal working rule outside the repository
+
+**What changed:** no project code was touched. The AI assistant wrote two small
+notes to its own private *memory folder* — a directory on this computer at
+`~/.claude/projects/-Users-macbook-note2action/memory/`, outside this
+repository (so git does not track it) — recording the project owner's
+instruction: **never run `git commit` (or push) without asking first.**
+
+**Files touched (both outside the repo):**
+- `.../memory/ask-before-committing.md` — created. Holds the rule itself, why
+  it exists, and how to apply it in future sessions.
+- `.../memory/MEMORY.md` — created. An *index* (a table of contents) listing
+  each saved note so future sessions can find them.
+
+**Why:** earlier today the assistant committed two refactor steps on its own,
+following the branch's apparent one-commit-per-step habit. The owner asked
+that committing always be confirmed first. Writing the rule to the persistent
+memory folder means every future session starts already knowing it, instead of
+relearning it by making the same mistake.
+
+---
+
+## 2026-08-14 — Extracted ViewHeader component for page headers
+
+**Plain-language summary:** the web app has five different screens (Capture,
+Review, Tasks, History, Home). Each screen shows a header at the top with a
+title, sometimes an eyebrow label (like "STEP 1 OF 3"), sometimes a description,
+and sometimes action buttons. The code for arranging these pieces was
+copy-pasted in each screen. Today we extracted that repeated pattern into one
+reusable *component* (a building block of interface). Now every screen's header
+uses the same component, making them consistent and easier to maintain.
+
+**Background:** when you copy code from one file to five files, the copies stay
+synchronized only if you remember to edit all five when something changes. A
+*component* centralizes the code — change it once and all five screens pick up
+the change automatically.
+
+**What changed:**
+
+- `apps/web/src/components/ViewHeader.tsx` — **created.** Exports a new
+  `ViewHeader` component that takes four optional pieces: `eyebrow` (small text
+  above the title, e.g. "STEP 1 OF 3"), `title` (the main heading), `description`
+  (muted text below the title), and `actions` (buttons or other controls aligned
+  to the right). The component arranges them in a consistent layout with
+  spacing and typography rules baked in.
+
+- `apps/web/src/views/review/review.view.tsx` — **edited.** Replaced the old
+  hand-built header (a `<div>` containing `StepLabel`, `<h1>`, `<p>`, and two
+  buttons) with `<ViewHeader eyebrow={…} title={…} description={…} actions={…}
+  />`. Added the import for the new component.
+
+- `apps/web/src/views/tasks/tasks.view.tsx` — **edited.** Same pattern: old
+  header replaced with `<ViewHeader>`. The description now contains a link to
+  History (moved from the old `<p>` inside the component). Added import.
+
+- `apps/web/src/views/history/history.view.tsx` — **edited.** History had no
+  eyebrow (no step label), so `<ViewHeader title={…} description={…}
+  actions={…} />` omits the `eyebrow`. The `actions` slot holds the owner filter
+  `<Select>`. Added import.
+
+- `apps/web/src/views/capture/capture.view.tsx` — **edited.** Replaced the
+  three old elements (`StepLabel`, `<h1>`, `<p>`) with `<ViewHeader eyebrow={…}
+  title={…} description={…} />` (no actions on this screen). Also added `mt-4`
+  (margin-top) to the card container below, since the old `<p>` had bottom margin
+  that ViewHeader does not — the margin moves to the next element to keep spacing
+  the same.
+
+**Typography and spacing rules baked into ViewHeader:**
+- Title is 25px, bold, with tight line height (1.12) and slight letter-spacing
+  tightening. It gets 7px top-margin only if there is an eyebrow above it.
+- Description is always 13px, muted grey, with a 70-character max-width for
+  readability and line height 1.5 for breathing room. 7px top-margin.
+- Actions are right-aligned, flex display with 10px gap between buttons.
+- The eyebrow, title, and description are grouped on the left; actions on the
+  right, with 10px gap between the two groups.
+
+**Normalizations (small improvements made while unifying):**
+- Description max-width went from 64ch (64 characters) to 70ch in History and
+  Capture, for visual consistency across the app. This is more readable.
+
+**Why:** unifying all five headers into one component makes them easier to
+maintain and ensures they all look and behave identically. If a design tweak is
+needed later, it happens in one place.
+
+**How we checked nothing broke:** ran the type checker (`tsc --noEmit`) and
+production build (`vite build`) — both passed. A pre-existing >500 kB chunk size
+warning from Vite is expected and approved. All five screens loaded successfully
+in manual testing (not committed yet).

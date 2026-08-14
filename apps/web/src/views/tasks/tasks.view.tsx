@@ -10,6 +10,7 @@ import { playPop } from "@/lib/sound";
 import type { Status } from "@/store/actionItems.types";
 import { Button } from "@/components/ui/button";
 import { StepLabel } from "@/components/StepLabel";
+import { ViewHeader } from "@/components/ViewHeader";
 import { SectionHeading } from "@/components/SectionHeading";
 import {
   Select,
@@ -55,13 +56,11 @@ export function TasksView() {
 
   return (
     <div className="n2a-view flex min-h-0 flex-1 flex-col overflow-hidden">
-      <div className="flex items-start justify-between gap-10">
-        <div>
-          <StepLabel step={3} label="Tasks" />
-          <h1 className="mt-[7px] text-[25px] font-bold leading-[1.12] tracking-[-0.03em]">
-            Tasks
-          </h1>
-          <p className="mt-[7px] text-[13px] text-muted-foreground">
+      <ViewHeader
+        eyebrow={<StepLabel step={3} label="Tasks" />}
+        title="Tasks"
+        description={
+          <>
             {rows.length} of {savedCount} open items · completed work moves to{" "}
             <a
               href="#"
@@ -72,16 +71,18 @@ export function TasksView() {
             >
               History
             </a>
-          </p>
-        </div>
-        <Button
-          onClick={() => navigate("/capture")}
-          className="h-10 flex-none rounded-[13px] px-[18px] text-[13.5px] font-semibold"
-          style={{ boxShadow: "0 8px 22px hsl(var(--primary) / 0.3)" }}
-        >
-          New capture
-        </Button>
-      </div>
+          </>
+        }
+        actions={
+          <Button
+            onClick={() => navigate("/capture")}
+            className="h-10 flex-none rounded-[13px] px-[18px] text-[13.5px] font-semibold"
+            style={{ boxShadow: "0 8px 22px hsl(var(--primary) / 0.3)" }}
+          >
+            New capture
+          </Button>
+        }
+      />
 
       <div className="my-3 flex items-center gap-[9px]">
         <Select value={filterOwner} onValueChange={setFilterOwner}>
