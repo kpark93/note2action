@@ -1,14 +1,6 @@
-import type { ActionItem, Priority, Status } from "@/store/actionItems.types";
+import type { ActionItem, Status } from "@/store/actionItems.types";
 import { initials, savedTasks } from "@/lib/items";
 import { compareDueAsc, formatDate } from "@/lib/dates";
-
-// Pill colors are theme-aware (see --pill-* / --magenta in global.css):
-// dark & saturated on light backgrounds, pastel on dark ones.
-export const PRIORITY_STYLE: Record<Priority, { bg: string; fg: string }> = {
-  High: { bg: "hsl(var(--magenta) / 0.16)", fg: "hsl(var(--pill-magenta))" },
-  Medium: { bg: "hsl(var(--primary) / 0.22)", fg: "hsl(var(--pill-blue))" },
-  Low: { bg: "hsl(var(--foreground) / 0.07)", fg: "hsl(var(--muted-foreground))" },
-};
 
 export const STATUS_STYLE: Record<
   Status,

@@ -498,3 +498,50 @@ details of rendering a bar correctly, while `StatCard` handles the tile layout.
 **How we checked nothing broke:** ran the type checker (`tsc --noEmit`) — it
 passed — and the production build (`vite build`) — it passed. The pre-existing
 >500 kB chunk size warning is expected and approved. Not yet committed.
+
+---
+
+## 2026-08-14 — Converted priority pill to PriorityBadge component on Badge
+
+**Plain-language summary:** the Tasks screen displayed priority (High, Medium,
+Low) as a small colored pill next to each task. The styling was defined inline
+using HTML *style* attributes (a *style attribute* = colors and sizes written
+directly in the tag). Today we converted that hand-styled pill into a reusable
+*component* called `PriorityBadge`, built on top of the shadcn `Badge` primitive.
+A *component* is a named, reusable piece of interface. shadcn's `Badge` provides
+consistent styling, class-merging, and accessibility for free; we only had to add
+the priority-specific colors.
+
+**What changed:**
+
+- `apps/web/src/components/PriorityBadge.tsx` — **created.** A new component
+  that accepts a `priority` (one of "High", "Medium", "Low") and optional
+  `className` for additional styling. It renders a `Badge` with theme-aware
+  colors stored in a `PRIORITY_CLASSES` lookup table (a data structure that maps
+  each priority name to a color *string* — text like `"bg-[hsl(...)]"` that
+  Tailwind converts to CSS). The colors come from CSS *design tokens* (named
+  values like `--magenta` defined once in `global.css`, so the whole app changes
+  if you edit them).
+
+- `apps/web/src/views/tasks/task-row.tsx` — **edited.** Added an import for the
+  new `PriorityBadge`. Removed the old inline `<span>` that used inline *style*
+  attributes (HTML attributes that set colors directly, like `style={{ color:
+  pr.fg }}`). Replaced it with `<PriorityBadge priority={row.priority}
+  className="justify-self-start" />`. Also deleted the line `const pr =
+  PRIORITY_STYLE[row.priority];` since `PRIORITY_STYLE` is no longer used.
+
+- `apps/web/src/views/tasks/tasks.utils.ts` — **edited.** Deleted the entire
+  `PRIORITY_STYLE` constant (a lookup table mapping priority names to color
+  objects). Removed `Priority` from the *import* statement, since it was only
+  used to *type* (describe the structure of) `PRIORITY_STYLE`. Kept `STATUS_STYLE`
+  (which colors the status dropdown), since Tasks still uses it.
+
+**Why:** a component centralizes styling logic so it is written once, used
+everywhere, and easy to change. Using shadcn's `Badge` ensures the pill has
+consistent behavior with the rest of the app's badge use. Removing inline styles
+and hand-built color lookups makes the Tasks screen cleaner and easier to read.
+
+**How we checked nothing broke:** a *grep* (a search tool) confirmed that
+`PRIORITY_STYLE` was only defined once, nowhere else, so it was safe to delete.
+Ran the type checker (`tsc --noEmit`) — it passed. Ran the production build
+(`vite build`) — it passed. Not yet committed.

@@ -1,10 +1,11 @@
 import { useActionItems } from "@/store/actionItems.store";
 import { STATUSES } from "@/store/actionItems.constants";
-import { PRIORITY_STYLE, STATUS_STYLE } from "./tasks.utils";
+import { STATUS_STYLE } from "./tasks.utils";
 import type { TaskRowVM } from "./tasks.utils";
 import type { Status } from "@/store/actionItems.types";
 import { Undo2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { PriorityBadge } from "@/components/PriorityBadge";
 import {
   Select,
   SelectContent,
@@ -26,7 +27,6 @@ interface TaskRowProps {
 /** One task in the Tasks list: owner initials, title, due, priority pill, status select, send-back. */
 export function TaskRow({ row, isCompleting, onStatusChange }: TaskRowProps) {
   const sendToReview = useActionItems((s) => s.sendToReview);
-  const pr = PRIORITY_STYLE[row.priority];
   const sc = STATUS_STYLE[row.status];
 
   return (
@@ -57,12 +57,7 @@ export function TaskRow({ row, isCompleting, onStatusChange }: TaskRowProps) {
       <span className="text-[12px] tabular-nums whitespace-nowrap text-muted-foreground">
         {row.dueLabel}
       </span>
-      <span
-        className="inline-flex justify-self-start rounded-full px-[10px] py-[3px] text-[11.5px] font-semibold"
-        style={{ background: pr.bg, color: pr.fg }}
-      >
-        {row.priority}
-      </span>
+      <PriorityBadge priority={row.priority} className="justify-self-start" />
       <Select
         value={row.status}
         onValueChange={(v) => onStatusChange(row.id, v as Status)}
