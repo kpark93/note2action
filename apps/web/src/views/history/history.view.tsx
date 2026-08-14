@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { ViewHeader } from "@/components/ViewHeader";
 import { SectionHeading } from "@/components/SectionHeading";
 import { EmptyState } from "@/components/EmptyState";
+import { StatCard } from "@/components/StatCard";
 import {
   Select,
   SelectContent,
@@ -49,19 +50,7 @@ export function HistoryView() {
 
       <div className="my-4 grid flex-none grid-cols-3 gap-3">
         {stats.map((s) => (
-          <div key={s.label} className="rounded-[16px] bg-card px-4 py-[13px]">
-            <div className="text-[12.5px] text-muted-foreground">{s.label}</div>
-            <div className="mt-[6px] text-[23px] font-bold tracking-[-0.035em] tabular-nums">
-              {s.value}
-            </div>
-            <div className="mt-[9px] h-1 overflow-hidden rounded-full bg-muted">
-              <div
-                className="n2a-bar h-full rounded-full"
-                style={{ width: s.bar, background: s.barColor }}
-              />
-            </div>
-            <div className="mt-[7px] text-[11px] text-muted-foreground">{s.delta}</div>
-          </div>
+          <StatCard key={s.label} {...s} />
         ))}
       </div>
 

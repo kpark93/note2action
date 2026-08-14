@@ -405,3 +405,63 @@ needed later, it happens in one place.
 production build (`vite build`) — both passed. A pre-existing >500 kB chunk size
 warning from Vite is expected and approved. All five screens loaded successfully
 in manual testing (not committed yet).
+
+---
+
+## 2026-08-14 — Created Progress primitive and StatCard component; rebuilt History stats
+
+**Plain-language summary:** the History screen displays three small metric tiles
+("Completed all time", "Closed on or before due date", "Still open"). Each tile
+showed the same structure: a label, a big number, a thin progress bar, and a
+footnote. That repeated structure was hand-written directly in the screen file.
+Today we extracted it into a reusable *component* called `StatCard`. Under the
+hood, `StatCard` uses a new `Progress` *primitive* — a low-level building block
+from the Radix UI library that draws a thin bar. This lets the History stats be
+cleaner and more maintainable.
+
+**Background terms:**
+- *Primitive* — a very basic, unstyled UI building block from Radix UI (a library
+  that provides low-level interactive components). Primitives are wrapped and
+  styled by higher-level components to get the look and behavior you want.
+- *Progress bar* — a thin colored stripe that grows or shrinks to show how much
+  of something is done (e.g. 72% complete).
+- *Radix UI* — a library providing unstyled primitives for menus, buttons, 
+  dialogs, and other common controls that handle keyboard and accessibility for
+  you.
+
+**What changed:**
+
+- `apps/web/src/components/ui/progress.tsx` — **created.** Wraps Radix UI's
+  `Progress` primitive and styles it with Tailwind. It accepts a `value`
+  (the percentage to fill, from 0–100), and optional styling classes for the
+  indicator bar. The bar width is set via inline CSS, not a transform, so
+  animations that smoothly grow the bar can work correctly.
+
+- `apps/web/src/components/StatCard.tsx` — **created.** A higher-level component
+  that shows a complete metric tile: a label (small grey text), a headline number
+  or percentage, a thin bar filled to a percentage, and a footnote. It accepts five
+  *props* (configuration values): `label`, `value`, `percent` (0–100), `barColor`
+  (a CSS color), and `delta` (the footnote text). The visual layout (spacing,
+  typography, rounded corners) is baked in.
+
+- `apps/web/src/views/history/history.utils.ts` — **edited.** The `StatVM`
+  *interface* (a TypeScript description of the shape of data) changed: the `bar`
+  field was removed and replaced with `percent`. Previously `bar` held a string
+  like `"72%"` that was then written directly as a CSS `width`. Now `percent` is
+  a plain number like `72`, and the `Progress` component applies the `%` unit
+  itself. The `historyStats` function was updated to calculate `percent` as a
+  number instead of formatting it as a string.
+
+- `apps/web/src/views/history/history.view.tsx` — **edited.** Added an import
+  for the new `StatCard` component. Replaced the hand-written `<div>` loop (about
+  14 lines of markup that built each tile) with a single line `<StatCard {...s} />`
+  that spreads the stat data as props. The outer grid wrapper stayed the same.
+
+**Why:** extracting the tile pattern into `StatCard` shrinks the screen file and
+makes the stats easier to tweak (change fonts, spacing, or bar colors in one
+place and all three tiles update). The `Progress` primitive handles the technical
+details of rendering a bar correctly, while `StatCard` handles the tile layout.
+
+**How we checked nothing broke:** ran the type checker (`tsc --noEmit`) — it
+passed — and the production build (`vite build`) — it passed. The pre-existing
+>500 kB chunk size warning is expected and approved. Not yet committed.

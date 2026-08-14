@@ -41,7 +41,8 @@ export function historyGroups(
 export interface StatVM {
   label: string;
   value: string | number;
-  bar: string;
+  /** 0-100 share drawn by the stat bar. */
+  percent: number;
   barColor: string;
   delta: string;
 }
@@ -51,12 +52,12 @@ export function historyStats(items: ActionItem[]): StatVM[] {
   const open = openItems(items);
   const total = items.length;
   const onTime = done.filter((i) => !i.due || (i.completed || "") <= i.due).length;
-  const donePct = total ? Math.round((done.length / total) * 100) + "%" : "0%";
+  const donePct = total ? Math.round((done.length / total) * 100) : 0;
   const onTimePct = done.length ? Math.round((onTime / done.length) * 100) : 0;
 
   return [
-    { label: "Completed all time", value: done.length, bar: donePct, barColor: "hsl(var(--primary))", delta: "across 4 meetings" },
-    { label: "Closed on or before due date", value: done.length ? onTimePct + "%" : "—", bar: onTimePct + "%", barColor: "hsl(var(--primary) / 0.65)", delta: onTime + " of " + done.length },
-    { label: "Still open", value: open.length, bar: total ? Math.round((open.length / total) * 100) + "%" : "0%", barColor: "hsl(var(--muted-foreground))", delta: "in Tasks" },
+    { label: "Completed all time", value: done.length, percent: donePct, barColor: "hsl(var(--primary))", delta: "across 4 meetings" },
+    { label: "Closed on or before due date", value: done.length ? onTimePct + "%" : "—", percent: onTimePct, barColor: "hsl(var(--primary) / 0.65)", delta: onTime + " of " + done.length },
+    { label: "Still open", value: open.length, percent: total ? Math.round((open.length / total) * 100) : 0, barColor: "hsl(var(--muted-foreground))", delta: "in Tasks" },
   ];
 }
