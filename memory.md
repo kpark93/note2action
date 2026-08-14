@@ -545,3 +545,53 @@ and hand-built color lookups makes the Tasks screen cleaner and easier to read.
 `PRIORITY_STYLE` was only defined once, nowhere else, so it was safe to delete.
 Ran the type checker (`tsc --noEmit`) — it passed. Ran the production build
 (`vite build`) — it passed. Not yet committed.
+
+---
+
+## 2026-08-14 — Converted confidence pill to ConfidencePill component on Badge
+
+**Plain-language summary:** the Review screen displayed a small pill on each card
+showing the confidence level as a percentage and a verdict ("needs review" or
+"confident"). The pill was hand-styled with inline colors and built-in logic for
+different low/high states. Today we converted that into a reusable *component*
+called `ConfidencePill`, built on the shadcn `Badge` primitive. The component
+encapsulates the color choices and layout, and also enabled us to slim down the
+`reviewStyle` function — it no longer has to know about pill styling at all.
+
+**What changed:**
+
+- `apps/web/src/components/ConfidencePill.tsx` — **created.** A new component
+  that accepts `pct` (the confidence percentage as text, e.g. "86%") and `low`
+  (a boolean flag, true if this item needs review). It renders a `Badge` with a
+  small blue dot, the percentage number in tabular font (monospace digits that
+  line up vertically), and a verdict label ("needs review" for low, "confident"
+  for high). Colors and borders change based on the `low` flag: low-confidence
+  items get blue tones (drawn from `--pill-blue` and `--primary`), while
+  high-confidence items get muted greys.
+
+- `apps/web/src/views/review/review-card.tsx` — **edited.** Added an import for
+  the new `ConfidencePill`. Removed the entire hand-built pill `<span>` block
+  (which contained the dot, percentage, and label, each with inline *style*
+  attributes). Replaced it with a single line: `<ConfidencePill pct={item.pct}
+  low={item.low} />`.
+
+- `apps/web/src/views/review/review.utils.ts` — **edited.** Removed five keys
+  from the `reviewStyle` function's return value: `label`, `pillBg`, `pillFg`,
+  `pillBorder`, and `dot`. These were only used by the pill span we just deleted.
+  Kept the four remaining keys that style the card itself: `cardBorder`,
+  `cardShadow`, `hoverShadow`, `hoverBorder`, plus `noteFg` (the color of the
+  note text at the card's bottom). The function is now simpler and does one job:
+  styling the card, not the pill.
+
+**Why:** extracting the pill into a component makes Review cleaner — the screen
+no longer has 20+ lines of pill markup and styling inline, and the card-styling
+function can focus purely on card styling. Using shadcn's `Badge` gives the pill
+consistent behavior and accessibility. Removing `label`, `dot`, and the pill
+colors from `reviewStyle` makes it easier to understand at a glance: it *only*
+styles the card.
+
+**How we checked nothing broke:** a *grep* confirmed that `pillBg`, `pillFg`,
+`pillBorder`, `st.label`, and `st.dot` are only defined in `review.utils.ts` and
+nowhere else (now that the pill span is gone). Ran the type checker (`tsc
+--noEmit`) — it passed. Ran the production build (`vite build`) — it passed. Not
+yet committed.

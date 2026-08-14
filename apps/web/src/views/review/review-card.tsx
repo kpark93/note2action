@@ -7,6 +7,7 @@ import type { ReviewItemVM } from "./review.utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { ConfidencePill } from "@/components/ConfidencePill";
 import {
   Select,
   SelectContent,
@@ -36,27 +37,7 @@ export function ReviewCard({ item }: { item: ReviewItemVM }) {
       }
     >
       <div className="mb-[9px] flex items-center gap-[10px]">
-        <span
-          className="flex flex-none items-center gap-[7px] rounded-full px-[10px] py-1 whitespace-nowrap"
-          style={{
-            background: st.pillBg,
-            border: `1px solid ${st.pillBorder}`,
-          }}
-        >
-          <span
-            className="h-[6px] w-[6px] rounded-full"
-            style={{ background: st.dot }}
-          />
-          <span
-            className="text-[11.5px] font-semibold tabular-nums"
-            style={{ color: st.pillFg }}
-          >
-            {item.pct}
-          </span>
-          <span className="text-[11.5px] font-medium" style={{ color: st.pillFg }}>
-            {st.label}
-          </span>
-        </span>
+        <ConfidencePill pct={item.pct} low={item.low} />
         <span className="ml-auto min-w-0 overflow-hidden text-[11.5px] text-ellipsis whitespace-nowrap text-muted-foreground">
           {item.meeting}
         </span>

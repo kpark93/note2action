@@ -2,14 +2,9 @@ import type { ActionItem } from "@/store/actionItems.types";
 import { LOW_CONFIDENCE_THRESHOLD } from "@/store/actionItems.constants";
 import { isLow, pendingItems } from "@/lib/items";
 
-/** Card + badge styling for a review item, keyed on whether it's low-confidence. */
+/** Card styling for a review item, keyed on whether it's low-confidence. */
 export function reviewStyle(low: boolean) {
   return {
-    label: low ? "needs review" : "confident",
-    pillBg: low ? "hsl(var(--primary) / 0.14)" : "hsl(var(--foreground) / 0.06)",
-    pillFg: low ? "hsl(var(--pill-blue))" : "hsl(var(--muted-foreground))",
-    pillBorder: low ? "hsl(var(--primary) / 0.4)" : "hsl(var(--foreground) / 0.1)",
-    dot: "hsl(var(--primary))",
     cardBorder: low ? "hsl(var(--primary) / 0.45)" : "hsl(var(--border))",
     cardShadow: low ? "0 10px 30px hsl(var(--primary) / 0.16)" : "none",
     hoverShadow: low
