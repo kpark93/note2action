@@ -2,6 +2,9 @@ import { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useActionItems } from "@/store/actionItems.store";
 import { OWNERS, RECENTS } from "@/store/actionItems.constants";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 
 export function CaptureView() {
   const navigate = useNavigate();
@@ -50,28 +53,29 @@ export function CaptureView() {
 
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-[18px] border border-border bg-card">
         <div className="flex items-center justify-between border-b border-border px-[18px] py-[14px]">
-          <input
+          <Input
             value={meetingTitle}
             onChange={(e) => setMeetingTitle(e.target.value)}
-            className="-ml-2 w-[320px] rounded-[9px] border border-transparent bg-transparent px-2 py-[5px] text-[14px] font-semibold text-foreground"
+            className="-ml-2 h-auto w-[320px] rounded-[9px] border-transparent bg-transparent px-2 py-[5px] text-[14px] font-semibold text-foreground shadow-none md:text-[14px] dark:bg-transparent"
           />
           <span className="text-[12px] tabular-nums text-muted-foreground">
             {words} words
           </span>
         </div>
-        <textarea
+        <Textarea
           value={raw}
           onChange={(e) => setRaw(e.target.value)}
           placeholder="Rachel: we need the pricing page live before the board deck goes out…"
-          className="block min-h-0 w-full flex-1 resize-none border-0 bg-card px-[18px] py-4 text-[13.5px] leading-[1.7] text-foreground"
+          className="field-sizing-fixed block min-h-0 w-full flex-1 resize-none rounded-none border-0 bg-card px-[18px] py-4 text-[13.5px] leading-[1.7] text-foreground shadow-none focus-visible:ring-0 md:text-[13.5px] dark:bg-card"
         />
         <div className="flex items-center justify-between gap-4 border-t border-border px-[18px] py-[15px]">
-          <button
+          <Button
+            variant="outline"
             onClick={loadSample}
-            className="h-[38px] rounded-[12px] border border-border bg-transparent px-[14px] text-[13px] font-medium text-muted-foreground"
+            className="h-[38px] rounded-[12px] border-border bg-transparent px-[14px] text-[13px] font-medium text-muted-foreground shadow-none dark:border-border dark:bg-transparent"
           >
             Paste sample notes
-          </button>
+          </Button>
           <div className="flex items-center gap-[14px]">
             <span
               className="text-[12.5px]"
@@ -98,10 +102,10 @@ export function CaptureView() {
                 "Paste at least a few lines"
               )}
             </span>
-            <button
+            <Button
               onClick={onExtract}
               disabled={!canExtract}
-              className="h-10 rounded-[13px] border-0 px-5 text-[13.5px] font-semibold"
+              className="h-10 rounded-[13px] px-5 text-[13.5px] font-semibold disabled:pointer-events-auto disabled:opacity-100"
               style={{
                 background: ready ? "hsl(var(--primary))" : "hsl(var(--muted))",
                 color: ready
@@ -113,7 +117,7 @@ export function CaptureView() {
               }}
             >
               {busy ? "Extracting…" : "Extract action items"}
-            </button>
+            </Button>
           </div>
         </div>
       </div>
