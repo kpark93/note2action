@@ -18,28 +18,19 @@ import {
 } from "./actionItems.constants";
 
 interface ActionItemsState {
-  onlyLow: boolean;
   sampleIndex: number;
   /** Index into RECENTS for the open transcript modal, or null when closed. */
   modalIndex: number | null;
   raw: string;
   meetingTitle: string;
-  filterOwner: string;
-  filterStatus: string;
-  historyOwner: string;
   items: ActionItem[];
   /** True while an AI extraction is in flight (survives tab switches). */
   extracting: boolean;
   /** Message from the last failed extraction, or null. */
   extractError: string | null;
 
-  toggleOnlyLow: () => void;
   setRaw: (raw: string) => void;
   setMeetingTitle: (title: string) => void;
-  setFilterOwner: (owner: string) => void;
-  setFilterStatus: (status: string) => void;
-  setHistoryOwner: (owner: string) => void;
-  clearFilters: () => void;
   loadSample: () => void;
   openRecent: (index: number) => void;
   closeModal: () => void;
@@ -67,25 +58,16 @@ interface ActionItemsState {
 }
 
 export const useActionItems = create<ActionItemsState>((set, get) => ({
-  onlyLow: false,
   sampleIndex: 0,
   modalIndex: null,
   raw: DEFAULT_RAW,
   meetingTitle: DEFAULT_MEETING_TITLE,
-  filterOwner: "All",
-  filterStatus: "All",
-  historyOwner: "All",
   items: SEED_ITEMS,
   extracting: false,
   extractError: null,
 
-  toggleOnlyLow: () => set((s) => ({ onlyLow: !s.onlyLow })),
   setRaw: (raw) => set({ raw }),
   setMeetingTitle: (meetingTitle) => set({ meetingTitle }),
-  setFilterOwner: (filterOwner) => set({ filterOwner }),
-  setFilterStatus: (filterStatus) => set({ filterStatus }),
-  setHistoryOwner: (historyOwner) => set({ historyOwner }),
-  clearFilters: () => set({ filterOwner: "All", filterStatus: "All" }),
 
   loadSample: () =>
     set((s) => {
@@ -163,7 +145,6 @@ export const useActionItems = create<ActionItemsState>((set, get) => ({
       items: s.items.map((it) =>
         it.status !== "Done" && !it.saved ? { ...it, saved: true } : it,
       ),
-      onlyLow: false,
     })),
 
   sendToReview: (id) =>

@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useActionItems } from "@/store/actionItems.store";
+import { useTasksStore } from "./tasks.store";
 import { OWNERS, STATUSES } from "@/store/actionItems.constants";
-import { PRIORITY_STYLE, STATUS_STYLE, savedTasks, taskRows } from "@/lib/selectors";
-import type { TaskRowVM } from "@/lib/selectors";
+import { savedTasks } from "@/lib/items";
+import { PRIORITY_STYLE, STATUS_STYLE, taskRows } from "./tasks.utils";
+import type { TaskRowVM } from "./tasks.utils";
 import { playPop } from "@/lib/sound";
 import type { Status } from "@/store/actionItems.types";
 
@@ -14,11 +16,11 @@ const STATUS_SECTIONS: Status[] = ["In progress", "Blocked", "Not started"];
 
 export function TasksView() {
   const items = useActionItems((s) => s.items);
-  const filterOwner = useActionItems((s) => s.filterOwner);
-  const filterStatus = useActionItems((s) => s.filterStatus);
-  const setFilterOwner = useActionItems((s) => s.setFilterOwner);
-  const setFilterStatus = useActionItems((s) => s.setFilterStatus);
-  const clearFilters = useActionItems((s) => s.clearFilters);
+  const filterOwner = useTasksStore((s) => s.filterOwner);
+  const filterStatus = useTasksStore((s) => s.filterStatus);
+  const setFilterOwner = useTasksStore((s) => s.setFilterOwner);
+  const setFilterStatus = useTasksStore((s) => s.setFilterStatus);
+  const clearFilters = useTasksStore((s) => s.clearFilters);
   const update = useActionItems((s) => s.update);
   const sendToReview = useActionItems((s) => s.sendToReview);
   const navigate = useNavigate();

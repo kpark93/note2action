@@ -1,16 +1,17 @@
 import type { CSSProperties } from "react";
 import { useNavigate } from "react-router-dom";
 import { useActionItems } from "@/store/actionItems.store";
+import { useReviewStore } from "./review.store";
 import { OWNERS } from "@/store/actionItems.constants";
-import { flagSentence, reviewItems, reviewStyle } from "@/lib/selectors";
+import { flagSentence, reviewItems, reviewStyle } from "./review.utils";
 import type { Priority } from "@/store/actionItems.types";
-import type { ReviewItemVM as VM } from "@/lib/selectors";
+import type { ReviewItemVM as VM } from "./review.utils";
 
 export function ReviewView() {
   const items = useActionItems((s) => s.items);
-  const onlyLow = useActionItems((s) => s.onlyLow);
+  const onlyLow = useReviewStore((s) => s.onlyLow);
   const navigate = useNavigate();
-  const toggleOnlyLow = useActionItems((s) => s.toggleOnlyLow);
+  const toggleOnlyLow = useReviewStore((s) => s.toggleOnlyLow);
   const saveToTasks = useActionItems((s) => s.saveToTasks);
 
   const all = reviewItems(items);

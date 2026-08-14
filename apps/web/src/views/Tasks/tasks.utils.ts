@@ -1,0 +1,55 @@
+import type { ActionItem, Priority, Status } from "@/store/actionItems.types";
+import { formatDate, initials, savedTasks } from "@/lib/items";
+
+// Pill colors are theme-aware (see --pill-* / --magenta in global.css):
+// dark & saturated on light backgrounds, pastel on dark ones.
+export const PRIORITY_STYLE: Record<Priority, { bg: string; fg: string }> = {
+  High: { bg: "hsl(var(--magenta) / 0.16)", fg: "hsl(var(--pill-magenta))" },
+  Medium: { bg: "hsl(var(--primary) / 0.22)", fg: "hsl(var(--pill-blue))" },
+  Low: { bg: "hsl(var(--foreground) / 0.07)", fg: "hsl(var(--muted-foreground))" },
+};
+
+export const STATUS_STYLE: Record<
+  Status,
+  { bg: string; fg: string; border: string }
+> = {
+  "Not started": { bg: "hsl(var(--foreground) / 0.06)", fg: "hsl(var(--muted-foreground))", border: "hsl(var(--foreground) / 0.14)" },
+  "In progress": { bg: "hsl(var(--primary) / 0.24)", fg: "hsl(var(--pill-blue))", border: "hsl(var(--primary) / 0.45)" },
+  Blocked: { bg: "hsl(var(--magenta) / 0.16)", fg: "hsl(var(--pill-magenta))", border: "hsl(var(--magenta) / 0.4)" },
+  Done: { bg: "hsl(var(--foreground) / 0.1)", fg: "hsl(var(--foreground))", border: "hsl(var(--foreground) / 0.2)" },
+};
+
+export interface TaskRowVM extends ActionItem {
+  initials: string;
+  /** Formatted due date, e.g. "Aug 14", or "—" when none. */
+  dueLabel: string;
+  /** Staggered entrance delay, e.g. "105ms". */
+  delay: string;
+}
+
+/** Earliest due date first; undated items sort last (ISO strings compare chronologically). */
+function byDueAsc(a: ActionItem, b: ActionItem): number {
+  if (!a.due) return b.due ? 1 : 0;
+  if (!b.due) return -1;
+  return a.due.localeCompare(b.due);
+}
+
+export function taskRows(
+  items: ActionItem[],
+  filterOwner: string,
+  filterStatus: string,
+): TaskRowVM[] {
+  return savedTasks(items)
+    .filter(
+      (it) =>
+        (filterOwner === "All" || it.owner === filterOwner) &&
+        (filterStatus === "All" || it.status === filterStatus),
+    )
+    .sort(byDueAsc)
+    .map((it, idx) => ({
+      ...it,
+      initials: initials(it.owner),
+      dueLabel: formatDate(it.due),
+      delay: idx * 35 + "ms",
+    }));
+}

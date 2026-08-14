@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useActionItems } from "@/store/actionItems.store";
 import { USER } from "@/store/actionItems.constants";
-import { pendingItems, savedTasks } from "@/lib/selectors";
+import { pendingItems, savedTasks } from "@/lib/items";
 
 // A few welcome messages; one is chosen at random each time Home mounts.
 const GREETINGS = [

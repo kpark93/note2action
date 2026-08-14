@@ -1,10 +1,10 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AppLayout } from "./features/actionItems/components/ActionItemsApp";
-import { HomeView } from "./features/actionItems/components/HomeView";
-import { CaptureView } from "./features/actionItems/components/CaptureView";
-import { ReviewView } from "./features/actionItems/components/ReviewView";
-import { TasksView } from "./features/actionItems/components/TasksView";
-import { HistoryView } from "./features/actionItems/components/HistoryView";
+import { AppLayout } from "@/components/AppLayout";
+import { HomeView } from "@/views/Home/home.view";
+import { CaptureView } from "@/views/Capture/capture.view";
+import { ReviewView } from "@/views/Review/review.view";
+import { TasksView } from "@/views/Tasks/tasks.view";
+import { HistoryView } from "@/views/History/history.view";
 
 /**
  * Root-level router. `main.tsx` supplies the providers (React Query, StrictMode);

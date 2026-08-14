@@ -3,7 +3,7 @@ import { useHealth } from "@/lib/health";
 import { useTheme } from "@/store/theme.store";
 import { useActionItems } from "@/store/actionItems.store";
 import { USER } from "@/store/actionItems.constants";
-import { summary } from "@/lib/selectors";
+import { summary } from "@/lib/items";
 
 const NAV = [
   { to: "/", label: "Home" },
