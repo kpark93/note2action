@@ -1,4 +1,6 @@
 @import "tailwindcss";
+/* Enter/exit + data-state animations for shadcn primitives (Dialog, Select). */
+@import "tw-animate-css";
 
 /* Dark mode is class-based (.dark on <html>), not OS preference. */
 @custom-variant dark (&:where(.dark, .dark *));

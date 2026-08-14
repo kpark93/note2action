@@ -2,6 +2,14 @@ import { useActionItems } from "@/store/actionItems.store";
 import { useHistoryStore } from "./history.store";
 import { OWNERS } from "@/store/actionItems.constants";
 import { historyGroups, historyStats } from "./history.utils";
+import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const ROW_COLS = "grid-cols-[minmax(0,2fr)_minmax(0,1fr)_88px_88px]";
 
@@ -26,18 +34,19 @@ export function HistoryView() {
             anything that comes back.
           </p>
         </div>
-        <select
-          value={historyOwner}
-          onChange={(e) => setHistoryOwner(e.target.value)}
-          className="h-[38px] min-w-[164px] flex-none rounded-[12px] border border-border bg-card px-[13px] text-[13px] text-foreground"
-        >
-          <option value="All">All owners</option>
-          {OWNERS.map((o) => (
-            <option key={o} value={o}>
-              {o}
-            </option>
-          ))}
-        </select>
+        <Select value={historyOwner} onValueChange={setHistoryOwner}>
+          <SelectTrigger className="min-w-[164px] flex-none rounded-[12px] border-border bg-card px-[13px] text-[13px] text-foreground data-[size=default]:h-[38px]">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="All">All owners</SelectItem>
+            {OWNERS.map((o) => (
+              <SelectItem key={o} value={o}>
+                {o}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="my-4 grid flex-none grid-cols-3 gap-3">
@@ -88,12 +97,13 @@ export function HistoryView() {
                   <span className="text-[12.5px] tabular-nums text-muted-foreground">
                     {h.completedLabel}
                   </span>
-                  <button
+                  <Button
+                    variant="outline"
                     onClick={() => update(h.id, "status", "In progress")}
-                    className="h-[31px] justify-self-end rounded-[10px] border border-border bg-transparent px-[13px] text-[12.5px] font-medium text-muted-foreground"
+                    className="h-[31px] justify-self-end rounded-[10px] border-border bg-transparent px-[13px] text-[12.5px] font-medium text-muted-foreground shadow-none dark:border-border dark:bg-transparent"
                   >
                     Reopen
-                  </button>
+                  </Button>
                 </div>
               ))}
             </div>
