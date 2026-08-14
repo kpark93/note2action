@@ -8,6 +8,15 @@ import { PRIORITY_STYLE, STATUS_STYLE, taskRows } from "./tasks.utils";
 import type { TaskRowVM } from "./tasks.utils";
 import { playPop } from "@/lib/sound";
 import type { Status } from "@/store/actionItems.types";
+import { Undo2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const COLS = "grid-cols-[minmax(0,1fr)_96px_88px_132px_34px]";
 const OPEN_STATUSES = STATUSES.slice(0, 3);
@@ -81,43 +90,34 @@ export function TasksView() {
         >
           {row.priority}
         </span>
-        <select
+        <Select
           value={row.status}
-          onChange={(e) => handleStatus(row.id, e.target.value as Status)}
-          className="h-[34px] w-full rounded-[11px] px-[11px] text-[12.5px] font-semibold"
-          style={{
-            background: sc.bg,
-            color: sc.fg,
-            border: `1px solid ${sc.border}`,
-          }}
+          onValueChange={(v) => handleStatus(row.id, v as Status)}
         >
-          {STATUSES.map((s) => (
-            <option key={s} value={s}>
-              {s}
-            </option>
-          ))}
-        </select>
-        <button
+          <SelectTrigger
+            className="w-full rounded-[11px] px-[11px] text-[12.5px] font-semibold shadow-none data-[size=default]:h-[34px] [&_svg]:!text-current"
+            style={{ background: sc.bg, color: sc.fg, borderColor: sc.border }}
+          >
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {STATUSES.map((s) => (
+              <SelectItem key={s} value={s}>
+                {s}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Button
+          variant="outline"
+          size="icon"
           onClick={() => sendToReview(row.id)}
           title="Send back to Review"
           aria-label="Send back to Review"
-          className="flex h-7 w-7 items-center justify-center justify-self-center rounded-[9px] border border-border bg-transparent text-muted-foreground"
+          className="h-7 w-7 justify-self-center rounded-[9px] border-border bg-transparent text-muted-foreground shadow-none dark:border-border dark:bg-transparent"
         >
-          <svg
-            viewBox="0 0 24 24"
-            width="13"
-            height="13"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth={2}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden="true"
-          >
-            <path d="M9 14 4 9l5-5" />
-            <path d="M4 9h11a5 5 0 0 1 0 10h-1" />
-          </svg>
-        </button>
+          <Undo2 className="size-[13px]" />
+        </Button>
       </div>
     );
   };
@@ -145,46 +145,49 @@ export function TasksView() {
             </a>
           </p>
         </div>
-        <button
+        <Button
           onClick={() => navigate("/capture")}
-          className="h-10 flex-none rounded-[13px] border-0 bg-primary px-[18px] text-[13.5px] font-semibold text-primary-foreground"
+          className="h-10 flex-none rounded-[13px] px-[18px] text-[13.5px] font-semibold"
           style={{ boxShadow: "0 8px 22px hsl(var(--primary) / 0.3)" }}
         >
           New capture
-        </button>
+        </Button>
       </div>
 
       <div className="my-3 flex items-center gap-[9px]">
-        <select
-          value={filterOwner}
-          onChange={(e) => setFilterOwner(e.target.value)}
-          className="h-[38px] min-w-[164px] rounded-[12px] border border-border bg-card px-[13px] text-[13px] text-foreground"
-        >
-          <option value="All">All owners</option>
-          {OWNERS.map((o) => (
-            <option key={o} value={o}>
-              {o}
-            </option>
-          ))}
-        </select>
-        <select
-          value={filterStatus}
-          onChange={(e) => setFilterStatus(e.target.value)}
-          className="h-[38px] min-w-[164px] rounded-[12px] border border-border bg-card px-[13px] text-[13px] text-foreground"
-        >
-          <option value="All">All statuses</option>
-          {OPEN_STATUSES.map((s) => (
-            <option key={s} value={s}>
-              {s}
-            </option>
-          ))}
-        </select>
-        <button
+        <Select value={filterOwner} onValueChange={setFilterOwner}>
+          <SelectTrigger className="min-w-[164px] rounded-[12px] border-border bg-card px-[13px] text-[13px] text-foreground data-[size=default]:h-[38px]">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="All">All owners</SelectItem>
+            {OWNERS.map((o) => (
+              <SelectItem key={o} value={o}>
+                {o}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select value={filterStatus} onValueChange={setFilterStatus}>
+          <SelectTrigger className="min-w-[164px] rounded-[12px] border-border bg-card px-[13px] text-[13px] text-foreground data-[size=default]:h-[38px]">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="All">All statuses</SelectItem>
+            {OPEN_STATUSES.map((s) => (
+              <SelectItem key={s} value={s}>
+                {s}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Button
+          variant="ghost"
           onClick={clearFilters}
-          className="h-[38px] rounded-[12px] border border-transparent bg-transparent px-[13px] text-[13px] font-medium text-muted-foreground"
+          className="h-[38px] rounded-[12px] px-[13px] text-[13px] font-medium text-muted-foreground"
         >
           Clear
-        </button>
+        </Button>
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-x-hidden overflow-y-auto -mr-1 pr-1">
