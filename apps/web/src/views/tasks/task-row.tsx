@@ -5,7 +5,7 @@ import type { TaskRowVM } from "./tasks.utils";
 import type { Status } from "@/store/actionItems.types";
 import { Undo2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { PriorityBadge } from "@/components/PriorityBadge";
+import { PriorityBadge } from "@/components/priority-badge";
 import {
   Select,
   SelectContent,

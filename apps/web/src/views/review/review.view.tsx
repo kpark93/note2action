@@ -3,9 +3,9 @@ import { useActionItems } from "@/store/actionItems.store";
 import { useReviewStore } from "./review.store";
 import { flagSentence, reviewItems } from "./review.utils";
 import { ReviewCard } from "./review-card";
-import { StepLabel } from "@/components/StepLabel";
-import { ViewHeader } from "@/components/ViewHeader";
-import { EmptyState } from "@/components/EmptyState";
+import { StepLabel } from "@/components/step-label";
+import { ViewHeader } from "@/components/view-header";
+import { EmptyState } from "@/components/empty-state";
 import { Button } from "@/components/ui/button";
 
 export function ReviewView() {

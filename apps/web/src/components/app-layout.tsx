@@ -1,6 +1,6 @@
 import { Outlet } from "react-router-dom";
-import { Sidebar } from "./Sidebar";
-import { RecentModal } from "./RecentModal";
+import { Sidebar } from "./sidebar";
+import { RecentModal } from "./recent-modal";
 
 /**
  * App shell: fixed sidebar + the routed view in <Outlet/>. Rendered as the

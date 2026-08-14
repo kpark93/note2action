@@ -704,3 +704,76 @@ intended dimensions, aligning with the design system's precision.
 lint`) — passed, catching no style issues. Ran the production build (`pnpm --filter
 @note2action/web build`) — passed. The pre-existing >500 kB chunk size warning is
 expected and approved.
+
+---
+
+## 2026-08-14 — Converted repeated styling patterns into shadcn components (plan + execution record)
+
+**What changed at the top level:** this entry records the *process* behind the
+seven commits that landed today between `94fe4cc` and `4f35908`; each commit's
+own details already have their own entries above, written as the work happened.
+
+**Files touched by the process itself:**
+- `docs/superpowers/plans/2026-08-14-shadcn-div-components.md` — **created.**
+  An *implementation plan*: a step-by-step recipe written before coding, with
+  the exact code each task should produce. Five tasks: a shared page-header
+  component (`ViewHeader`), a stat tile built on a new progress-bar *primitive*
+  (a small building-block component), two pill components built on the
+  existing `Badge`, and a new `cta` look (variant) for the glowing blue button.
+- The work was executed by dispatching one fresh AI *subagent* (a helper
+  session with a clean slate) per task, each followed by an independent
+  reviewer subagent; review findings were fixed and re-checked before moving
+  on. Notable catches: a commit that accidentally bundled an unrelated journal
+  entry (unbundled, and the entry — which turned out to be real work from a
+  parallel session — was restored in its own commit `ef4dc86`); a lost
+  pointer-style mouse cursor on the Review screen's save button (restored);
+  and a 1-pixel invisible border the new priority pill inherited from `Badge`
+  (removed, so the pill measures exactly like the old one).
+
+**Why:** the goal was to slim down repeated hard-coded styling by giving each
+repeated pattern one named home, while keeping every screen looking the same
+as before to the pixel (three tiny, deliberate exceptions are named in the
+plan and in the entries above).
+
+**How we checked:** every task ran the type checker and the production build;
+two independent review passes (per task and whole-branch) confirmed the moved
+styles match the originals value-for-value.
+
+---
+
+## 2026-08-14 — Renamed component files to kebab-case
+
+**What changed:** the ten component files in `apps/web/src/components/` were
+renamed from PascalCase (capital first letters, like `ViewHeader.tsx`) to
+*kebab-case* (all lowercase with hyphens between words, like
+`view-header.tsx`). Only the file names changed — the components themselves,
+and the names used inside the code (`ViewHeader`, `StatCard`, …), stay exactly
+as they were, because React components must start with a capital letter in
+code even when their files are lowercase.
+
+**Files renamed (old → new), all in `apps/web/src/components/`:**
+`AppLayout.tsx → app-layout.tsx`, `ConfidencePill.tsx → confidence-pill.tsx`,
+`EmptyState.tsx → empty-state.tsx`, `PriorityBadge.tsx → priority-badge.tsx`,
+`RecentModal.tsx → recent-modal.tsx`, `SectionHeading.tsx → section-heading.tsx`,
+`Sidebar.tsx → sidebar.tsx`, `StatCard.tsx → stat-card.tsx`,
+`StepLabel.tsx → step-label.tsx`, `ViewHeader.tsx → view-header.tsx`.
+
+**Files edited to match (their `import` lines point at the new names):**
+`App.tsx`, `components/app-layout.tsx`, and six view files
+(`views/review/review.view.tsx`, `views/review/review-card.tsx`,
+`views/tasks/tasks.view.tsx`, `views/tasks/task-row.tsx`,
+`views/history/history.view.tsx`, `views/capture/capture.view.tsx`).
+
+**Why:** the rest of the project already uses lowercase file names — the
+shadcn primitives (`ui/button.tsx`), the view files (`capture.view.tsx`), and
+the earlier extracted pieces (`review-card.tsx`, `task-row.tsx`). One naming
+style everywhere means no guessing, and it avoids a classic trap: Mac laptops
+treat `Sidebar.tsx` and `sidebar.tsx` as the same file, but the Linux build
+servers that ship the app do not, so mixed casing can build locally yet break
+in deployment. The renames used `git mv` (git's rename command), which records
+a rename rather than a delete-plus-create, keeping each file's history.
+
+**How we checked nothing broke:** the type checker (`tsc`) — which caught one
+missed spot, two imports inside `app-layout.tsx` that still pointed at the old
+capitalized names — and the production build (`vite build`); both now pass.
+Not yet committed.

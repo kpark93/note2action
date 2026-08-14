@@ -3,10 +3,10 @@ import { useHistoryStore } from "./history.store";
 import { OWNERS } from "@/store/actionItems.constants";
 import { historyGroups, historyStats } from "./history.utils";
 import { Button } from "@/components/ui/button";
-import { ViewHeader } from "@/components/ViewHeader";
-import { SectionHeading } from "@/components/SectionHeading";
-import { EmptyState } from "@/components/EmptyState";
-import { StatCard } from "@/components/StatCard";
+import { ViewHeader } from "@/components/view-header";
+import { SectionHeading } from "@/components/section-heading";
+import { EmptyState } from "@/components/empty-state";
+import { StatCard } from "@/components/stat-card";
 import {
   Select,
   SelectContent,

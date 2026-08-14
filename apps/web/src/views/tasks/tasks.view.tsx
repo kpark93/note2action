@@ -9,9 +9,9 @@ import { TaskRow } from "./task-row";
 import { playPop } from "@/lib/sound";
 import type { Status } from "@/store/actionItems.types";
 import { Button } from "@/components/ui/button";
-import { StepLabel } from "@/components/StepLabel";
-import { ViewHeader } from "@/components/ViewHeader";
-import { SectionHeading } from "@/components/SectionHeading";
+import { StepLabel } from "@/components/step-label";
+import { ViewHeader } from "@/components/view-header";
+import { SectionHeading } from "@/components/section-heading";
 import {
   Select,
   SelectContent,

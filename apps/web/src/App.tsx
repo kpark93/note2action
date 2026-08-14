@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AppLayout } from "@/components/AppLayout";
+import { AppLayout } from "@/components/app-layout";
 import { HomeView } from "@/views/home/home.view";
 import { CaptureView } from "@/views/capture/capture.view";
 import { ReviewView } from "@/views/review/review.view";
