@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useActionItems } from "@/store/actionItems.store";
 import { USER } from "@/store/actionItems.constants";
 import { pendingItems, savedTasks } from "@/lib/items";
+import { Button } from "@/components/ui/button";
 
 // A few welcome messages; one is chosen at random each time Home mounts.
 const GREETINGS = [
@@ -54,13 +55,13 @@ export function HomeView() {
         />
       </div>
 
-      <button
+      <Button
         onClick={() => navigate("/capture")}
-        className="mt-6 h-10 w-fit rounded-[13px] border-0 bg-primary px-[18px] text-[13.5px] font-semibold text-primary-foreground"
+        className="mt-6 h-10 w-fit rounded-[13px] px-[18px] text-[13.5px] font-semibold"
         style={{ boxShadow: "0 8px 22px hsl(var(--primary) / 0.3)" }}
       >
         New capture
-      </button>
+      </Button>
     </div>
   );
 }

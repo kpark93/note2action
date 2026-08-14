@@ -4,6 +4,8 @@ import { useTheme } from "@/store/theme.store";
 import { useActionItems } from "@/store/actionItems.store";
 import { USER } from "@/store/actionItems.constants";
 import { summary } from "@/lib/items";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
 const NAV = [
   { to: "/", label: "Home" },
@@ -67,9 +69,9 @@ export function Sidebar() {
           >
             {label}
             {to === "/review" && flagCount > 0 && (
-              <span className="rounded-full bg-primary px-[7px] py-px text-[11px] font-semibold text-primary-foreground">
+              <Badge className="px-[7px] py-px text-[11px] font-semibold">
                 {flagCount}
-              </span>
+              </Badge>
             )}
           </NavLink>
         ))}
@@ -97,11 +99,12 @@ export function Sidebar() {
         {(["light", "dark"] as const).map((mode) => {
           const active = theme === mode;
           return (
-            <button
+            <Button
               key={mode}
+              variant="ghost"
               onClick={() => setTheme(mode)}
               aria-pressed={active}
-              className="flex items-center justify-center gap-[6px] rounded-[9px] py-[6px] text-[12px] font-medium"
+              className="h-auto w-full gap-[6px] rounded-[9px] px-0 py-[6px] text-[12px] font-medium"
               style={{
                 background: active ? "hsl(var(--secondary))" : "transparent",
                 color: active
@@ -111,7 +114,7 @@ export function Sidebar() {
             >
               <span aria-hidden="true">{mode === "light" ? "☀" : "☾"}</span>
               {mode === "light" ? "Light" : "Dark"}
-            </button>
+            </Button>
           );
         })}
       </div>
