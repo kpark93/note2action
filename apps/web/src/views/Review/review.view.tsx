@@ -6,6 +6,16 @@ import { OWNERS } from "@/store/actionItems.constants";
 import { flagSentence, reviewItems, reviewStyle } from "./review.utils";
 import type { Priority } from "@/store/actionItems.types";
 import type { ReviewItemVM as VM } from "./review.utils";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export function ReviewView() {
   const items = useActionItems((s) => s.items);
@@ -34,19 +44,20 @@ export function ReviewView() {
           </p>
         </div>
         <div className="flex flex-none items-center gap-[10px]">
-          <button
+          <Button
+            variant="outline"
             onClick={() => navigate("/capture")}
-            className="h-10 rounded-[13px] border border-border bg-transparent px-4 text-[13.5px] font-medium text-foreground"
+            className="h-10 rounded-[13px] border-border bg-transparent px-4 text-[13.5px] font-medium text-foreground shadow-none dark:border-border dark:bg-transparent"
           >
             Back to notes
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={() => {
               saveToTasks();
               navigate("/tasks");
             }}
             disabled={all.length === 0}
-            className="h-10 rounded-[13px] border-0 px-[18px] text-[13.5px] font-semibold"
+            className="h-10 rounded-[13px] px-[18px] text-[13.5px] font-semibold disabled:pointer-events-auto disabled:opacity-100"
             style={{
               background:
                 all.length === 0 ? "hsl(var(--muted))" : "hsl(var(--primary))",
@@ -62,14 +73,15 @@ export function ReviewView() {
             }}
           >
             Save {all.length} to Tasks
-          </button>
+          </Button>
         </div>
       </div>
 
       <div className="my-3 flex items-center gap-[14px]">
         <span className="text-[13px] text-muted-foreground">{flagCount} need review</span>
         <span className="h-[14px] w-px bg-border" />
-        <button
+        <Button
+          variant="ghost"
           onClick={toggleOnlyLow}
           className="h-[31px] rounded-full px-[13px] text-[12.5px] font-medium"
           style={{
@@ -79,7 +91,7 @@ export function ReviewView() {
           }}
         >
           Only low confidence
-        </button>
+        </Button>
         <span className="flex-1" />
         <span className="text-[12.5px] text-muted-foreground">
           Edit any field inline · saves as you type
@@ -165,53 +177,59 @@ function ReviewCard({ item }: { item: VM }) {
         </span>
       </div>
 
-      <textarea
+      <Textarea
         value={item.title}
         onChange={(e) => update(item.id, "title", e.target.value)}
         rows={2}
-        className="review-title mb-[9px] block min-h-[38px] w-full resize-none overflow-hidden rounded-[11px] border border-transparent bg-transparent px-[7px] py-[5px] text-[14.5px] leading-[1.35] font-semibold tracking-[-0.02em] text-foreground"
+        className="review-title mb-[9px] block field-sizing-fixed min-h-[38px] w-full resize-none overflow-hidden rounded-[11px] border-transparent bg-transparent px-[7px] py-[5px] text-[14.5px] leading-[1.35] font-semibold tracking-[-0.02em] text-foreground shadow-none md:text-[14.5px] dark:bg-transparent"
       />
 
       <div className="grid grid-cols-[minmax(0,1fr)] gap-[9px]">
         <label className="flex flex-col gap-[6px]">
           <span className="text-[11px] font-medium text-muted-foreground">Owner</span>
-          <select
+          <Select
             value={item.owner}
-            onChange={(e) => update(item.id, "owner", e.target.value)}
-            className="h-8 rounded-[10px] border border-border bg-secondary px-2 text-[12.5px] text-foreground"
+            onValueChange={(v) => update(item.id, "owner", v)}
           >
-            {OWNERS.map((o) => (
-              <option key={o} value={o}>
-                {o}
-              </option>
-            ))}
-          </select>
+            <SelectTrigger className="w-full rounded-[10px] border-border bg-secondary px-2 text-[12.5px] text-foreground data-[size=default]:h-8">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {OWNERS.map((o) => (
+                <SelectItem key={o} value={o}>
+                  {o}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </label>
         <div className="grid grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] gap-[9px]">
           <label className="flex min-w-0 flex-col gap-[6px]">
             <span className="text-[11px] font-medium text-muted-foreground">Due</span>
-            <input
+            <Input
               type="date"
               value={item.due}
               onChange={(e) => update(item.id, "due", e.target.value)}
-              className="h-8 rounded-[10px] border border-border bg-secondary px-2 text-[12.5px] text-foreground"
+              className="h-8 rounded-[10px] border-border bg-secondary px-2 text-[12.5px] text-foreground shadow-none md:text-[12.5px] dark:bg-secondary"
             />
           </label>
           <label className="flex min-w-0 flex-col gap-[6px]">
             <span className="text-[11px] font-medium text-muted-foreground">
               Priority
             </span>
-            <select
+            <Select
               value={item.priority}
-              onChange={(e) =>
-                update(item.id, "priority", e.target.value as Priority)
-              }
-              className="h-8 rounded-[10px] border border-border bg-secondary px-2 text-[12.5px] text-foreground"
+              onValueChange={(v) => update(item.id, "priority", v as Priority)}
             >
-              <option value="High">High</option>
-              <option value="Medium">Medium</option>
-              <option value="Low">Low</option>
-            </select>
+              <SelectTrigger className="w-full rounded-[10px] border-border bg-secondary px-2 text-[12.5px] text-foreground data-[size=default]:h-8">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="High">High</SelectItem>
+                <SelectItem value="Medium">Medium</SelectItem>
+                <SelectItem value="Low">Low</SelectItem>
+              </SelectContent>
+            </Select>
           </label>
         </div>
       </div>
@@ -225,19 +243,20 @@ function ReviewCard({ item }: { item: VM }) {
         </span>
         <span className="flex w-[82px] flex-none flex-col gap-[6px]">
           {item.low && (
-            <button
+            <Button
               onClick={() => confirm(item.id)}
-              className="h-[29px] w-full rounded-[9px] border-0 bg-primary text-[12.5px] font-semibold text-primary-foreground"
+              className="h-[29px] w-full rounded-[9px] px-0 text-[12.5px] font-semibold"
             >
               Confirm
-            </button>
+            </Button>
           )}
-          <button
+          <Button
+            variant="outline"
             onClick={() => discard(item.id)}
-            className="h-[29px] w-full rounded-[9px] border border-border bg-transparent text-[12.5px] font-medium text-muted-foreground"
+            className="h-[29px] w-full rounded-[9px] border-border bg-transparent px-0 text-[12.5px] font-medium text-muted-foreground shadow-none dark:border-border dark:bg-transparent"
           >
             Discard
-          </button>
+          </Button>
         </span>
       </div>
     </article>
