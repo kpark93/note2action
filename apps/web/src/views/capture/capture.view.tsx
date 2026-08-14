@@ -2,6 +2,8 @@ import { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useActionItems } from "@/store/actionItems.store";
 import { OWNERS, RECENTS } from "@/store/actionItems.constants";
+import { todayISO } from "@/lib/dates";
+import { StepLabel } from "@/components/StepLabel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -34,15 +36,13 @@ export function CaptureView() {
     extractNotes({
       notes: raw,
       meetingTitle,
-      today: new Date().toISOString().slice(0, 10),
+      today: todayISO(),
       owners: [...OWNERS],
     });
 
   return (
     <div className="n2a-view flex min-h-0 max-w-[840px] flex-1 flex-col overflow-hidden">
-      <div className="text-[10.5px] font-semibold tracking-[0.14em] text-muted-foreground">
-        STEP 1 OF 3 — CAPTURE
-      </div>
+      <StepLabel step={1} label="Capture" />
       <h1 className="mt-[7px] text-[25px] font-bold leading-[1.12] tracking-[-0.03em]">
         Paste your meeting notes
       </h1>

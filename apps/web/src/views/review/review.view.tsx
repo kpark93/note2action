@@ -6,6 +6,7 @@ import { OWNERS } from "@/store/actionItems.constants";
 import { flagSentence, reviewItems, reviewStyle } from "./review.utils";
 import type { Priority } from "@/store/actionItems.types";
 import type { ReviewItemVM as VM } from "./review.utils";
+import { StepLabel } from "@/components/StepLabel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -32,9 +33,7 @@ export function ReviewView() {
     <div className="n2a-view flex min-h-0 flex-1 flex-col overflow-hidden">
       <div className="flex items-start justify-between gap-10">
         <div>
-          <div className="text-[10.5px] font-semibold tracking-[0.14em] text-muted-foreground">
-            STEP 2 OF 3 — REVIEW
-          </div>
+          <StepLabel step={2} label="Review" />
           <h1 className="mt-[7px] text-[25px] font-bold leading-[1.12] tracking-[-0.03em]">
             {all.length} action items extracted
           </h1>

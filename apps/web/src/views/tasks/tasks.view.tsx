@@ -10,6 +10,7 @@ import { playPop } from "@/lib/sound";
 import type { Status } from "@/store/actionItems.types";
 import { Undo2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { StepLabel } from "@/components/StepLabel";
 import {
   Select,
   SelectContent,
@@ -129,7 +130,8 @@ export function TasksView() {
     <div className="n2a-view flex min-h-0 flex-1 flex-col overflow-hidden">
       <div className="flex items-start justify-between gap-10">
         <div>
-          <h1 className="text-[25px] font-bold leading-[1.12] tracking-[-0.03em]">
+          <StepLabel step={3} label="Tasks" />
+          <h1 className="mt-[7px] text-[25px] font-bold leading-[1.12] tracking-[-0.03em]">
             Tasks
           </h1>
           <p className="mt-[7px] text-[13px] text-muted-foreground">
