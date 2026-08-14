@@ -1,0 +1,114 @@
+import { useNavigate } from "react-router-dom";
+import { useActionItems } from "@/store/actionItems.store";
+import { useReviewStore } from "./review.store";
+import { flagSentence, reviewItems } from "./review.utils";
+import { ReviewCard } from "./review-card";
+import { StepLabel } from "@/components/step-label";
+import { ViewHeader } from "@/components/view-header";
+import { EmptyState } from "@/components/empty-state";
+import { Button } from "@/components/ui/button";
+
+export function ReviewView() {
+  const items = useActionItems((s) => s.items);
+  const onlyLow = useReviewStore((s) => s.onlyLow);
+  const navigate = useNavigate();
+  const toggleOnlyLow = useReviewStore((s) => s.toggleOnlyLow);
+  const saveToTasks = useActionItems((s) => s.saveToTasks);
+
+  const all = reviewItems(items);
+  const flagCount = all.filter((i) => i.low).length;
+  const visible = onlyLow ? all.filter((i) => i.low) : all;
+
+  return (
+    <div className="n2a-view flex min-h-0 flex-1 flex-col overflow-hidden">
+      <ViewHeader
+        eyebrow={<StepLabel step={2} label="Review" />}
+        title={`${all.length} action items extracted`}
+        description={
+          <>Owners and dates were inferred from the transcript. {flagSentence(flagCount)}</>
+        }
+        actions={
+          <>
+            <Button
+              variant="outline"
+              onClick={() => navigate("/capture")}
+              className="h-10 rounded-[13px] border-border bg-transparent px-4 text-[13.5px] font-medium text-foreground shadow-none dark:border-border dark:bg-transparent"
+            >
+              Back to notes
+            </Button>
+            <Button
+              variant="cta"
+              onClick={() => {
+                saveToTasks();
+                navigate("/tasks");
+              }}
+              disabled={all.length === 0}
+              className="disabled:pointer-events-auto disabled:opacity-100"
+              style={
+                all.length === 0
+                  ? {
+                      background: "hsl(var(--muted))",
+                      color: "hsl(var(--muted-foreground))",
+                      boxShadow: "none",
+                      cursor: "not-allowed",
+                    }
+                  : { cursor: "pointer" }
+              }
+            >
+              Save {all.length} to Tasks
+            </Button>
+          </>
+        }
+      />
+
+      <div className="my-3 flex items-center gap-[14px]">
+        <span className="text-[13px] text-muted-foreground">{flagCount} need review</span>
+        <span className="h-[14px] w-px bg-border" />
+        <Button
+          variant="ghost"
+          onClick={toggleOnlyLow}
+          className="h-[31px] rounded-full px-[13px] text-[12.5px] font-medium"
+          style={{
+            background: onlyLow ? "hsl(var(--primary) / 0.15)" : "transparent",
+            color: onlyLow ? "hsl(var(--pill-blue))" : "hsl(var(--muted-foreground))",
+            border: `1px solid ${onlyLow ? "hsl(var(--primary) / 0.5)" : "hsl(var(--border))"}`,
+          }}
+        >
+          Only low confidence
+        </Button>
+        <span className="flex-1" />
+        <span className="text-[12.5px] text-muted-foreground">
+          Edit any field inline · saves as you type
+        </span>
+      </div>
+
+      {all.length === 0 ? (
+        <div className="flex min-h-0 flex-1 items-center justify-center">
+          <EmptyState title="Nothing to review">
+            Head to Capture and extract action items from your notes.
+          </EmptyState>
+        </div>
+      ) : visible.length === 0 ? (
+        <div className="flex min-h-0 flex-1 items-center justify-center">
+          <EmptyState>
+            No low-confidence items — everything looks confident.
+          </EmptyState>
+        </div>
+      ) : (
+        <div className="grid min-h-0 flex-1 auto-rows-min grid-cols-[repeat(auto-fill,minmax(252px,1fr))] content-start gap-[10px] overflow-x-hidden overflow-y-auto -mr-1 pr-1">
+          {visible.map((item) => (
+            <ReviewCard key={item.id} item={item} />
+          ))}
+        </div>
+      )}
+
+      {all.length > 0 && (
+        <p className="mt-3 text-[12px] text-muted-foreground">
+          {all.length} extracted · owners and dates inferred · edits save as you
+          type
+        </p>
+      )}
+    </div>
+  );
+}
+

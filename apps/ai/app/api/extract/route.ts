@@ -1,5 +1,5 @@
 import { generateObject } from "ai";
-import { chatModel } from "@/lib/provider";
+import { extractModel } from "@/lib/provider";
 import { ExtractRequest, ExtractResponse } from "@note2action/shared";
 
 // Extraction can take a few seconds for long transcripts.
@@ -13,7 +13,7 @@ export async function POST(req: Request) {
   // `generateObject` constrains the model to the ExtractResponse schema and
   // validates the result, so the caller always gets well-formed items back.
   const { object } = await generateObject({
-    model: chatModel(),
+    model: extractModel(),
     schema: ExtractResponse,
     system:
       "You are note2action's extraction engine. Read raw meeting notes and " +
