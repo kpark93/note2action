@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
-import { useActionItems } from "../store";
-import { RECENTS } from "../constants";
+import { useActionItems } from "@/store/actionItems.store";
+import { RECENTS } from "@/store/actionItems.constants";
 
 /** Full-transcript preview for a recent capture, with a "Load into capture". */
 export function RecentModal() {

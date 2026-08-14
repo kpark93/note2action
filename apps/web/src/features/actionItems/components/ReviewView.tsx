@@ -1,10 +1,10 @@
 import type { CSSProperties } from "react";
 import { useNavigate } from "react-router-dom";
-import { useActionItems } from "../store";
-import { OWNERS } from "../constants";
-import { flagSentence, reviewItems, reviewStyle } from "../selectors";
-import type { Priority } from "../types";
-import type { ReviewItemVM as VM } from "../selectors";
+import { useActionItems } from "@/store/actionItems.store";
+import { OWNERS } from "@/store/actionItems.constants";
+import { flagSentence, reviewItems, reviewStyle } from "@/lib/selectors";
+import type { Priority } from "@/store/actionItems.types";
+import type { ReviewItemVM as VM } from "@/lib/selectors";
 
 export function ReviewView() {
   const items = useActionItems((s) => s.items);

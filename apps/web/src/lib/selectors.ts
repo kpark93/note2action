@@ -2,8 +2,8 @@
 // v2 mock. No React, no store: functions take data in and return view models
 // (including the exact colors the design used) out, so components stay thin and
 // this stays unit-testable.
-import type { ActionItem, Priority, Status } from "./types";
-import { LOW_CONFIDENCE_THRESHOLD, TODAY } from "./constants";
+import type { ActionItem, Priority, Status } from "@/store/actionItems.types";
+import { LOW_CONFIDENCE_THRESHOLD, TODAY } from "@/store/actionItems.constants";
 
 // Pill text colors are theme-aware (see --pill-* / --muted-foreground in
 // index.css): dark & saturated on light backgrounds, pastel on dark ones.

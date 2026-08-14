@@ -6,8 +6,8 @@
 // use of Zustand for client state.
 import { create } from "zustand";
 import type { ExtractRequest, ExtractedItem } from "@note2action/shared";
-import { extractActionItems } from "./api";
-import type { ActionItem } from "./types";
+import { extractActionItems } from "@/lib/actionItems.api";
+import type { ActionItem } from "./actionItems.types";
 import {
   DEFAULT_MEETING_TITLE,
   DEFAULT_RAW,
@@ -15,7 +15,7 @@ import {
   SAMPLES,
   SEED_ITEMS,
   TODAY,
-} from "./constants";
+} from "./actionItems.constants";
 
 interface ActionItemsState {
   onlyLow: boolean;

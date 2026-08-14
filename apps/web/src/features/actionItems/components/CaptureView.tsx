@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { useActionItems } from "../store";
-import { OWNERS, RECENTS } from "../constants";
+import { useActionItems } from "@/store/actionItems.store";
+import { OWNERS, RECENTS } from "@/store/actionItems.constants";
 
 export function CaptureView() {
   const navigate = useNavigate();

@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useActionItems } from "../store";
-import { OWNERS, STATUSES } from "../constants";
-import { PRIORITY_STYLE, STATUS_STYLE, savedTasks, taskRows } from "../selectors";
-import type { TaskRowVM } from "../selectors";
-import { playPop } from "../sound";
-import type { Status } from "../types";
+import { useActionItems } from "@/store/actionItems.store";
+import { OWNERS, STATUSES } from "@/store/actionItems.constants";
+import { PRIORITY_STYLE, STATUS_STYLE, savedTasks, taskRows } from "@/lib/selectors";
+import type { TaskRowVM } from "@/lib/selectors";
+import { playPop } from "@/lib/sound";
+import type { Status } from "@/store/actionItems.types";
 
 const COLS = "grid-cols-[minmax(0,1fr)_96px_88px_132px_34px]";
 const OPEN_STATUSES = STATUSES.slice(0, 3);

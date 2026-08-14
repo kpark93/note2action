@@ -1,6 +1,6 @@
-import { useActionItems } from "../store";
-import { OWNERS } from "../constants";
-import { historyGroups, historyStats } from "../selectors";
+import { useActionItems } from "@/store/actionItems.store";
+import { OWNERS } from "@/store/actionItems.constants";
+import { historyGroups, historyStats } from "@/lib/selectors";
 
 const ROW_COLS = "grid-cols-[minmax(0,2fr)_minmax(0,1fr)_88px_88px]";
 

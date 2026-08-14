@@ -1,5 +1,5 @@
 // Seed data and fixed options, ported verbatim from the v2 (revised) design mock.
-import type { ActionItem, Status } from "./types";
+import type { ActionItem, Status } from "./actionItems.types";
 
 export const OWNERS = [
   "Rachel Ng",

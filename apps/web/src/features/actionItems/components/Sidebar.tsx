@@ -1,9 +1,9 @@
 import { NavLink } from "react-router-dom";
-import { useHealth } from "@/features/health/hooks";
-import { useTheme } from "@/features/theme/store";
-import { useActionItems } from "../store";
-import { USER } from "../constants";
-import { summary } from "../selectors";
+import { useHealth } from "@/lib/health";
+import { useTheme } from "@/store/theme.store";
+import { useActionItems } from "@/store/actionItems.store";
+import { USER } from "@/store/actionItems.constants";
+import { summary } from "@/lib/selectors";
 
 const NAV = [
   { to: "/", label: "Home" },
