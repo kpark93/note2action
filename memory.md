@@ -595,3 +595,78 @@ styles the card.
 nowhere else (now that the pill span is gone). Ran the type checker (`tsc
 --noEmit`) — it passed. Ran the production build (`vite build`) — it passed. Not
 yet committed.
+
+---
+
+## 2026-08-14 — Added Button cta variant for glowing primary actions
+
+**Plain-language summary:** the web app uses four prominent action buttons at
+critical moments: "New capture" on Tasks and Home screens, "Extract action
+items" on Capture, and "Save to Tasks" on Review. Each was hand-styled with the
+same glow shadow and custom sizes. Today we extracted that styling into a
+reusable `cta` (*call-to-action*) variant of the shadcn `Button` component,
+replacing four separate style definitions with a single, consistent variant.
+
+**Background:** a *variant* in shadcn's `cva` system is a named style option
+you apply to a component — like `variant="outline"` or `variant="ghost"` on a
+button. Under the hood, `cva` (*class-variance-authority*) generates class
+strings based on variant names, and *Tailwind* (the CSS framework) applies those
+classes. A subtle ordering detail: `cva` emits classes in this order: defaults,
+then variants, then *compound variants* (special combos of two or more variant
+settings). Because Tailwind's *merge* tool lets the last class win, sizing
+(`h-10`, `px-[18px]`, `text-[13.5px]`) must go in `compoundVariants` to beat the
+default size's `h-9 px-4`.
+
+**What changed:**
+
+- `apps/web/src/components/ui/button.tsx` — **edited.** Added a new `cta` entry
+  to the button's `variants.variant` list. The cta variant sets the primary
+  color, rounded corners (`rounded-[13px]`), semibold weight, and the 8px glow
+  shadow. Also added a new `compoundVariants` key (a first-time addition to this
+  file) with one entry: when `variant="cta"` *and* `size="default"`, apply
+  `h-10 px-[18px] text-[13.5px]` (the custom sizing, emitted last so it wins).
+
+- `apps/web/src/views/tasks/tasks.view.tsx` — **edited.** Replaced the "New
+  capture" button's inline classes and shadow style with `variant="cta"`,
+  removing 3 redundant lines.
+
+- `apps/web/src/views/home/home.view.tsx` — **edited.** Replaced the "New
+  capture" button's inline classes and shadow style with `variant="cta"`,
+  removing 3 redundant lines.
+
+- `apps/web/src/views/capture/capture.view.tsx` — **edited.** Replaced the
+  "Extract action items" button's inline classes and complex shadow style
+  (which changed based on the `ready` state) with `variant="cta"`. The button
+  keeps its conditional styling for not-ready/busy states (using `ready ? {} :
+  {...}` in the style prop to apply overrides only when not ready), and kept
+  the `disabled` and `cursor` logic. Normalized the padding from `px-5` to the
+  variant's `px-[18px]`.
+
+- `apps/web/src/views/review/review.view.tsx` — **edited.** Replaced the "Save
+  to Tasks" button's inline classes and complex disabled-state styling with
+  `variant="cta"`. The button keeps its conditional styling: when `all.length
+  === 0`, the style prop applies muted colors and `cursor: "not-allowed"`,
+  otherwise `{ cursor: "pointer" }` (the variant's primary colors show, and the
+  mouse pointer becomes the pointing hand over the enabled button — matching how
+  the button behaved before this change).
+
+*Post-review fix (same day):* code review caught that the enabled Save button
+had lost its pointing-hand cursor (the first version passed `undefined` instead
+of `{ cursor: "pointer" }` in the enabled branch — a *regression*, meaning
+something that used to work stopped working). The enabled branch now restores
+`cursor: "pointer"`, and the button block's *indentation* (the leading spaces
+that show code nesting) was aligned with its sibling button. The review also
+noted the Capture/Review buttons newly gain the variant's hover darkening
+(`hover:bg-primary/90`); this was accepted deliberately so all four CTA buttons
+behave identically.
+
+**Why:** consolidating four hand-styled buttons into one reusable variant makes
+the code shorter, more maintainable, and ensures all CTAs look identical. If the
+glow shadow or rounded corners need tweaking in the future, one edit updates all
+four buttons — and the centr­al definition in `button.tsx` is easier to audit
+for accessibility.
+
+**How we checked nothing broke:** ran the type checker (`tsc --noEmit`) — passed.
+Ran the production build (`vite build`) — passed. The pre-existing >500 kB chunk
+size warning is expected and approved. All four screens (Tasks, Home, Capture,
+Review) loaded successfully with the new variant applied.

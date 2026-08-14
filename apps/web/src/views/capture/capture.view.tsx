@@ -101,16 +101,19 @@ export function CaptureView() {
               )}
             </span>
             <Button
+              variant="cta"
               onClick={onExtract}
               disabled={!canExtract}
-              className="h-10 rounded-[13px] px-5 text-[13.5px] font-semibold disabled:pointer-events-auto disabled:opacity-100"
+              className="disabled:pointer-events-auto disabled:opacity-100"
               style={{
-                background: ready ? "hsl(var(--primary))" : "hsl(var(--muted))",
-                color: ready
-                  ? "hsl(var(--primary-foreground))"
-                  : "hsl(var(--muted-foreground))",
+                ...(ready
+                  ? {}
+                  : {
+                      background: "hsl(var(--muted))",
+                      color: "hsl(var(--muted-foreground))",
+                      boxShadow: "none",
+                    }),
                 cursor: canExtract ? "pointer" : busy ? "wait" : "not-allowed",
-                boxShadow: ready ? "0 8px 22px hsl(var(--primary) / 0.3)" : "none",
                 opacity: busy ? 0.85 : 1,
               }}
             >

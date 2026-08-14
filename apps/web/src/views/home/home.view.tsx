@@ -56,9 +56,9 @@ export function HomeView() {
       </div>
 
       <Button
+        variant="cta"
         onClick={() => navigate("/capture")}
-        className="mt-6 h-10 w-fit rounded-[13px] px-[18px] text-[13.5px] font-semibold"
-        style={{ boxShadow: "0 8px 22px hsl(var(--primary) / 0.3)" }}
+        className="mt-6 w-fit"
       >
         New capture
       </Button>

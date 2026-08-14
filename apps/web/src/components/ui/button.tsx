@@ -19,6 +19,7 @@ const buttonVariants = cva(
         ghost:
           "hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50",
         link: "text-primary underline-offset-4 hover:underline",
+        cta: "bg-primary text-primary-foreground hover:bg-primary/90 rounded-[13px] font-semibold shadow-[0_8px_22px_hsl(var(--primary)/0.3)]",
       },
       size: {
         default: "h-9 px-4 py-2 has-[>svg]:px-3",
@@ -35,6 +36,13 @@ const buttonVariants = cva(
       variant: "default",
       size: "default",
     },
+    compoundVariants: [
+      {
+        variant: "cta",
+        size: "default",
+        class: "h-10 px-[18px] text-[13.5px]",
+      },
+    ],
   }
 )
 

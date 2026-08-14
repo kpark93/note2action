@@ -37,25 +37,23 @@ export function ReviewView() {
               Back to notes
             </Button>
             <Button
+              variant="cta"
               onClick={() => {
                 saveToTasks();
                 navigate("/tasks");
               }}
               disabled={all.length === 0}
-              className="h-10 rounded-[13px] px-[18px] text-[13.5px] font-semibold disabled:pointer-events-auto disabled:opacity-100"
-              style={{
-                background:
-                  all.length === 0 ? "hsl(var(--muted))" : "hsl(var(--primary))",
-                color:
-                  all.length === 0
-                    ? "hsl(var(--muted-foreground))"
-                    : "hsl(var(--primary-foreground))",
-                cursor: all.length === 0 ? "not-allowed" : "pointer",
-                boxShadow:
-                  all.length === 0
-                    ? "none"
-                    : "0 8px 22px hsl(var(--primary) / 0.3)",
-              }}
+              className="disabled:pointer-events-auto disabled:opacity-100"
+              style={
+                all.length === 0
+                  ? {
+                      background: "hsl(var(--muted))",
+                      color: "hsl(var(--muted-foreground))",
+                      boxShadow: "none",
+                      cursor: "not-allowed",
+                    }
+                  : { cursor: "pointer" }
+              }
             >
               Save {all.length} to Tasks
             </Button>

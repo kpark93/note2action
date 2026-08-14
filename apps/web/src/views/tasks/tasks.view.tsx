@@ -74,11 +74,7 @@ export function TasksView() {
           </>
         }
         actions={
-          <Button
-            onClick={() => navigate("/capture")}
-            className="h-10 flex-none rounded-[13px] px-[18px] text-[13.5px] font-semibold"
-            style={{ boxShadow: "0 8px 22px hsl(var(--primary) / 0.3)" }}
-          >
+          <Button variant="cta" onClick={() => navigate("/capture")} className="flex-none">
             New capture
           </Button>
         }
