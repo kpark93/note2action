@@ -408,6 +408,39 @@ in manual testing (not committed yet).
 
 ---
 
+## 2026-08-14 — Deleted two leftover design-mockup files from the web app
+
+**What changed:** two files were deleted. No code was added or edited; the app
+itself behaves exactly the same.
+
+**Files touched (both deleted):**
+- `apps/web/src/index.html`
+- `apps/web/src/support.js`
+
+**Why they existed:** they were leftovers from a design-mockup tool (a program
+that draws quick visual previews of screens before they are really built). The
+mockup tool had dropped its own preview page and a generated *script* (a file
+of JavaScript code) into the `src` folder, where the app's real source code
+lives. Neither file was ever used by the app.
+
+**Why deleting them matters:** the real `index.html` — the single starting page
+a browser loads first, which every web app must have exactly one of — lives one
+folder up, at `apps/web/index.html`. That is where *Vite* (the tool that builds
+and serves this app during development) expects to find it. Having a second,
+unrelated `index.html` inside `src/` is confusing: a reader could easily open
+the wrong one and wonder why edits do nothing. Neither file was tracked by
+*git* (the version-control tool that records the project's history), meaning
+git had never saved them, so deleting them loses nothing and touches no
+history.
+
+**How we checked it was safe:** before deleting, the files' contents were read.
+Both contained generated mockup-runtime code (the first line of `support.js`
+even says "GENERATED … do not edit"), and a search of the app's real code found
+nothing that references them. Deleting a file nothing points to cannot break
+the app.
+
+---
+
 ## 2026-08-14 — Created Progress primitive and StatCard component; rebuilt History stats
 
 **Plain-language summary:** the History screen displays three small metric tiles
