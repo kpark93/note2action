@@ -670,3 +670,37 @@ for accessibility.
 Ran the production build (`vite build`) — passed. The pre-existing >500 kB chunk
 size warning is expected and approved. All four screens (Tasks, Home, Capture,
 Review) loaded successfully with the new variant applied.
+
+---
+
+## 2026-08-14 — Fixed PriorityBadge border for pixel-perfect alignment
+
+**Plain-language summary:** the Priority pills on the Tasks screen were slightly
+larger than intended. The shadcn `Badge` component (a reusable styled building
+block) adds a 1-pixel *transparent border* (a thin edge that is invisible but
+takes up space) to all badges by default. Our `PriorityBadge` component inherited
+this border, making the pill about 2 pixels larger in each dimension than the
+original hand-built version. We fixed it by adding `border-0` (a Tailwind class
+that removes all borders) to disable the inherited border.
+
+**Background:** *Tailwind* is a CSS framework where you apply styles using short
+class names like `border-0` instead of writing CSS by hand. A *CSS class* is a
+named set of styling rules. When components are *composed* (built from other
+components), they inherit styling from their base layer unless explicitly
+overridden.
+
+**What changed:**
+- `apps/web/src/components/PriorityBadge.tsx` — **edited.** The base class string
+  for the Badge's `className` now starts with `border-0`, moving the string from
+  `"rounded-full px-[10px] py-[3px] text-[11.5px] font-semibold"` to
+  `"border-0 rounded-full px-[10px] py-[3px] text-[11.5px] font-semibold"`.
+
+**Why:** this is a *pixel-parity* fix — ensuring the rebuilt component matches the
+original design pixel-for-pixel. The 1px transparent border was invisible but
+broke the intended sizing. Removing it makes High/Medium/Low pills render at their
+intended dimensions, aligning with the design system's precision.
+
+**How we checked nothing broke:** ran the linter (`pnpm --filter @note2action/web
+lint`) — passed, catching no style issues. Ran the production build (`pnpm --filter
+@note2action/web build`) — passed. The pre-existing >500 kB chunk size warning is
+expected and approved.

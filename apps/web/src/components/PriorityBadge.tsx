@@ -22,7 +22,7 @@ export function PriorityBadge({
     <Badge
       variant="ghost"
       className={cn(
-        "rounded-full px-[10px] py-[3px] text-[11.5px] font-semibold",
+        "border-0 rounded-full px-[10px] py-[3px] text-[11.5px] font-semibold",
         PRIORITY_CLASSES[priority],
         className
       )}
