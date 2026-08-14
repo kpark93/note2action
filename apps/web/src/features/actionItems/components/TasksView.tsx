@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useActionItems } from "../store";
 import { OWNERS, STATUSES } from "../constants";
 import { PRIORITY_STYLE, STATUS_STYLE, savedTasks, taskRows } from "../selectors";
@@ -20,7 +21,7 @@ export function TasksView() {
   const clearFilters = useActionItems((s) => s.clearFilters);
   const update = useActionItems((s) => s.update);
   const sendToReview = useActionItems((s) => s.sendToReview);
-  const goTo = useActionItems((s) => s.goTo);
+  const navigate = useNavigate();
 
   // Track the row being completed so it stays mounted long enough to play the
   // pop animation before it leaves the list for History.
@@ -135,7 +136,7 @@ export function TasksView() {
               href="#"
               onClick={(e) => {
                 e.preventDefault();
-                goTo("history");
+                navigate("/history");
               }}
             >
               History
@@ -143,7 +144,7 @@ export function TasksView() {
           </p>
         </div>
         <button
-          onClick={() => goTo("capture")}
+          onClick={() => navigate("/capture")}
           className="h-10 flex-none rounded-[13px] border-0 bg-primary px-[18px] text-[13.5px] font-semibold text-primary-foreground"
           style={{ boxShadow: "0 8px 22px hsl(var(--primary) / 0.3)" }}
         >

@@ -1,19 +1,19 @@
+import { NavLink } from "react-router-dom";
 import { useHealth } from "@/features/health/hooks";
 import { useTheme } from "@/features/theme/store";
 import { useActionItems } from "../store";
+import { USER } from "../constants";
 import { summary } from "../selectors";
-import type { Screen } from "../types";
 
-const NAV: { screen: Screen; label: string }[] = [
-  { screen: "capture", label: "Capture" },
-  { screen: "review", label: "Review" },
-  { screen: "tasks", label: "Tasks" },
-  { screen: "history", label: "History" },
+const NAV = [
+  { to: "/", label: "Home" },
+  { to: "/capture", label: "Capture" },
+  { to: "/review", label: "Review" },
+  { to: "/tasks", label: "Tasks" },
+  { to: "/history", label: "History" },
 ];
 
 export function Sidebar() {
-  const screen = useActionItems((s) => s.screen);
-  const goTo = useActionItems((s) => s.goTo);
   const items = useActionItems((s) => s.items);
   const { donePct, doneCount, openCount, flagCount } = summary(items);
   const pct = parseInt(donePct, 10) || 0;
@@ -51,30 +51,28 @@ export function Sidebar() {
         WORKSPACE
       </div>
       <nav className="flex flex-col gap-1">
-        {NAV.map(({ screen: s, label }) => {
-          const active = screen === s;
-          return (
-            <button
-              key={s}
-              onClick={() => goTo(s)}
-              className="flex items-center justify-between rounded-[13px] px-[13px] py-[11px] text-left text-[14px]"
-              style={{
-                background: active ? "hsl(var(--secondary))" : "transparent",
-                color: active
-                  ? "hsl(var(--foreground))"
-                  : "hsl(var(--muted-foreground))",
-                fontWeight: active ? 600 : 500,
-              }}
-            >
-              {label}
-              {s === "review" && flagCount > 0 && (
-                <span className="rounded-full bg-primary px-[7px] py-px text-[11px] font-semibold text-primary-foreground">
-                  {flagCount}
-                </span>
-              )}
-            </button>
-          );
-        })}
+        {NAV.map(({ to, label }) => (
+          <NavLink
+            key={to}
+            to={to}
+            end={to === "/"}
+            className="flex items-center justify-between rounded-[13px] px-[13px] py-[11px] text-left text-[14px]"
+            style={({ isActive }) => ({
+              background: isActive ? "hsl(var(--secondary))" : "transparent",
+              color: isActive
+                ? "hsl(var(--foreground))"
+                : "hsl(var(--muted-foreground))",
+              fontWeight: isActive ? 600 : 500,
+            })}
+          >
+            {label}
+            {to === "/review" && flagCount > 0 && (
+              <span className="rounded-full bg-primary px-[7px] py-px text-[11px] font-semibold text-primary-foreground">
+                {flagCount}
+              </span>
+            )}
+          </NavLink>
+        ))}
       </nav>
 
       <div className="min-h-[34px] flex-1" />
@@ -120,11 +118,11 @@ export function Sidebar() {
 
       <div className="mt-[14px] flex items-center gap-[11px] border-t border-border pt-[14px]">
         <span className="flex h-8 w-8 items-center justify-center rounded-[11px] bg-primary text-[12px] font-bold text-primary-foreground">
-          KP
+          {USER.initials}
         </span>
         <span className="flex flex-col leading-[1.3]">
-          <span className="text-[13px] font-semibold">Kyle Park</span>
-          <span className="text-[11px] text-muted-foreground">Product</span>
+          <span className="text-[13px] font-semibold">{USER.name}</span>
+          <span className="text-[11px] text-muted-foreground">{USER.role}</span>
         </span>
         <span
           className="ml-auto h-[7px] w-[7px] flex-none rounded-full"

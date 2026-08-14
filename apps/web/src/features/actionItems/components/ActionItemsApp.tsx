@@ -1,22 +1,18 @@
-import { useActionItems } from "../store";
+import { Outlet } from "react-router-dom";
 import { Sidebar } from "./Sidebar";
-import { CaptureView } from "./CaptureView";
-import { ReviewView } from "./ReviewView";
-import { TasksView } from "./TasksView";
-import { HistoryView } from "./HistoryView";
 import { RecentModal } from "./RecentModal";
 
-export function ActionItemsApp() {
-  const screen = useActionItems((s) => s.screen);
-
+/**
+ * App shell: fixed sidebar + the routed view in <Outlet/>. Rendered as the
+ * layout route in App.tsx. The transcript dialog lives here so it can open from
+ * any route (its open state is in the shared store).
+ */
+export function AppLayout() {
   return (
     <div className="flex h-screen gap-[14px] overflow-hidden bg-background p-[14px]">
       <Sidebar />
       <main className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-[22px] bg-panel px-6 py-[22px]">
-        {screen === "capture" && <CaptureView />}
-        {screen === "review" && <ReviewView />}
-        {screen === "tasks" && <TasksView />}
-        {screen === "history" && <HistoryView />}
+        <Outlet />
       </main>
       <RecentModal />
     </div>

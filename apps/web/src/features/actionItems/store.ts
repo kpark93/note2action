@@ -7,7 +7,7 @@
 import { create } from "zustand";
 import type { ExtractRequest, ExtractedItem } from "@note2action/shared";
 import { extractActionItems } from "./api";
-import type { ActionItem, Screen } from "./types";
+import type { ActionItem } from "./types";
 import {
   DEFAULT_MEETING_TITLE,
   DEFAULT_RAW,
@@ -18,7 +18,6 @@ import {
 } from "./constants";
 
 interface ActionItemsState {
-  screen: Screen;
   onlyLow: boolean;
   sampleIndex: number;
   /** Index into RECENTS for the open transcript modal, or null when closed. */
@@ -34,7 +33,6 @@ interface ActionItemsState {
   /** Message from the last failed extraction, or null. */
   extractError: string | null;
 
-  goTo: (screen: Screen) => void;
   toggleOnlyLow: () => void;
   setRaw: (raw: string) => void;
   setMeetingTitle: (title: string) => void;
@@ -69,7 +67,6 @@ interface ActionItemsState {
 }
 
 export const useActionItems = create<ActionItemsState>((set, get) => ({
-  screen: "review",
   onlyLow: false,
   sampleIndex: 0,
   modalIndex: null,
@@ -82,7 +79,6 @@ export const useActionItems = create<ActionItemsState>((set, get) => ({
   extracting: false,
   extractError: null,
 
-  goTo: (screen) => set({ screen }),
   toggleOnlyLow: () => set((s) => ({ onlyLow: !s.onlyLow })),
   setRaw: (raw) => set({ raw }),
   setMeetingTitle: (meetingTitle) => set({ meetingTitle }),
@@ -111,7 +107,6 @@ export const useActionItems = create<ActionItemsState>((set, get) => ({
         raw: r.text,
         meetingTitle: r.name,
         modalIndex: null,
-        screen: "capture",
       };
     }),
 
@@ -168,7 +163,6 @@ export const useActionItems = create<ActionItemsState>((set, get) => ({
       items: s.items.map((it) =>
         it.status !== "Done" && !it.saved ? { ...it, saved: true } : it,
       ),
-      screen: "tasks",
       onlyLow: false,
     })),
 
@@ -187,7 +181,7 @@ export const useActionItems = create<ActionItemsState>((set, get) => ({
       // Apply + navigate happen here — independent of any mounted component,
       // so switching tabs mid-extraction can't drop the result.
       get().applyExtraction(items);
-      set({ extracting: false, screen: "review" });
+      set({ extracting: false });
     } catch (err) {
       set({
         extracting: false,

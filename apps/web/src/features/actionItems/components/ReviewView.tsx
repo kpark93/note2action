@@ -1,4 +1,5 @@
 import type { CSSProperties } from "react";
+import { useNavigate } from "react-router-dom";
 import { useActionItems } from "../store";
 import { OWNERS } from "../constants";
 import { flagSentence, reviewItems, reviewStyle } from "../selectors";
@@ -8,7 +9,7 @@ import type { ReviewItemVM as VM } from "../selectors";
 export function ReviewView() {
   const items = useActionItems((s) => s.items);
   const onlyLow = useActionItems((s) => s.onlyLow);
-  const goTo = useActionItems((s) => s.goTo);
+  const navigate = useNavigate();
   const toggleOnlyLow = useActionItems((s) => s.toggleOnlyLow);
   const saveToTasks = useActionItems((s) => s.saveToTasks);
 
@@ -33,13 +34,16 @@ export function ReviewView() {
         </div>
         <div className="flex flex-none items-center gap-[10px]">
           <button
-            onClick={() => goTo("capture")}
+            onClick={() => navigate("/capture")}
             className="h-10 rounded-[13px] border border-border bg-transparent px-4 text-[13.5px] font-medium text-foreground"
           >
             Back to notes
           </button>
           <button
-            onClick={saveToTasks}
+            onClick={() => {
+              saveToTasks();
+              navigate("/tasks");
+            }}
             disabled={all.length === 0}
             className="h-10 rounded-[13px] border-0 px-[18px] text-[13.5px] font-semibold"
             style={{

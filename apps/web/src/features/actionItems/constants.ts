@@ -9,6 +9,14 @@ export const OWNERS = [
   "Unassigned",
 ] as const;
 
+/** The signed-in user (no auth yet — a single hardcoded profile). */
+export const USER = {
+  name: "Kyle Park",
+  firstName: "Kyle",
+  initials: "KP",
+  role: "Product",
+} as const;
+
 export const STATUSES: Status[] = [
   "Not started",
   "In progress",

@@ -4,7 +4,7 @@
 // (which the API currently speaks) — kept local until the backend grows to
 // match. See constants.ts for the seed data and store.ts for the state.
 
-export type Screen = "capture" | "review" | "tasks" | "history";
+export type Screen = "home" | "capture" | "review" | "tasks" | "history";
 
 export type Priority = "High" | "Medium" | "Low";
 

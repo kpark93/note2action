@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import { useActionItems } from "../store";
 import { RECENTS } from "../constants";
 
@@ -6,6 +7,7 @@ export function RecentModal() {
   const modalIndex = useActionItems((s) => s.modalIndex);
   const closeModal = useActionItems((s) => s.closeModal);
   const loadRecent = useActionItems((s) => s.loadRecent);
+  const navigate = useNavigate();
 
   if (modalIndex === null) return null;
   const r = RECENTS[modalIndex];
@@ -48,7 +50,10 @@ export function RecentModal() {
             Close
           </button>
           <button
-            onClick={loadRecent}
+            onClick={() => {
+              loadRecent();
+              navigate("/capture");
+            }}
             className="h-9 rounded-[11px] border-0 bg-primary px-4 text-[13px] font-semibold text-primary-foreground"
             style={{ boxShadow: "0 8px 22px hsl(var(--primary) / 0.3)" }}
           >

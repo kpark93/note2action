@@ -1,7 +1,10 @@
+import { useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { useActionItems } from "../store";
 import { OWNERS, RECENTS } from "../constants";
 
 export function CaptureView() {
+  const navigate = useNavigate();
   const raw = useActionItems((s) => s.raw);
   const meetingTitle = useActionItems((s) => s.meetingTitle);
   const setRaw = useActionItems((s) => s.setRaw);
@@ -11,6 +14,14 @@ export function CaptureView() {
   const extractNotes = useActionItems((s) => s.extractNotes);
   const busy = useActionItems((s) => s.extracting);
   const extractError = useActionItems((s) => s.extractError);
+
+  // Extraction runs in the store (so it survives navigation). When it finishes
+  // successfully and we're still on Capture, move to Review.
+  const wasBusy = useRef(false);
+  useEffect(() => {
+    if (wasBusy.current && !busy && !extractError) navigate("/review");
+    wasBusy.current = busy;
+  }, [busy, extractError, navigate]);
 
   const words = raw.trim() ? raw.trim().split(/\s+/).length : 0;
   const ready = words > 12;
