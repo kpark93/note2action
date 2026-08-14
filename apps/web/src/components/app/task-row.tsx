@@ -1,11 +1,11 @@
 import { useActionItems } from "@/store/actionItems.store";
 import { STATUSES } from "@/store/actionItems.constants";
-import { STATUS_STYLE } from "./tasks.utils";
-import type { TaskRowVM } from "./tasks.utils";
+import { STATUS_STYLE } from "@/views/tasks/tasks.utils";
+import type { TaskRowVM } from "@/views/tasks/tasks.utils";
 import type { Status } from "@/store/actionItems.types";
 import { Undo2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { PriorityBadge } from "@/components/priority-badge";
+import { PriorityBadge } from "@/components/app/priority-badge";
 import {
   Select,
   SelectContent,

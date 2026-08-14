@@ -1,13 +1,13 @@
 import type { CSSProperties } from "react";
 import { useActionItems } from "@/store/actionItems.store";
 import { OWNERS } from "@/store/actionItems.constants";
-import { reviewStyle } from "./review.utils";
+import { reviewStyle } from "@/views/review/review.utils";
 import type { Priority } from "@/store/actionItems.types";
-import type { ReviewItemVM } from "./review.utils";
+import type { ReviewItemVM } from "@/views/review/review.utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { ConfidencePill } from "@/components/confidence-pill";
+import { ConfidencePill } from "@/components/app/confidence-pill";
 import {
   Select,
   SelectContent,

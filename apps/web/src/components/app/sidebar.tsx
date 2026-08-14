@@ -1,24 +1,11 @@
-import { NavLink } from "react-router-dom";
 import { useHealth } from "@/lib/health";
 import { useTheme } from "@/store/theme.store";
-import { useActionItems } from "@/store/actionItems.store";
 import { USER } from "@/store/actionItems.constants";
-import { summary } from "@/lib/items";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-
-const NAV = [
-  { to: "/", label: "Home" },
-  { to: "/capture", label: "Capture" },
-  { to: "/review", label: "Review" },
-  { to: "/tasks", label: "Tasks" },
-  { to: "/history", label: "History" },
-];
+import { SidebarNav } from "./sidebar-nav";
+import { CompletionCard } from "./completion-card";
 
 export function Sidebar() {
-  const items = useActionItems((s) => s.items);
-  const { donePct, doneCount, openCount, flagCount } = summary(items);
-  const pct = parseInt(donePct, 10) || 0;
   const theme = useTheme((s) => s.theme);
   const setTheme = useTheme((s) => s.setTheme);
 
@@ -49,51 +36,11 @@ export function Sidebar() {
         </span>
       </div>
 
-      <div className="mb-3 text-[10.5px] font-semibold tracking-[0.14em] text-muted-foreground">
-        WORKSPACE
-      </div>
-      <nav className="flex flex-col gap-1">
-        {NAV.map(({ to, label }) => (
-          <NavLink
-            key={to}
-            to={to}
-            end={to === "/"}
-            className="flex items-center justify-between rounded-[13px] px-[13px] py-[11px] text-left text-[14px]"
-            style={({ isActive }) => ({
-              background: isActive ? "hsl(var(--secondary))" : "transparent",
-              color: isActive
-                ? "hsl(var(--foreground))"
-                : "hsl(var(--muted-foreground))",
-              fontWeight: isActive ? 600 : 500,
-            })}
-          >
-            {label}
-            {to === "/review" && flagCount > 0 && (
-              <Badge className="px-[7px] py-px text-[11px] font-semibold">
-                {flagCount}
-              </Badge>
-            )}
-          </NavLink>
-        ))}
-      </nav>
+      <SidebarNav />
 
       <div className="min-h-[34px] flex-1" />
 
-      <div className="rounded-[16px] bg-secondary p-[14px]">
-        <div className="text-[11.5px] text-muted-foreground">Completion this month</div>
-        <div className="mt-[7px] text-[24px] font-bold tracking-[-0.03em] tabular-nums">
-          <SlotNumber value={pct} />
-        </div>
-        <div className="mt-3 h-[5px] overflow-hidden rounded-full bg-muted">
-          <div
-            className="n2a-bar h-full rounded-full bg-primary"
-            style={{ width: donePct }}
-          />
-        </div>
-        <div className="mt-[11px] text-[11.5px] text-muted-foreground">
-          {doneCount} closed · {openCount} open
-        </div>
-      </div>
+      <CompletionCard />
 
       <div className="mt-[14px] grid grid-cols-2 gap-1 rounded-[12px] border border-border bg-card p-1">
         {(["light", "dark"] as const).map((mode) => {
@@ -134,67 +81,5 @@ export function Sidebar() {
         />
       </div>
     </aside>
-  );
-}
-
-const DIGITS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
-
-/**
- * Slot-machine percentage. Each digit is a 0–9 reel translated to the current
- * value; the CSS transition rolls through the in-between digits — up when the
- * number grows (a task completed), down when it shrinks (added/uncompleted).
- */
-function SlotNumber({ value }: { value: number }) {
-  const clamped = Math.max(0, Math.min(100, Math.round(value)));
-  const digits = String(clamped).split("");
-  return (
-    <span
-      className="inline-flex items-center"
-      style={{ height: "1em", lineHeight: 1 }}
-      aria-label={`${clamped}%`}
-    >
-      {digits.map((d, i) => (
-        // Key from the right so lower places keep their reel across carries.
-        <SlotDigit key={digits.length - 1 - i} digit={Number(d)} />
-      ))}
-      <span
-        aria-hidden="true"
-        style={{ display: "flex", height: "1em", alignItems: "center" }}
-      >
-        %
-      </span>
-    </span>
-  );
-}
-
-function SlotDigit({ digit }: { digit: number }) {
-  return (
-    <span
-      aria-hidden="true"
-      style={{ display: "block", height: "1em", overflow: "hidden" }}
-    >
-      <span
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          transform: `translateY(-${digit}em)`,
-          transition: "transform 0.7s cubic-bezier(0.16, 1, 0.3, 1)",
-        }}
-      >
-        {DIGITS.map((n) => (
-          <span
-            key={n}
-            style={{
-              display: "flex",
-              height: "1em",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            {n}
-          </span>
-        ))}
-      </span>
-    </span>
   );
 }

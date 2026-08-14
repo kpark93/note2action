@@ -777,3 +777,124 @@ a rename rather than a delete-plus-create, keeping each file's history.
 missed spot, two imports inside `app-layout.tsx` that still pointed at the old
 capitalized names — and the production build (`vite build`); both now pass.
 Not yet committed.
+
+---
+
+## 2026-08-14 — Extracted view layout wrappers into ViewShell, ScrollRegion, and Toolbar
+
+**What changed:** three tiny *layout components* (components whose only job is
+arranging space, not showing content) were created, and the five screens now
+use them instead of repeating the same long lists of styling classes.
+
+**Files created (all in `apps/web/src/components/`):**
+- `view-shell.tsx` — `ViewShell`, the outer frame of every screen: plays the
+  entrance animation and stretches to fill the window column. Screens with a
+  twist pass extra classes: Capture caps its width; Home makes the whole frame
+  scrollable.
+- `scroll-region.tsx` — `ScrollRegion`, the scrolling area inside a screen. It
+  owns only the scrolling rules, including the small negative-margin trick
+  (`-mr-1 pr-1`) that nudges the scrollbar off the content's edge. What is
+  *inside* the region — a column of rows (Tasks, History) or a grid of cards
+  (Review) — stays written at each screen, passed in as classes.
+- `toolbar.tsx` — `Toolbar`, the row of filters/actions that sits between a
+  screen's header and its content (used by Review and Tasks, each with its own
+  gap size).
+
+**Files edited (all five view files):** `views/review/review.view.tsx`,
+`views/tasks/tasks.view.tsx`, `views/history/history.view.tsx`,
+`views/capture/capture.view.tsx`, `views/home/home.view.tsx` — each swapped
+its hand-written wrapper `<div>`s for the new components.
+
+**Why:** the same long class strings were copy-pasted across screens; when the
+same idea lives in five places, a fix must be made five times and the copies
+drift apart. Each component merges its base classes with whatever the caller
+passes using the project's `cn()` helper, so per-screen differences remain
+visible right where that screen is defined. The screens render pixel-identical
+markup — the classes moved, none changed.
+
+**How we checked nothing broke:** the type checker (`tsc`) and the production
+build (`vite build`) both pass, and a search confirmed no view still carries
+the old repeated class recipes. Not yet committed.
+
+---
+
+## 2026-08-14 — Grouped app components into components/app/ and split the last big files
+
+**What changed:** four related hygiene steps, agreed with the project owner
+after weighing which splits are worth their cost (over-splitting is its own
+problem: many tiny files and import-hopping with no gain).
+
+**1. New home for the app's own components.** The `components/` folder mixed
+two kinds of files: shadcn *primitives* (ready-made basics like `button.tsx`,
+kept in `components/ui/`) and components written for this app. The thirteen
+app-specific ones moved into a new `apps/web/src/components/app/` folder, so
+the split is now obvious at a glance: `ui/` = building blocks we didn't write,
+`app/` = ours. Every `import` line pointing at them was updated.
+
+**2. One dropdown to rule the filters.** The owner/status filter dropdowns on
+Tasks (two) and History (one) were three hand-built copies of the same thing.
+- `components/app/filter-select.tsx` — **created.** `FilterSelect` takes the
+  current value, a change handler, the "All …" label, and the option list.
+- `views/tasks/tasks.view.tsx`, `views/history/history.view.tsx` — **edited**
+  to use it; each dropped ~20 lines of duplicated markup.
+
+**3. Sidebar slimmed (200 → ~90 lines).** Three self-contained pieces moved
+out, each into `components/app/`: `slot-number.tsx` (the slot-machine
+percentage animation — 60 lines of pure animation logic), `sidebar-nav.tsx`
+(the WORKSPACE links plus the Review count badge), and `completion-card.tsx`
+(the "Completion this month" widget). The small brand header, theme toggle,
+and user footer deliberately stay inline — they are single-use and tiny, so
+extracting them would add files without adding clarity.
+
+**4. Views finished their decomposition.** Following the existing pattern
+where a screen's pieces live beside it:
+- `views/history/history-row.tsx` — **created**; the ✓/title/owner/date/Reopen
+  row left `history.view.tsx` (now 74 lines).
+- `views/capture/notes-editor.tsx` and `views/capture/recent-captures.tsx` —
+  **created**; the editor card and the RECENT strip left `capture.view.tsx`,
+  which shrank from 151 to 34 lines and now reads as: header, editor, recents.
+- `views/home/recap-card.tsx` — **created**; `RecapCard` moved out of
+  `home.view.tsx`.
+
+**Why:** every screen file is now a short skeleton naming its parts, and each
+part has one clear job in its own small file — easier to read, easier to
+change safely.
+
+**How we checked nothing broke:** the type checker (`tsc`) and production
+build (`vite build`) pass; all markup moved verbatim, so the app looks and
+behaves identically. Not yet committed.
+
+---
+
+## 2026-08-14 — Enforced the three-file rule for view folders
+
+**What changed:** the project owner set a structural rule: each folder under
+`apps/web/src/views/` may hold only three files — the screen itself
+(`<name>.view.tsx`), its helpers (`<name>.utils.ts`), and its screen-local
+state (`<name>.store.ts`). Six component files living beside their screens
+were therefore moved into the shared `apps/web/src/components/app/` folder.
+
+**Files moved (old location → `components/app/`):**
+- `views/review/review-card.tsx` → `components/app/review-card.tsx`
+- `views/tasks/task-row.tsx` → `components/app/task-row.tsx`
+- `views/history/history-row.tsx` → `components/app/history-row.tsx`
+- `views/capture/notes-editor.tsx` → `components/app/notes-editor.tsx`
+- `views/capture/recent-captures.tsx` → `components/app/recent-captures.tsx`
+- `views/home/recap-card.tsx` → `components/app/recap-card.tsx`
+
+**Files edited:** the five `*.view.tsx` files now import those components from
+their new `@/components/app/...` paths, and two of the moved files updated
+their own imports: `review-card.tsx` and `task-row.tsx` used *relative*
+imports (paths starting `./`, meaning "in my own folder") to reach their old
+neighbors `review.utils.ts` and `tasks.utils.ts`; those became full
+`@/views/...` paths since the files are no longer neighbors.
+
+**Why:** this trades the previous "pieces live beside their screen" layout for
+a stricter, simpler rule — every screen folder looks identical, and all
+components (shared or not) live in one place. Both layouts are legitimate;
+the owner chose predictability. The trio keeps the view-name prefix
+(`tasks.view.tsx`, not a bare `view.tsx`) so open editor tabs stay tellable
+apart.
+
+**How we checked nothing broke:** the type checker (`tsc`) and the production
+build (`vite build`) both pass after the moves. Not yet committed.

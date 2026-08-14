@@ -5,20 +5,17 @@ import { useTasksStore } from "./tasks.store";
 import { OWNERS, STATUSES } from "@/store/actionItems.constants";
 import { savedTasks } from "@/lib/items";
 import { taskRows } from "./tasks.utils";
-import { TaskRow } from "./task-row";
+import { TaskRow } from "@/components/app/task-row";
 import { playPop } from "@/lib/sound";
 import type { Status } from "@/store/actionItems.types";
 import { Button } from "@/components/ui/button";
-import { StepLabel } from "@/components/step-label";
-import { ViewHeader } from "@/components/view-header";
-import { SectionHeading } from "@/components/section-heading";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { StepLabel } from "@/components/app/step-label";
+import { ViewHeader } from "@/components/app/view-header";
+import { SectionHeading } from "@/components/app/section-heading";
+import { ViewShell } from "@/components/app/view-shell";
+import { ScrollRegion } from "@/components/app/scroll-region";
+import { Toolbar } from "@/components/app/toolbar";
+import { FilterSelect } from "@/components/app/filter-select";
 
 const OPEN_STATUSES = STATUSES.slice(0, 3);
 // Tasks are grouped into these sections, most-active first.
@@ -55,7 +52,7 @@ export function TasksView() {
   const savedCount = savedTasks(items).length;
 
   return (
-    <div className="n2a-view flex min-h-0 flex-1 flex-col overflow-hidden">
+    <ViewShell>
       <ViewHeader
         eyebrow={<StepLabel step={3} label="Tasks" />}
         title="Tasks"
@@ -80,33 +77,19 @@ export function TasksView() {
         }
       />
 
-      <div className="my-3 flex items-center gap-[9px]">
-        <Select value={filterOwner} onValueChange={setFilterOwner}>
-          <SelectTrigger className="min-w-[164px] rounded-[12px] border-border bg-card px-[13px] text-[13px] text-foreground data-[size=default]:h-[38px]">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="All">All owners</SelectItem>
-            {OWNERS.map((o) => (
-              <SelectItem key={o} value={o}>
-                {o}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Select value={filterStatus} onValueChange={setFilterStatus}>
-          <SelectTrigger className="min-w-[164px] rounded-[12px] border-border bg-card px-[13px] text-[13px] text-foreground data-[size=default]:h-[38px]">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="All">All statuses</SelectItem>
-            {OPEN_STATUSES.map((s) => (
-              <SelectItem key={s} value={s}>
-                {s}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+      <Toolbar className="gap-[9px]">
+        <FilterSelect
+          value={filterOwner}
+          onValueChange={setFilterOwner}
+          allLabel="All owners"
+          options={OWNERS}
+        />
+        <FilterSelect
+          value={filterStatus}
+          onValueChange={setFilterStatus}
+          allLabel="All statuses"
+          options={OPEN_STATUSES}
+        />
         <Button
           variant="ghost"
           onClick={clearFilters}
@@ -114,9 +97,9 @@ export function TasksView() {
         >
           Clear
         </Button>
-      </div>
+      </Toolbar>
 
-      <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-x-hidden overflow-y-auto -mr-1 pr-1">
+      <ScrollRegion className="flex flex-col gap-4">
         {rows.length === 0 ? (
           <div className="rounded-[16px] bg-card px-5 py-[52px] text-center text-[13.5px] text-muted-foreground">
             {savedCount === 0
@@ -144,7 +127,7 @@ export function TasksView() {
             );
           })
         )}
-      </div>
-    </div>
+      </ScrollRegion>
+    </ViewShell>
   );
 }

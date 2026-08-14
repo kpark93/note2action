@@ -2,10 +2,13 @@ import { useNavigate } from "react-router-dom";
 import { useActionItems } from "@/store/actionItems.store";
 import { useReviewStore } from "./review.store";
 import { flagSentence, reviewItems } from "./review.utils";
-import { ReviewCard } from "./review-card";
-import { StepLabel } from "@/components/step-label";
-import { ViewHeader } from "@/components/view-header";
-import { EmptyState } from "@/components/empty-state";
+import { ReviewCard } from "@/components/app/review-card";
+import { StepLabel } from "@/components/app/step-label";
+import { ViewHeader } from "@/components/app/view-header";
+import { EmptyState } from "@/components/app/empty-state";
+import { ViewShell } from "@/components/app/view-shell";
+import { ScrollRegion } from "@/components/app/scroll-region";
+import { Toolbar } from "@/components/app/toolbar";
 import { Button } from "@/components/ui/button";
 
 export function ReviewView() {
@@ -20,7 +23,7 @@ export function ReviewView() {
   const visible = onlyLow ? all.filter((i) => i.low) : all;
 
   return (
-    <div className="n2a-view flex min-h-0 flex-1 flex-col overflow-hidden">
+    <ViewShell>
       <ViewHeader
         eyebrow={<StepLabel step={2} label="Review" />}
         title={`${all.length} action items extracted`}
@@ -61,7 +64,7 @@ export function ReviewView() {
         }
       />
 
-      <div className="my-3 flex items-center gap-[14px]">
+      <Toolbar className="gap-[14px]">
         <span className="text-[13px] text-muted-foreground">{flagCount} need review</span>
         <span className="h-[14px] w-px bg-border" />
         <Button
@@ -80,7 +83,7 @@ export function ReviewView() {
         <span className="text-[12.5px] text-muted-foreground">
           Edit any field inline · saves as you type
         </span>
-      </div>
+      </Toolbar>
 
       {all.length === 0 ? (
         <div className="flex min-h-0 flex-1 items-center justify-center">
@@ -95,11 +98,11 @@ export function ReviewView() {
           </EmptyState>
         </div>
       ) : (
-        <div className="grid min-h-0 flex-1 auto-rows-min grid-cols-[repeat(auto-fill,minmax(252px,1fr))] content-start gap-[10px] overflow-x-hidden overflow-y-auto -mr-1 pr-1">
+        <ScrollRegion className="grid auto-rows-min grid-cols-[repeat(auto-fill,minmax(252px,1fr))] content-start gap-[10px]">
           {visible.map((item) => (
             <ReviewCard key={item.id} item={item} />
           ))}
-        </div>
+        </ScrollRegion>
       )}
 
       {all.length > 0 && (
@@ -108,7 +111,7 @@ export function ReviewView() {
           type
         </p>
       )}
-    </div>
+    </ViewShell>
   );
 }
 
