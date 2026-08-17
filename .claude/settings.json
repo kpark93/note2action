@@ -1,0 +1,29 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit|NotebookEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "{ f=$(jq -r '.tool_input.file_path // .tool_input.notebook_path // empty'); case \"$f\" in \"\"|*memory.md) ;; *) touch \"$CLAUDE_PROJECT_DIR/.claude/.memory_pending\" ;; esac; } 2>/dev/null || true",
+            "timeout": 10,
+            "statusMessage": "Noting that a file changed (memory.md journal)"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "{ input=$(cat); flag=\"$CLAUDE_PROJECT_DIR/.claude/.memory_pending\"; mem=\"$CLAUDE_PROJECT_DIR/memory.md\"; if [ -f \"$flag\" ] && [ \"$(printf '%s' \"$input\" | jq -r '.stop_hook_active // false')\" != \"true\" ]; then if [ \"$mem\" -nt \"$flag\" ]; then rm -f \"$flag\"; else rm -f \"$flag\"; jq -n '{decision: \"block\", reason: \"You edited files this session but have not yet logged them in memory.md at the repository root. Before finishing: append a new entry to memory.md (create the file if it is missing, never delete earlier entries). The entry must start with a ## heading containing the current date and a short title, then explain WHAT changed, WHICH files (paths), and WHY - written for a student who is new to programming: define every technical term in plain language the first time it appears. Then stop.\"}'; fi; fi; } 2>/dev/null",
+            "timeout": 15,
+            "statusMessage": "Checking whether memory.md needs a journal entry"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -23,3 +23,12 @@ __pycache__/
 # editor / os
 .DS_Store
 *.log
+
+# claude code local state (per-machine; settings.json IS committed)
+.claude/.memory_pending
+.claude/settings.local.json
+
+# claude code hook logs — never belong in the repo
+logs/
+
+.memory.md
