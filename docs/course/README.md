@@ -96,8 +96,9 @@ over time without losing what's in it.
 
 1. Add the service to `docker-compose.yml`: image `postgres:17`, a named
    volume for data, env vars for user/password/db name. Map host port
-   **5433** (5432 is Postgres's default and often taken — checking with
-   `lsof -i :5432` first is the habit).
+   **5432** (Postgres's default — checking it's free with `lsof -i :5432`
+   first is the habit; fall back to 5433 if another Postgres owns it. On
+   this machine 5432 was verified free, so we use the default). ✅ done
 2. `cd apps/api && uv add sqlalchemy alembic pydantic-settings psycopg`
 3. Create `app/settings.py` — a pydantic-settings class that reads
    `DATABASE_URL` from the environment and fails loudly at startup if it's
@@ -122,7 +123,8 @@ over time without losing what's in it.
 > your schema's git history.
 >
 > 📖 **Connection string / DATABASE_URL** — one line encoding how to reach
-> the database: `postgresql+psycopg://user:pass@localhost:5433/note2action`.
+> the database. Ours (local dev):
+> `postgresql+psycopg://postgres:postgres@localhost:5432/note2action`.
 >
 > 📖 **Named volume** — Docker-managed disk space that outlives the
 > container, so your data survives `docker compose down`.
@@ -204,7 +206,7 @@ instead of one hour.
 ### How (manually)
 
 1. Install DBeaver → new PostgreSQL connection → host `localhost`, port
-   `5433`, plus the user/password/db from your compose file → open the
+   `5432`, plus the user/password/db from your compose file → open the
    `action_items` table.
 2. Save an item in the app → refresh the table in DBeaver → watch your row
    exist. Edit a row in DBeaver → refresh the app → watch it change. That

@@ -159,7 +159,8 @@ an endpoint.
 **Build:**
 
 - Add a `postgres` service to `docker-compose.yml` (pick a host port that
-  doesn't collide with other local projects — e.g. 5433 if 5432 is taken).
+  doesn't collide with other local projects — 5432 was verified free here,
+  so we use the default; 5433 is the usual fallback). ✅ done 2026-08-17
 - In `apps/api`: **SQLAlchemy** (the ORM — maps Python classes to tables),
   **Alembic** (its _migration_ tool — versioned scripts that evolve the
   schema; note Alembic is the migration tool, not the ORM itself),

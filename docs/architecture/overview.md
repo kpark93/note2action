@@ -10,7 +10,7 @@ flowchart TD
     Web["web — React + Vite (:5173)"]
     API["api — FastAPI (:8000)"]
     AI["ai — Next.js + Vercel AI SDK (:3000)"]
-    DB[("PostgreSQL (:5433) — Module 9")]
+    DB[("PostgreSQL (:5432) — Module 9")]
     LLM[Anthropic]
     Shared["packages/shared — zod contracts"]
 

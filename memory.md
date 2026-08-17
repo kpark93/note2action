@@ -1368,3 +1368,89 @@ explainable step; `git log` now reads as a story instead of one blob.
 appeared in it mid-session (Module 9 work in progress, not part of this
 series). Note: it currently fails `pnpm format:check`; the pre-commit hook
 will auto-fix that whenever it gets committed.
+
+## 2026-08-17 — Module 9 step 1: Postgres is running; docs aligned to port 5432
+
+**WHAT changed:** Kyle added the `postgres` service to `docker-compose.yml`
+himself (image `postgres:17.1-alpine`, named volume `postgres_data`, host
+port 5432) and passed the durability checkpoint: a `canary` table survived
+`docker compose down` + `up`, proving the named volume keeps data alive
+across container restarts. The docs were then updated to match reality —
+the plan said host port 5433 as a collision-avoiding default, but 5432 was
+verified free on this machine (Docker bound it successfully), so we kept
+the standard port.
+
+**WHICH files:** `docker-compose.yml` (Kyle, by hand);
+`docs/course/README.md`, `docs/roadmap.md`, `docs/architecture/overview.md`,
+`docs/architecture/api.md` (port references 5433 → 5432, and the example
+DATABASE_URL now shows the real local credentials).
+
+**WHY:** Docs that disagree with the running system are worse than no docs —
+every future connection string, DBeaver setup, and settings default flows
+from this port and these credentials, so the written record has to match
+what `docker compose config` actually says.
+
+Terms worth knowing:
+
+- **Host port vs container port** (`"5432:5432"`): the right side is the
+  port inside the container (Postgres always thinks it's on 5432); the left
+  side is the door on your machine. Other containers use the service name
+  and container port (`postgres:5432`); tools on your Mac use
+  `localhost:<host port>`.
+- **Named volume:** Docker-managed disk space that outlives the container.
+  `docker compose down` keeps it; `down -v` deletes it.
+- **First-boot gotcha:** the `POSTGRES_*` env vars are only read when the
+  data volume is empty — changing them later does nothing without a wipe.
+
+## 2026-08-17 — Database renamed to note2action
+
+**WHAT changed:** Kyle renamed the database from the default `postgres` to
+`note2action` (edited `POSTGRES_DB` in `docker-compose.yml`, then wiped and
+re-initialized with `docker compose down -v && up` — required because the
+`POSTGRES_*` env vars are only read into an empty data volume). Verified
+live: `SELECT current_database()` returns `note2action`. The one stale doc
+reference was updated to match.
+
+**WHICH files:** `docker-compose.yml` (Kyle, by hand);
+`docs/course/README.md` (the example DATABASE_URL now ends in
+`/note2action`).
+
+**WHY:** A database named after the project makes every connection string,
+psql prompt, and DBeaver session self-describing. Doing the rename now was
+deliberate timing: the wipe only cost a throwaway table — once real data
+lands, `down -v` becomes destructive and renames stop being casual.
+
+## 2026-08-17 — Module 9: SQLAlchemy models — the ER diagram becomes code
+
+**WHAT changed:** Kyle wrote `apps/api/app/models.py` (three ORM classes:
+User, Meeting, ActionItem) and fixed two bugs himself (a missing import,
+and a foreign key placed in the wrong table). The mentor then fixed the
+remaining type mix-ups: `Mapped[DateTime]` → `Mapped[datetime]` for
+captured_at, `DateTime | None` → `date | None` for due and completed,
+`owner` made required (the AI writes "Unassigned" instead of nothing),
+`saved` given `default=False`, `ondelete="CASCADE"` added to the
+meeting_id foreign key, and the unused `Boolean` import removed. Verified:
+`Base.metadata` registers all three tables.
+
+**WHICH files:** `apps/api/app/models.py`. (Earlier this session, also by
+Kyle: `app/models.py` → `app/schemas.py` rename, `app/settings.py`,
+`apps/api/.env` + `.env.example`, and the postgres service in
+`docker-compose.yml`.)
+
+**WHY (the idea behind the mentor's fixes):** SQLAlchemy code mentions two
+different "type" worlds. Inside `Mapped[...]` you name the _Python_ type —
+what your program holds in memory (lowercase `datetime`, `date`, `str`).
+Inside `mapped_column(...)` you name _database_ things — what Postgres
+stores (`DateTime(timezone=True)`, `Text`). Capital-D `DateTime` is the
+database one; lowercase `datetime` is the Python one. Mixing them is the
+single most common beginner error in modern SQLAlchemy.
+
+Terms worth knowing:
+
+- **`date` vs `datetime` (Python):** `date` is a calendar day (2026-08-17,
+  no clock); `datetime` is an exact moment (day + time + timezone). Due
+  dates and completion days are `date`s; "when Extract ran" is a moment.
+- **Default:** a value the database fills in when the app doesn't say —
+  new rows start `saved=false` (the Review queue) automatically.
+- **`ondelete="CASCADE"`:** delete a meeting and the database deletes its
+  action items too, keeping the schema-doc promise.

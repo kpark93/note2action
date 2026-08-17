@@ -11,7 +11,7 @@ flowchart LR
     Router --> Seam["ItemRepository<br/>(the persistence seam)"]
     Seam --> Mem["InMemoryItemRepository<br/>(today: a Python list)"]
     Seam -.->|"Module 9"| PG["PostgresItemRepository"]
-    PG -.-> DB[("PostgreSQL :5433")]
+    PG -.-> DB[("PostgreSQL :5432")]
 ```
 
 Notes:
