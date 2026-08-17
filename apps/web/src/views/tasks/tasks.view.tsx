@@ -71,7 +71,11 @@ export function TasksView() {
           </>
         }
         actions={
-          <Button variant="cta" onClick={() => navigate("/capture")} className="flex-none">
+          <Button
+            variant="cta"
+            onClick={() => navigate("/capture")}
+            className="flex-none"
+          >
             New capture
           </Button>
         }

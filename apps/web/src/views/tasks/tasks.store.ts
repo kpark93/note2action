@@ -20,7 +20,11 @@ export const useTasksStore = create<TasksState>()(
       setFilterStatus: (filterStatus) =>
         set({ filterStatus }, false, "tasks/setFilterStatus"),
       clearFilters: () =>
-        set({ filterOwner: "All", filterStatus: "All" }, false, "tasks/clearFilters"),
+        set(
+          { filterOwner: "All", filterStatus: "All" },
+          false,
+          "tasks/clearFilters",
+        ),
     }),
     { name: "TasksStore" },
   ),

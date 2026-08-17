@@ -10,7 +10,9 @@ export function reviewStyle(low: boolean) {
     hoverShadow: low
       ? "0 16px 38px hsl(var(--primary) / 0.26)"
       : "0 12px 30px hsl(0 0% 0% / 0.35)",
-    hoverBorder: low ? "hsl(var(--primary) / 0.65)" : "hsl(var(--foreground) / 0.18)",
+    hoverBorder: low
+      ? "hsl(var(--primary) / 0.65)"
+      : "hsl(var(--foreground) / 0.18)",
     noteFg: low ? "hsl(var(--foreground))" : "hsl(var(--muted-foreground))",
   };
 }

@@ -49,7 +49,10 @@ export async function request<T = unknown>(
   });
 
   if (!res.ok) {
-    throw new HttpError(res.status, `${method} ${path} failed (HTTP ${res.status})`);
+    throw new HttpError(
+      res.status,
+      `${method} ${path} failed (HTTP ${res.status})`,
+    );
   }
 
   const data: unknown = await res.json();

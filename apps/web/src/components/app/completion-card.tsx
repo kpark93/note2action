@@ -10,7 +10,9 @@ export function CompletionCard() {
 
   return (
     <div className="rounded-[16px] bg-secondary p-[14px]">
-      <div className="text-[11.5px] text-muted-foreground">Completion this month</div>
+      <div className="text-[11.5px] text-muted-foreground">
+        Completion this month
+      </div>
       <div className="mt-[7px] text-[24px] font-bold tracking-[-0.03em] tabular-nums">
         <SlotNumber value={pct} />
       </div>

@@ -28,7 +28,10 @@ export function ReviewView() {
         eyebrow={<StepLabel step={2} label="Review" />}
         title={`${all.length} action items extracted`}
         description={
-          <>Owners and dates were inferred from the transcript. {flagSentence(flagCount)}</>
+          <>
+            Owners and dates were inferred from the transcript.{" "}
+            {flagSentence(flagCount)}
+          </>
         }
         actions={
           <>
@@ -65,7 +68,9 @@ export function ReviewView() {
       />
 
       <Toolbar className="gap-[14px]">
-        <span className="text-[13px] text-muted-foreground">{flagCount} need review</span>
+        <span className="text-[13px] text-muted-foreground">
+          {flagCount} need review
+        </span>
         <span className="h-[14px] w-px bg-border" />
         <Button
           variant="ghost"
@@ -73,7 +78,9 @@ export function ReviewView() {
           className="h-[31px] rounded-full px-[13px] text-[12.5px] font-medium"
           style={{
             background: onlyLow ? "hsl(var(--primary) / 0.15)" : "transparent",
-            color: onlyLow ? "hsl(var(--pill-blue))" : "hsl(var(--muted-foreground))",
+            color: onlyLow
+              ? "hsl(var(--pill-blue))"
+              : "hsl(var(--muted-foreground))",
             border: `1px solid ${onlyLow ? "hsl(var(--primary) / 0.5)" : "hsl(var(--border))"}`,
           }}
         >
@@ -114,4 +121,3 @@ export function ReviewView() {
     </ViewShell>
   );
 }
-

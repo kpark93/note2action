@@ -149,9 +149,7 @@ export const useActionItems = create<ActionItemsState>((set, get) => ({
 
   sendToReview: (id) =>
     set((s) => ({
-      items: s.items.map((it) =>
-        it.id === id ? { ...it, saved: false } : it,
-      ),
+      items: s.items.map((it) => (it.id === id ? { ...it, saved: false } : it)),
     })),
 
   extractNotes: async (payload) => {
@@ -166,8 +164,7 @@ export const useActionItems = create<ActionItemsState>((set, get) => ({
     } catch (err) {
       set({
         extracting: false,
-        extractError:
-          err instanceof Error ? err.message : "Extraction failed",
+        extractError: err instanceof Error ? err.message : "Extraction failed",
       });
     }
   },

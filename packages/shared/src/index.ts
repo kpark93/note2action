@@ -64,7 +64,9 @@ export const ExtractedItem = z.object({
     ),
   confidence: z
     .number()
-    .describe("0-100: confidence in this extraction (owner, date, and intent)."),
+    .describe(
+      "0-100: confidence in this extraction (owner, date, and intent).",
+    ),
   note: z
     .string()
     .describe("Short rationale or a supporting quote from the notes."),

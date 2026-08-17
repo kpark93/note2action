@@ -52,7 +52,9 @@ export function ReviewCard({ item }: { item: ReviewItemVM }) {
 
       <div className="grid grid-cols-[minmax(0,1fr)] gap-[9px]">
         <label className="flex flex-col gap-[6px]">
-          <span className="text-[11px] font-medium text-muted-foreground">Owner</span>
+          <span className="text-[11px] font-medium text-muted-foreground">
+            Owner
+          </span>
           <Select
             value={item.owner}
             onValueChange={(v) => update(item.id, "owner", v)}
@@ -71,7 +73,9 @@ export function ReviewCard({ item }: { item: ReviewItemVM }) {
         </label>
         <div className="grid grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] gap-[9px]">
           <label className="flex min-w-0 flex-col gap-[6px]">
-            <span className="text-[11px] font-medium text-muted-foreground">Due</span>
+            <span className="text-[11px] font-medium text-muted-foreground">
+              Due
+            </span>
             <Input
               type="date"
               value={item.due}
