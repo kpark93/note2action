@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 
 from fastapi import FastAPI
 
-from .models import HealthResponse, ItemsResponse
+from .schemas import HealthResponse, ItemsResponse
 from .repository import InMemoryItemRepository, ItemRepository
 
 app = FastAPI(title="note2action API")

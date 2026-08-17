@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from typing import Protocol
 
-from .models import Item
+from .schemas import Item
 
 
 class ItemRepository(Protocol):
