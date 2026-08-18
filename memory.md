@@ -1454,3 +1454,57 @@ Terms worth knowing:
   new rows start `saved=false` (the Review queue) automatically.
 - **`ondelete="CASCADE"`:** delete a meeting and the database deletes its
   action items too, keeping the schema-doc promise.
+
+## 2026-08-17 — Module 9: the repository swap — Postgres behind the seam
+
+**WHAT changed:** The API can now serve items from the real database.
+New `app/db.py` (engine + session factory), `PostgresItemRepository` in
+`app/repository.py` (same interface as the in-memory one, answers from the
+`action_items` table, translating DB rows into the old wire shape),
+a `repository` switch in `app/settings.py` (default `"memory"`; `.env` sets
+`postgres` for real runs), a chooser in `app/main.py` picking the
+implementation in one place, and `tests/test_items.py` pinning the
+in-memory repository so tests never need Docker. Tests: 2 passed.
+
+**WHICH files:** `app/db.py` (new), `app/repository.py`, `app/settings.py`,
+`app/main.py`, `apps/api/.env` + `.env.example`, `tests/test_items.py`.
+
+**WHY:** This is the payoff of the Module 2 "seam": endpoints only know the
+repository's method names, so swapping a Python list for Postgres changed
+zero endpoint code. The translation in the repository (int id → str,
+status → done bool) shows storage shape and wire shape are allowed to
+differ — the repository is where they meet, until Module 10 upgrades the
+shared contract.
+
+Bugs met on the way (all instructive):
+
+- pydantic-settings rejected `REPOSITORY=postgres` until the field existed —
+  every `.env` line must match a declared field (typo protection).
+- **Name shadowing:** `import app.main` after `from app.main import app`
+  silently rebinds `app` from the FastAPI object to the package.
+  "'module' object is not callable" / "'FastAPI' object has no attribute
+  'main'" both trace to that one ambiguity. Fix: `import app.main as
+main_module` so each thing keeps its own name.
+
+## 2026-08-17 — Module 9 complete: durable data, end to end
+
+**WHAT changed:** Fixed the last bug in `PostgresItemRepository` — a
+leftover `return` on the line above the row-to-Item translation made the
+translation _dead code_ (code after a return never runs), so the endpoint
+returned raw ActionItem objects and failed serialization with a 500. The
+bug was invisible while the table was empty (raw `[]` validates fine) and
+only appeared once a real row existed — a textbook argument for testing
+with at least one real row. Also confirmed the Module 9 checkpoint: a row
+inserted via psql survived `docker compose down` + `up`, and the API now
+serves it as `{"items":[{"id":"2","title":"Survive a restart",...}]}`.
+
+**WHICH files:** `app/repository.py` (removed the dead-code return).
+
+**WHY id=2, not 1:** the earlier deliberately-rejected `'URGENT'` insert
+burned id 1 — Postgres identity sequences hand out numbers before the
+insert is validated and never reclaim them. Id gaps are normal.
+
+Debugging pattern that cracked it: test each layer separately — psql
+(database: row there), fresh Python process (repository: returns raw
+object → aha), then the running server. The 500 the client sees is
+deliberately vague; the layers tell the truth.

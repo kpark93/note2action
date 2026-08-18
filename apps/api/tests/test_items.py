@@ -1,7 +1,11 @@
+import app.main as main_module
 from fastapi.testclient import TestClient
 
 from app.main import app
+from app.repository import InMemoryItemRepository
 
+# Tests always use the in-memory repository, regardless of .env.
+main_module.repository = InMemoryItemRepository()
 client = TestClient(app)
 
 

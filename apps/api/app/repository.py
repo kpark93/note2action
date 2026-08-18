@@ -10,6 +10,9 @@ from __future__ import annotations
 from typing import Protocol
 
 from .schemas import Item
+from sqlalchemy import select
+from .db import SessionLocal
+from .models import ActionItem
 
 
 class ItemRepository(Protocol):
@@ -29,3 +32,16 @@ class InMemoryItemRepository:
 
     def list_items(self) -> list[Item]:
         return list(self._items)
+
+class PostgresItemRepository:
+    """Item store backed by the real action_items table"""
+
+    def list_items(self) -> list[Item]:
+        with SessionLocal() as session:
+            rows = session.execute(select(ActionItem)).scalars().all()
+            return [
+                Item(id=str(row.id), title=row.title, done=row.status == "Done")
+                for row in rows
+            ]
+
+    

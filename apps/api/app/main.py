@@ -7,12 +7,17 @@ from datetime import datetime, timezone
 from fastapi import FastAPI
 
 from .schemas import HealthResponse, ItemsResponse
-from .repository import InMemoryItemRepository, ItemRepository
+from .repository import InMemoryItemRepository, ItemRepository, PostgresItemRepository
+from .settings import settings
 
 app = FastAPI(title="note2action API")
 
 # Swap this for a DB-backed ItemRepository later — see app/repository.py.
-repository: ItemRepository = InMemoryItemRepository()
+repository: ItemRepository = (
+    PostgresItemRepository()
+    if settings.repository == "postgres"
+    else InMemoryItemRepository()
+)
 
 
 @app.get("/api/health", response_model=HealthResponse)
