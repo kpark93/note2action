@@ -40,6 +40,26 @@ export type ItemsResponse = z.infer<typeof ItemsResponse>;
 export const Priority = z.enum(["High", "Medium", "Low"]);
 export type Priority = z.infer<typeof Priority>;
 
+/** Task status, shared by the extractor and the web UI. */
+export const Status = z.enum(["Not started", "In progress", "Blocked", "Done"]);
+export type Status = z.infer<typeof Status>;
+
+/** One persisted action item — mirrors the action_items table. */
+export const ActionItem = z.object({
+  id: z.number(),
+  meetingId: z.number(),
+  title: z.string(),
+  owner: z.string(),
+  due: z.string().nullable(),
+  priority: Priority,
+  confidence: z.number(),
+  saved: z.boolean(),
+  note: z.string().nullable(),
+  status: Status,
+  completed: z.string().nullable(),
+});
+export type ActionItem = z.infer<typeof ActionItem>;
+
 /**
  * One action item extracted from raw notes by the AI. The `.describe()` calls
  * are sent to the model (via the AI SDK) to steer the extraction — keep them

@@ -1508,3 +1508,417 @@ Debugging pattern that cracked it: test each layer separately — psql
 (database: row there), fresh Python process (repository: returns raw
 object → aha), then the running server. The 500 the client sees is
 deliberately vague; the layers tell the truth.
+
+## 2026-08-18 — agency-intelligence #18: workload identity federation as a credential type
+
+**WHAT changed:** Built ticket #18 for the agency-intelligence platform (in
+its own repo, not note2action): production workloads can now authenticate
+with an Entra ID (Azure Gov) _workload identity_ instead of a long-lived API
+key. A workload identity is an account that belongs to a program (a service),
+not a person; _federation_ means our platform trusts tokens issued by
+Microsoft's login service for that identity instead of storing any secret
+ourselves. The platform stores only a binding — "tokens from issuer X about
+subject Y belong to use case Z" — so there is no key to leak. The workload
+presents a _JWT_ (JSON Web Token: a signed, expiring blob of claims like
+"who am I" and "who is this for"), and the API verifies the signature
+against the tenant's _JWKS_ (JSON Web Key Set: the issuer's published public
+keys), checks audience and expiry, then resolves the identity to its one use
+case. Where federation isn't configured (dev), federated tokens get an
+explicit 503 "not configured" and the old API-key path keeps working — a
+clean fallback, never loosened auth.
+
+**WHICH files** (all under `/Users/macbook/Blen/agency-intelligence-wt/feat-18-entra-workload-identity`,
+a _git worktree_ — a second checkout of the same repo so the main checkout's
+branch stays untouched — on branch `feat/18-entra-workload-identity`):
+
+- `apps/api/app/models/use_case.py` — new `CredentialType` enum; `Credential`
+  gains `credential_type`, `federated_issuer`, `federated_subject`; a CHECK
+  constraint (a database rule that rejects rows violating a condition) forces
+  api_key rows to have key material and federated rows to have identity
+  fields, never both; unique (issuer, subject) so one identity maps to
+  exactly one use case.
+- `apps/api/alembic/versions/20260818_000005_federated_credentials.py` — the
+  _migration_ (a scripted, reversible schema change) using batch mode so it
+  replays on SQLite (tests) and PostgreSQL (production).
+- `apps/api/app/helpers/federation.py` — new: JWKS client cache, token
+  verification, (issuer, subject) → use case resolution.
+- `apps/api/app/helpers/credentials.py` — factored `credential_is_live()`
+  (active + unexpired) so both auth paths share one liveness rule.
+- `apps/api/app/api/use_cases/routes.py` — two endpoints:
+  `POST /use-cases/{id}/credentials/federated` (register a binding) and
+  `POST /credentials/federated/resolve` (token → use case), with
+  machine-readable `federated_auth_*` log events.
+- `apps/api/app/core/config.py`, `.env.example` — `ENTRA_FEDERATION_JWKS_URL`
+  - `ENTRA_FEDERATION_AUDIENCE`; both blank (dev) = federation off.
+- Tests (written first, watched fail, then made green — TDD):
+  `apps/api/tests/test_federated_credentials.py`,
+  `test_federated_stub_idp.py` (a _stub IdP_: a tiny local HTTP server
+  publishing a real RSA public key, so signature checks are real, not
+  mocked), `test_federated_credentials_migration.py` (upgrade AND downgrade).
+- Docs: `docs/authentication.md` federation section,
+  `docs/plans/2026-08-18-18-entra-workload-identity-federation.md` (plan went
+  to `docs/plans/` because `docs/PLANS.md` is owned by open PR #90).
+
+**WHY:** NFR-4 says production credentials should be workload identities,
+not long-lived keys — a stolen API key works until someone notices; a
+federated token expires in minutes and the private key never leaves
+Microsoft's vault. The migration first targeted the wrong parent revision
+(read the migration list from the _old_ checkout, which was behind main);
+the repo's single-head guard test caught it — worktrees can differ from the
+checkout you explored first, so always read state from the tree you build in.
+Verification: full `bun run verify` + `verify:contracts` green (API: 673
+passed / 92.92% coverage, web + mobile + sdk suites all passing). Not yet
+committed — awaiting Kyle's go-ahead.
+
+## 2026-08-18 — #18 security review + naming/hygiene pass
+
+**WHAT changed:** Security-reviewed the ticket #18 branch as a government
+gateway (checked for _vulnerabilities_ — flaws an attacker could exploit —
+and _secret exposure_ — private values like keys or passwords leaking into
+code, logs, or responses). Found no exploitable issues; the review notes are
+in the session log. Then made naming uniform: renamed the helper
+`verify_workload_token` → `verify_federated_token` (everything else says
+"federated token", and uniform names make code searchable) and the log
+events `credential_federated_*` → `federated_credential_*` (so all events
+for this feature share one `federated_` prefix — log events are the
+machine-readable breadcrumbs the platform emits so failures can be
+diagnosed automatically). Re-ran the hygiene tools: _black_ (auto-formats
+Python), _ruff_ (Python linter: flags suspicious patterns), _mypy_ (checks
+type annotations), _eslint_ (JavaScript linter) and _prettier_ (JS/docs
+formatter) — all clean; full API suite still 673 passed, 92.92% coverage.
+
+**WHICH files** (in `/Users/macbook/Blen/agency-intelligence-wt/feat-18-entra-workload-identity`):
+`apps/api/app/helpers/federation.py` and
+`apps/api/app/api/use_cases/routes.py` (the renames).
+
+**WHY:** A credential system for a government gateway earns a dedicated
+adversarial pass — reviewing _for attacks_ (forged tokens, secrets in logs,
+enumeration oracles) is a different lens than reviewing _for correctness_,
+and doing it before commit is far cheaper than after deploy. The renames
+matter because inconsistent names are where bugs hide: if half the code
+says "workload" and half says "federated", a future search for one term
+silently misses the other half.
+
+## 2026-08-18 — #18 shipped: commit + PR #91
+
+**WHAT changed:** Committed the ticket #18 work and opened the pull request
+(a _pull request_, or PR, is a proposal on GitHub asking to merge one
+branch's commits into another, where reviewers and automated checks gate
+the merge): https://github.com/blencorp/agency-intelligence/pull/91,
+branch `feat/18-entra-workload-identity` → `main`, single commit `e9aae80`.
+Two mechanical lessons: (1) _commitlint_ (a tool that rejects commit
+messages not matching the team's format) refused the first message because
+its subject started with a capitalized proper noun ("Entra ID…") — the
+`subject-case` rule reads that as sentence-case; starting with a lowercase
+verb ("add Entra ID…") passes. (2) The repo's PR template is parsed by a CI
+job, so the Lifecycle/Risk/date lines were filled as single bare values
+(`proposal`, `low`, `2026-11-18`) with all eight checkboxes kept verbatim.
+
+**WHICH files:** No source edits this session — `git commit` and `git push`
+in `/Users/macbook/Blen/agency-intelligence-wt/feat-18-entra-workload-identity`,
+plus the PR body draft in the session scratchpad.
+
+**WHY:** Kyle reviewed the branch and approved shipping. The PR body pastes
+the real verification output (verify + contracts both exit 0; API 673
+tests / 92.92% coverage) because the repo's rule is evidence before claims —
+a reviewer should never have to take "it passes" on faith.
+
+## 2026-08-18 — Acting as reviewer: security pass on PR #91
+
+**WHAT:** Reviewed pull request #91 in `blencorp/agency-intelligence` (the
+workload-identity federation change journaled above) and posted the review
+on GitHub: a summary plus six _inline comments_ (remarks attached to
+specific lines of the changed code, so the discussion sits next to the
+code it concerns). Verdict: no secrets exposed, no exploitable
+vulnerability, guardrails followed — but three cheap _defense-in-depth_
+fixes (extra safety layers, so no single mistake becomes fatal) were asked
+for before merge: (1) pin the token-signature _algorithm_ (the exact math
+used to create and verify a token's signature) instead of reusing the
+Clerk app's setting, so one config knob no longer controls two unrelated
+login systems; (2) pin the expected _issuer_ (the `iss` field inside a
+token that names which authority created it), which the code currently
+never checks against configuration; (3) require `https://` for the _JWKS_
+URL (JSON Web Key Set — a published list of public keys used to verify
+token signatures), because fetching those keys over plain HTTP would let
+an attacker sitting on the network swap in their own keys and forge tokens
+the platform would accept. Three minor notes too: slow-fetch timeout and
+key-rotation lag, one untested failure branch, and issuer format checking
+at registration. The PR's test claims were verified independently by
+running its 24 new tests locally at the exact reviewed commit — all
+passed. A deeper automated correctness review was also launched and will
+post its own comments when done.
+
+**WHICH files:** No source edits this session — review work only. The
+review was posted through the GitHub API from two scratchpad files
+(`pr91.diff`, the downloaded change set; `pr91-review.json`, the review
+payload). Review link:
+https://github.com/blencorp/agency-intelligence/pull/91#pullrequestreview-4964470564
+
+**WHY:** Kyle asked for a reviewer pass on PR #91 treating it as a
+government gateway: confirm guardrails, no secret or API-key exposure, no
+vulnerabilities, and clean hygiene. GitHub only allows a "comment"-type
+review on one's own PR (not approve/request-changes), but writing the
+security reasoning down next to the code before merging is the point:
+evidence and objections belong on the record, not in someone's head.
+
+## 2026-08-18 — Un-reviewing PR #91: removing everything that was posted
+
+**WHAT:** Kyle revoked posting permission ("remove all comments left on PR,
+do not comment unless approved to"), so everything published in the
+previous entry was taken back down. All six _inline comments_ (remarks
+attached to specific lines of changed code) were deleted through the
+_GitHub API_ (a way for programs to read and change things on GitHub by
+sending requests, instead of clicking in the browser). One limit
+discovered: GitHub will not let you delete a _submitted review_ itself —
+only its comments and its text — so the review record remains as an empty
+shell whose body now reads "(removed)". The still-running automated review
+pipeline was also shut down before it could post anything: its worker
+_subagents_ (helper programs launched to work on pieces of a bigger job)
+were stopped — one auto-restarted and had to be stopped twice — and the
+coordinator was sent an explicit abort message revoking its permission to
+comment. Afterwards the PR was re-checked: zero comments remain. The
+security findings themselves (pin the signature algorithm, pin the
+expected issuer, require HTTPS for the key-set URL, plus three minor
+notes) still live in the conversation and the previous journal entry.
+
+**WHICH files:** No project source files changed. The deletions happened
+on GitHub (PR #91 in `blencorp/agency-intelligence`) via `gh api` calls.
+One new personal-memory rule was saved outside the repo at
+`~/.claude/projects/-Users-macbook-note2action/memory/no-unapproved-pr-comments.md`
+(plus its index line in `MEMORY.md` there) so the lesson persists across
+sessions.
+
+**WHY:** Publishing a review is an outward-facing action: once comments
+are on a shared PR, teammates can read them and GitHub keeps traces even
+after deletion (the "(removed)" stub proves it). The durable rule going
+forward: findings are presented in chat first, and nothing gets posted to
+a PR or issue without Kyle's explicit approval for that specific posting.
+
+## 2026-08-18 — #26 built: gateway exact-match response cache (Redis)
+
+**WHAT changed:** Implemented ticket #26 for agency-intelligence: the AI
+gateway now has a _response cache_ — it remembers the answer to a request
+and serves the identical request again from memory instead of paying for a
+second model call. The store is _Redis_ (a fast in-memory key-value
+database). "Exact-match" means the lookup key is a _hash_ (a short
+fingerprint computed from data; any change produces a different
+fingerprint) of the caller's entire request in _canonical JSON_ — the JSON
+re-written with keys sorted so that `{"a":1,"b":2}` and `{"b":2,"a":1}`
+fingerprint identically. Entries are private to one use case +
+classification by default; sharing across use cases requires both the
+lowest classification and an explicit opt-in flag; requests labeled `phi`
+(protected health information) are never cached unless a deploy
+explicitly enables it. Everything _fails open_: if Redis is down the
+request just goes to the model as a normal miss — a cache may never break
+a request. Second identical request within the _TTL_ (time-to-live: how
+long an entry survives) returns with header `x-ai-cache: hit`.
+
+**WHICH files** (in `/Users/macbook/Blen/agency-intelligence-wt/feat-26-gateway-response-cache`):
+
+- `apps/api/app/helpers/response_cache.py` — new: key normalization, scope
+  rules, fail-open Redis wrapper.
+- `apps/api/app/api/v1/routes.py` — cache lookup before the upstream call,
+  store after; new `x-ai-data-labels` header parse; threaded the real
+  hit/miss status into the response header and usage ledger.
+- `apps/api/app/core/config.py`, `.env.example`, `docker-compose.yml` —
+  three new settings (blank Redis URL = cache off in dev) and a dev Redis
+  service.
+- `apps/api/pyproject.toml`, `apps/api/uv.lock` — `redis` runtime dep,
+  `fakeredis` (an in-process Redis imitation with real command semantics)
+  for tests.
+- Tests written first (watched fail, then green):
+  `apps/api/tests/test_response_cache_unit.py` and
+  `test_response_cache_gateway.py` — 27 cases covering all three
+  acceptance criteria plus streaming bypass and Redis-outage fail-open.
+- `docs/plans/2026-08-18-26-gateway-response-cache.md` — the plan.
+
+**WHY:** The provider's prompt cache only discounts a repeated prompt
+_prefix_; it cannot capture the whole-request repeats that dashboards and
+retry storms generate. A gateway-side cache serves those for free. The
+subtle ordering bug avoided: prompt shaping injects a per-request cache
+hint into the payload, so the cache key must be computed from the raw
+payload _before_ shaping — keying after shaping would make every request
+unique and the hit rate permanently zero. Placement detail: the new
+settings went in a region of config.py far from where open PR #91 inserts
+its settings, so git can merge both PRs cleanly in either order.
+
+## 2026-08-18 — #26 verified end to end; awaiting ship decision
+
+**WHAT changed:** Closed out the #26 build with final polish and fresh
+verification. Fixed a stale code comment (the cache-status constant still
+claimed "caching is out of scope" from the earlier ticket that stubbed
+it), reverted an accidental `bun.lock` change (a _lockfile_ — the exact
+recorded versions of every installed package — that the installer had
+rewritten as a side effect), regenerated `apps/api/uv.lock` (the Python
+equivalent) to include the new `redis` and `fakeredis` packages, and
+silenced the two linter/type-checker findings (an unused import; a byte
+type mismatch fixed with an explicit `bytes()` conversion). Then re-ran
+the entire verification gate against the finished tree — because the
+first run had overlapped my last edits, and evidence should describe the
+final state, not a moving one: verify exit 0, contracts exit 0, API 676
+tests passed at 92.92% coverage, all 27 new cache tests shown passing
+name by name.
+
+**WHICH files** (in `/Users/macbook/Blen/agency-intelligence-wt/feat-26-gateway-response-cache`):
+`apps/api/app/api/v1/routes.py` (comment + `bytes()` fix),
+`apps/api/tests/test_response_cache_unit.py` (unused import),
+`apps/api/uv.lock` (regenerated), `bun.lock` (reverted, no net change).
+
+**WHY:** A verification run that raced concurrent edits proves nothing
+about the tree you actually ship — re-running on the final state is the
+cheap way to make "it passes" a fact instead of a guess. Work is
+uncommitted, waiting on Kyle's commit/PR decision. Also observed (and
+deliberately left alone): someone is mid-edit on the #18 worktree adding
+issuer pinning; its helper doesn't enforce the pinned issuer yet.
+
+## 2026-08-18 — Hardening the federation auth path (PR #91 review fixes)
+
+**WHAT:** Applied the three security fixes from the earlier review to the
+PR #91 branch, using _TDD_ (test-driven development — write a test that
+fails because the behavior doesn't exist yet, watch it fail, then write
+just enough code to make it pass; the watched failure proves the test can
+actually catch the bug). Nine new tests were written first and each failed
+for the expected reason before any code changed. The fixes: (1) the
+federation token check now uses its own pinned _algorithm_ list of
+`RS256` (the algorithm is the exact math used to create and verify a
+token's signature) instead of borrowing the Clerk login system's setting —
+before, flipping that one shared knob silently changed which Entra tokens
+were accepted, and a test proved it by failing with
+`InvalidAlgorithmError`; (2) a new `ENTRA_FEDERATION_ISSUER` setting pins
+the expected _issuer_ (the `iss` field inside a token naming which
+authority created it) so verification compares it against configuration
+instead of trusting whatever the token claims, and federation now refuses
+to run (a clear 503 "service unavailable" response) unless all three of
+its settings are present; (3) a _validator_ (a small function that runs
+when configuration loads and rejects bad values) forces the _JWKS_ URL
+(JSON Web Key Set — the published list of public keys used to check token
+signatures) to use `https://`, because keys fetched over plain HTTP could
+be swapped by an attacker on the network; loopback addresses like
+`127.0.0.1` stay allowed so the test suite's local stub server keeps
+working.
+
+**WHICH files:** In
+`/Users/macbook/Blen/agency-intelligence-wt/feat-18-entra-workload-identity/`:
+`apps/api/app/helpers/federation.py` (pinned algorithms, issuer check,
+three-setting requirement), `apps/api/app/core/config.py` (new issuer
+setting + HTTPS validator), `apps/api/tests/test_federation_config.py`
+(new — 6 config tests), `apps/api/tests/test_federated_stub_idp.py`
+(3 new behavior tests + fixture/helper updates), `.env.example`,
+`docs/authentication.md`, and
+`docs/plans/2026-08-18-18-entra-workload-identity-federation.md`
+(addendum). Changes are uncommitted, pending Kyle's approval to commit
+and push.
+
+**WHY:** Kyle approved exactly these three fixes from the security
+review. Each one is _defense in depth_ (layered safety so no single
+mistake is fatal): the algorithm and issuer pins remove trust the code
+was silently extending, and the HTTPS rule makes a dangerous
+misconfiguration impossible instead of merely unlikely. Verified with
+real output before claiming success: full API suite 682 passed /
+coverage 92.95%, lint and type checks clean, all contract checks passed.
+
+## 2026-08-18 — Shipping the hardening: commit ee0f38d + PR #91 update
+
+**WHAT:** With Kyle's approval, the three security fixes from the previous
+entry were committed and pushed, and PR #91's description was brought up
+to date. Before committing, the full _verify gate_ (the repo's single
+command that runs every lint, type check, test suite, and contract check
+in one go — `bun run verify`) was re-run and exited 0 (an _exit code_ of
+0 is a program's way of saying "success"; anything else means failure).
+The commit message subject starts with a lowercase verb ("harden…")
+because the repo's _commitlint_ tool (which rejects commit messages that
+don't match the team's format) reads a capitalized first word as
+sentence-case and refuses it. The PR body's evidence block was updated to
+the real post-fix numbers (682 API tests passed, 92.95% coverage, 33 new
+tests) while the template lines that a CI job parses — Lifecycle state,
+Risk level, review date, all eight checkboxes — were left byte-identical;
+that "accountability" check passed on the edited body. A _monitor_ (a
+small background watcher that reports when something changes) is watching
+the remaining CI checks on the new commit.
+
+**WHICH files:** In the worktree
+`/Users/macbook/Blen/agency-intelligence-wt/feat-18-entra-workload-identity/`:
+no new source edits this session — `git add` + `git commit` (`ee0f38d`)
+of the seven files from the previous entry, then `git push` to
+`origin/feat/18-entra-workload-identity`. The updated PR description was
+drafted in the session scratchpad (`pr91-body.md`) and applied with
+`gh pr edit 91`.
+
+**WHY:** Kyle said "commit and update pr". The repo's rule is evidence
+before claims: the PR must paste real verification output, so the gate
+was re-run _after_ the hardening commit and the pasted numbers come from
+that run — a reviewer should never inherit stale evidence from an
+earlier version of the branch.
+
+## 2026-08-18 — #26 security review found and fixed a scope-forgery bug
+
+**WHAT changed:** Adversarial review of the #26 cache branch (treating it
+as a government gateway) found one real defect in my own uncommitted code:
+_delimiter injection_ into the cache scope. The scope string joined
+caller-supplied values with `:` — so a use-case id that itself contained a
+colon (like `a:cui`) could produce the same scope string as a different
+use-case + classification pair, letting two different security contexts
+share cache entries. The fix _percent-encodes_ each component (URL-style
+escaping, where `:` becomes `%3A`) before joining, so the delimiter can
+never be forged. Done TDD: the collision test was written first and
+watched fail, then the fix turned it green. Also renamed the route helper
+`_cache_store` → `_store_response` for verb-first naming consistency, and
+re-ran the full hygiene chain: black (no-op), ruff clean, mypy clean,
+eslint clean (web + mobile), prettier clean, 677 API tests at 92.93%
+coverage.
+
+**WHICH files** (in `/Users/macbook/Blen/agency-intelligence-wt/feat-26-gateway-response-cache`):
+`apps/api/app/helpers/response_cache.py` (the quote() fix),
+`apps/api/tests/test_response_cache_unit.py` (the collision test),
+`apps/api/app/api/v1/routes.py` (rename).
+
+**WHY:** Joining untrusted strings with a delimiter is the classic way
+scoping schemes break — the same bug family as log injection and path
+traversal. The security review lens ("how would I forge this key?")
+caught what the functional tests could not, because every functional test
+used well-behaved ids. Per Kyle's instruction, nothing was committed or
+pushed — results handed over in chat.
+
+## 2026-08-18 — Module 10 begins: the full ActionItem contract, both languages
+
+**WHAT changed:** Started Module 10 (connecting the web app to the real
+database) with steps 1–3: the _wire contract_ — the agreed JSON shape that
+travels between apps — grew from the three-field stub `{id, title, done}`
+to the full eleven-field `ActionItem` that mirrors the `action_items`
+table. I typed the schema twice, once per language: a _zod_ schema in
+`packages/shared` (TypeScript, guards the web side) and a _pydantic_ model
+in the API (Python, guards the server side). New tools learned:
+`.nullable()` in zod and `str | None` in Python both mean "a value or
+null" — the ER diagram's nullable columns arriving on the wire;
+`Literal["High", ...]` is Python's version of `z.enum` (only these exact
+strings allowed); `.isoformat()` asks a Python date to write itself as a
+`"2026-08-18"` string, because dates travel as strings in JSON. Then the
+repository learned to speak the full shape: the Postgres translation now
+maps all eleven columns (snake_case DB names on the right, camelCase wire
+names on the left), and the in-memory fake's seeds became full items that
+obey the same rules as the real database.
+
+**WHICH files:** `packages/shared/src/index.ts` (`Status` enum +
+`ActionItem` zod schema), `apps/api/app/schemas.py` (Literal enums,
+`ActionItem` model, `ItemsResponse` now carries it; stub `Item` deleted),
+`apps/api/app/repository.py` (Protocol + both repositories upgraded; the
+import alias `from .models import ActionItem as ActionItemRow` keeps the
+database class and the wire class apart), `apps/api/tests/test_items.py`
+(asserts integer ids and the full key set).
+
+**WHY:** The web app can't display owners, due dates, and priorities that
+the repository throws away — and both ends of the wire must agree on the
+shape character-for-character, or good rows get rejected as garbage. My
+mentor's review caught exactly that: my zod enum said "In Progress" but
+the database constraint says "In progress" — one capital letter that
+would have broken every in-progress item. Proof that the contract works:
+feeding pydantic that same typo now raises a ValidationError naming the
+field. Debugging lessons this session: a traceback prints source lines
+from the file on disk _right now_, not from the code the process is
+actually running — so a "fixed" line can appear in a stale server's
+error (running code ≠ disk code); and `Connection refused` means "the
+thing you're calling isn't running" (my Postgres container hadn't
+survived the day change — `docker compose up -d postgres` brought it
+back, and the named volume still had my row). Final proof: pytest green
+on the in-memory fake, then curl returned my survivor row wearing all
+eleven fields with correct types.
