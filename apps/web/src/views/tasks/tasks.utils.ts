@@ -40,12 +40,14 @@ export function taskRows(
   items: ActionItem[],
   filterOwner: string,
   filterStatus: string,
+  filterPriority: string,
 ): TaskRowVM[] {
   return savedTasks(items)
     .filter(
       (it) =>
         (filterOwner === "All" || it.owner === filterOwner) &&
-        (filterStatus === "All" || it.status === filterStatus),
+        (filterStatus === "All" || it.status === filterStatus) &&
+        (filterPriority === "All" || it.priority === filterPriority),
     )
     .sort((a, b) => compareDueAsc(a.due, b.due))
     .map((it, idx) => ({

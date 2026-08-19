@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useItemsQuery, usePatchItem } from "@/lib/items.queries";
 import { useTasksStore } from "./tasks.store";
-import { OWNERS, STATUSES } from "@/store/actionItems.constants";
+import { OWNERS, PRIORITIES, STATUSES } from "@/store/actionItems.constants";
 import { savedTasks } from "@/lib/items";
 import { taskRows } from "./tasks.utils";
 import { TaskRow } from "@/components/app/task-row";
@@ -25,8 +25,10 @@ export function TasksView() {
   const items = useItemsQuery().data ?? [];
   const filterOwner = useTasksStore((s) => s.filterOwner);
   const filterStatus = useTasksStore((s) => s.filterStatus);
+  const filterPriority = useTasksStore((s) => s.filterPriority);
   const setFilterOwner = useTasksStore((s) => s.setFilterOwner);
   const setFilterStatus = useTasksStore((s) => s.setFilterStatus);
+  const setFilterPriority = useTasksStore((s) => s.setFilterPriority);
   const clearFilters = useTasksStore((s) => s.clearFilters);
   const patchItem = usePatchItem();
   const navigate = useNavigate();
@@ -48,7 +50,7 @@ export function TasksView() {
     }
   };
 
-  const rows = taskRows(items, filterOwner, filterStatus);
+  const rows = taskRows(items, filterOwner, filterStatus, filterPriority);
   const savedCount = savedTasks(items).length;
 
   return (
@@ -93,6 +95,12 @@ export function TasksView() {
           onValueChange={setFilterStatus}
           allLabel="All statuses"
           options={OPEN_STATUSES}
+        />
+        <FilterSelect
+          value={filterPriority}
+          onValueChange={setFilterPriority}
+          allLabel="All priorities"
+          options={PRIORITIES}
         />
         <Button
           variant="ghost"

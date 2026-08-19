@@ -1,6 +1,6 @@
 // Fixed options and sample notes. The v2 mock's seed items and fake "recent
 // captures" used to live here too — real data comes from the API now.
-import type { Status } from "./actionItems.types";
+import type { Priority, Status } from "./actionItems.types";
 
 export const OWNERS = [
   "Rachel Ng",
@@ -24,6 +24,8 @@ export const STATUSES: Status[] = [
   "Blocked",
   "Done",
 ];
+
+export const PRIORITIES: Priority[] = ["High", "Medium", "Low"];
 
 /** "Today" is pinned so the seeded due/completed dates stay meaningful. */
 export const TODAY = "2026-08-11";

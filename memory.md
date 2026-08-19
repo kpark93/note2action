@@ -2235,6 +2235,100 @@ next debugger in the wrong direction — surfacing the real failure
 failed…`) names the broken leg for free. Web typecheck re-verified
 clean after the copy change.
 
+## 2026-08-19 — History stat: "across N meetings" derived, not hardcoded
+
+**WHAT changed:** The History view's "Completed all time" tile said
+"across 4 meetings" — a number typed into the code back in the mock
+era, wrong the moment real data arrived. Now N is derived from the
+meetings actually in the database: `useMeetingsQuery` accepts a
+`limit` (the RECENT strip keeps its 3; History asks for up to 1000 —
+a stand-in for "all" until the API needs real paging), the view
+passes `meetings.length` into `historyStats`, and the label
+pluralizes ("across 1 meeting" vs "across 3 meetings"). A new test
+pins both the derivation and the pluralization.
+
+**WHICH files:** `apps/web/src/lib/items.queries.ts` (limit param,
+limit in the query key so different limits cache separately),
+`views/history/history.utils.ts` (`historyStats` takes
+`meetingCount`), `views/history/history.view.tsx` (fetch + thread the
+count), `views/history/history.utils.test.ts` (updated signatures +
+new pluralization test).
+
+**WHY:** Hardcoded display numbers are lies waiting to be noticed —
+Kyle spotted this one reviewing the running app. Verified: typecheck
+clean, 34 web tests pass.
+
+## 2026-08-19 — New Meetings screen: every saved capture, one click to its transcript
+
+**WHAT changed:** A sixth screen. `/meetings` lists every capture in
+the database as full-width cards, newest first — title, "N items
+extracted", and a relative "Nd ago" — with the app's standard entrance
+animation and hover treatment (the existing `n2a-row` and `recent-btn`
+CSS classes, reused rather than reinvented). Clicking a card opens the
+_same_ transcript modal the Capture screen's RECENT strip uses: the
+modal lives in the app layout (so it can open from any route) and is
+driven by one store value, `modalMeetingId` — the new screen just calls
+the existing `openRecent(id)` action, and everything else (fetching the
+transcript, "Load into capture") came for free. Data comes from
+`useMeetingsQuery(1000)` — all meetings, not the strip's three. Loading
+and no-meetings-yet states use the shared `EmptyState`.
+
+**WHICH files:** new `apps/web/src/views/meetings/meetings.view.tsx`
+(single-file view — no local UI state or derivations, so no
+`.store.ts`/`.utils.ts` needed); `App.tsx` (route);
+`components/app/sidebar-nav.tsx` (nav entry after History).
+
+**WHY:** Kyle asked for it — the RECENT strip only shows three
+captures, and older ones had no home. The reuse is the lesson: because
+the modal was already global and id-driven, a whole new screen needed
+zero new modal code. Verified: typecheck clean, 34 web tests pass,
+production build succeeds.
+
+## 2026-08-19 — Meetings cards: hover swaps "1d ago" for the real date
+
+**WHAT changed:** On the Meetings screen, hovering a card's relative
+timestamp ("1d ago") now cross-fades it into the actual capture date
+("Aug 18"). The implementation dodges a classic CSS trap: if the
+element you're hovering _hides itself_, the hover ends the instant it
+disappears — which un-hides it, re-triggers the hover, and flickers
+forever. The fix: both labels are stacked in the same CSS grid cell
+(`col-start-1 row-start-1` twice), so the wrapper keeps the width of
+the wider label and the cursor never loses its target; hover state
+lives on the wrapper (a named Tailwind group, `group/when`) and only
+the labels' opacity changes. The date label carries
+`aria-hidden` so screen readers hear one timestamp, not two.
+
+**WHICH files:** `apps/web/src/views/meetings/meetings.view.tsx`
+(the timestamp span), `lib/dates.ts` untouched — `formatDate` already
+existed and takes the ISO timestamp's first ten characters.
+
+**WHY:** Kyle asked for it. Relative time is instantly readable but
+imprecise; the hover gives the precise date without spending
+permanent space on it. Verified: typecheck clean, 34 web tests pass.
+
+## 2026-08-19 — Tasks view: priority filter joins owner and status
+
+**WHAT changed:** The Tasks screen's toolbar has a third dropdown:
+priority (All/High/Medium/Low), composing with the existing owner and
+status filters — every active filter must match (a logical AND). The
+change walks the view's three files in order: `tasks.store.ts` (the
+view-local zustand store gains `filterPriority` + setter, and
+`clearFilters` resets all three), `tasks.utils.ts` (`taskRows` takes
+the new argument and adds one AND clause), `tasks.view.tsx` (a third
+`FilterSelect`, reusing the same component as the other two). A
+`PRIORITIES` constant joined `STATUSES` in actionItems.constants.ts —
+the priority list was previously hardcoded inline in the Review card's
+dropdown, so now there's one authoritative list to import.
+
+**WHICH files:** `views/tasks/tasks.store.ts`, `tasks.utils.ts`,
+`tasks.view.tsx`, `tasks.utils.test.ts` (signatures + a new
+composition test), `store/actionItems.constants.ts` (PRIORITIES).
+
+**WHY:** Kyle asked for it. Filters stay client-side per the Module 8
+decision — the dataset is one user's items, small enough that a
+round-trip per dropdown change buys nothing. Verified: typecheck
+clean, 35 web tests pass.
+
 ## 2026-08-18 — #26 shipped: commit + PR with the new body format
 
 **WHAT changed:** Committed the #26 response-cache work as `c7052a4`
