@@ -1922,3 +1922,564 @@ survived the day change — `docker compose up -d postgres` brought it
 back, and the named volume still had my row). Final proof: pytest green
 on the in-memory fake, then curl returned my survivor row wearing all
 eleven fields with correct types.
+
+## 2026-08-18 — Steps 1–3 committed; mentor cleanup pass before the commit
+
+**WHAT changed:** My mentor did a small cleanup pass on my step 1–3 work
+and then committed it all as `fee23be` (a _commit_ is a saved snapshot of
+the project in git with a message describing it). The cleanups: the old
+stub `Item` class was deleted from the API's schemas — _dead code_ (code
+nothing calls anymore) that survived my sweep; before deleting we ran a
+word-exact `grep` (a search tool that finds text in files) to prove
+nothing still referenced it. The items test was renamed from
+`test_list_items_returns_stub_items` to
+`test_list_items_returns_full_action_items` so its name matches what it
+now proves, and `meetingId` was added to the test's key-set check — my
+list of expected fields had ten entries where the schema has eleven, so
+one field was going unchecked.
+
+**WHICH files:** `apps/api/app/schemas.py` (stub `Item` removed),
+`apps/api/tests/test_items.py` (rename + `meetingId` in the asserted key
+set), `memory.md` (the journal entry above this one). Committed together
+with my step 1–3 work in `packages/shared/src/index.ts` and
+`apps/api/app/repository.py`.
+
+**WHY:** A commit is a shipped unit — dead code and stale test names
+inside it become permanent history someone else reads later. The
+one-field gap in the test mattered more than it looks: a _subset
+assertion_ (checking "at least these keys exist") only guards the keys
+you actually list, so a missing `meetingId` in a response would have
+passed the test silently. Tests were re-run after the cleanups
+(`2 passed`) before committing, because evidence comes before claims.
+
+## 2026-08-18 — Fixed the nagging Stop hook: a shared-state race
+
+**WHAT changed:** The repo's journal-enforcing _Stop hook_ (a small
+script Claude Code runs automatically every time the assistant finishes
+a turn) was blocking every prompt with "you edited files but haven't
+journaled" even when nothing in this repo changed. Root cause: the hook
+pair used one shared _flag file_ (an empty file whose mere existence is
+the signal) at `.claude/.memory_pending` — any file edit created it, and
+the Stop hook demanded a journal entry whenever it existed. But several
+Claude sessions now run in parallel under this project, and they all
+touched the _same_ flag — so session B's edits made the hook nag session
+A. That's a _race condition_ on _shared state_: multiple writers to one
+signal, with no way to tell whose it is. Two fixes: (1) the flag is now
+per-session — each session writes `.memory_pending_<session id>` (the
+_session id_ is the unique name Claude Code gives each running
+conversation) and the Stop hook only checks its own; (2) edits to files
+_outside_ this repository no longer set the flag at all, so work on
+other projects can't trigger note2action's journal rule. Also added a
+self-cleanup (flags older than two days are deleted) and widened the
+`.gitignore` pattern to `.memory_pending*` (the `*` is a _glob_ — a
+wildcard matching any ending) so the new flag names never show up as
+untracked files.
+
+**WHICH files:** `.claude/settings.json` (the PostToolUse and Stop hook
+commands) and `.gitignore` (line 28's pattern).
+
+**WHY:** A hook that cries wolf trains everyone to ignore it — the
+journal rule only works if a block really means "you have unjournaled
+edits." The fix was verified before being trusted: each hook command was
+tested by piping fake inputs through it (in-repo edit → flag appears;
+out-of-repo edit → no flag; memory.md edit → no flag; stop with pending
+flag → block; stop again → silent; journal-after-edit → silent), and the
+settings file was re-validated as proper JSON afterwards. Sessions that
+were already running keep the old hook wording until they restart, so
+the last few `.memory_pending`-style nags may linger in _other_ open
+sessions but not new ones.
+
+## 2026-08-18 — Roles flipped; PATCH /api/items/{id} finished (Claude implements, Kyle reviews)
+
+**WHAT changed:** The course workflow reversed — from now on the mentor
+writes the code and Kyle reviews each change before the next step. First
+implementation under the new rules: finishing the PATCH endpoint (an
+_endpoint_ is one URL the API answers on; _PATCH_ is the HTTP verb for
+"change only these fields"). Four pieces: (1) `ActionItem` in the API's
+schemas went back to strict — every field required again — and the
+partial-update shape became its own class, `ActionItemPatch`, where every
+field is optional; the two answer different questions ("what does a
+complete item look like?" vs "what may a client change?"), and making the
+main schema optional would have let broken rows pass validation silently.
+(2) The PATCH route got `response_model=ActionItem` to match the other
+routes' style (Kyle had already added the missing imports himself).
+(3) The repository _Protocol_ (the promise-list every implementation must
+honor) gained `update_item`, and the in-memory fake implemented it using
+`model_copy(update=...)` (pydantic's "copy this object with these fields
+changed") — including the server-side rule that `completed` is stamped
+with today's date when status becomes "Done" and cleared otherwise.
+(4) Two new endpoint tests: marking an item Done must return a
+`completed` date the client never sent (and reverting must clear it),
+and patching an unknown id must return _404_ (the "not found" status
+code) with a clean message instead of a crash.
+
+**WHICH files:** `apps/api/app/schemas.py` (strict `ActionItem` +
+new `ActionItemPatch`), `apps/api/app/main.py` (`response_model`),
+`apps/api/app/repository.py` (Protocol method, in-memory `update_item`,
+docstring updated to describe the two-implementation reality),
+`apps/api/tests/test_items.py` (two PATCH tests).
+
+**WHY:** Kyle asked to flip roles: "you implement the code and I will
+review your changes." Verified before presenting: `uv run pytest` shows
+5 passed, and against the live server curl PATCH marked the real row
+Done (server stamped `completed: "2026-08-18"`), returned
+`{"detail":"Item not found"}` for id 999, and a final revert left the
+demo row back at "Not started" with `completed: null`.
+
+## 2026-08-18 — Step 4b: DELETE /api/items/{id}, and tests stop sharing state
+
+**WHAT changed:** The API can now delete an item. The repository
+_Protocol_ gained `delete_item(item_id) -> bool` (True = deleted, False
+= no such id — the repository reports facts; the endpoint decides what
+they mean over HTTP). Both implementations honor it: the in-memory fake
+removes the item from its list; the Postgres one loads the row by
+primary key, `session.delete(row)` marks it for removal, and
+`session.commit()` makes it real. The endpoint returns _204 No
+Content_ — the HTTP status for "done, and there is nothing to say
+back" — so it sends an empty body on success and 404 for unknown ids.
+Alongside, the test file got a structural fix: a _pytest fixture_ (a
+setup function pytest runs around tests) marked `autouse` (runs before
+every test automatically) now gives each test its **own** fresh
+in-memory repository. Before, all tests shared one module-level fake, so
+a delete test would have shrunk the list a later test counts — an
+_order dependence_ bug where tests pass or fail depending on which runs
+first.
+
+**WHICH files:** `apps/api/app/repository.py` (Protocol + both
+`delete_item` implementations), `apps/api/app/main.py` (the DELETE
+route), `apps/api/tests/test_items.py` (autouse fixture + two DELETE
+tests).
+
+**WHY:** DELETE is in the Module 8 API contract. Verified: 7 tests
+pass; live proof planted a sacrificial row directly in Postgres (id 3),
+deleted it through the API (204, empty body), got 404 on the second
+attempt, and the list still shows only the survivor row — the demo data
+was deliberately spared.
+
+## 2026-08-18 — Step 4c: POST /api/meetings — captures become durable
+
+**WHAT changed:** The biggest endpoint yet: one POST persists a whole
+capture — the meeting and every extracted item — in a single
+_transaction_ (an all-or-nothing unit of database work: either the
+meeting AND all its items are saved, or none are). New wire schemas in
+both languages: `Meeting` (`{id, title, capturedAt, itemCount}` —
+itemCount is derived by counting, never stored), `CreateMeetingRequest`
+(`{title, rawNotes, items: ExtractedItem[]}`), `CreateMeetingResponse`,
+plus a Python mirror of `ExtractedItem` (the AI's output shape, which
+the API never needed to understand until now). The Postgres
+implementation taught a new session tool: `session.flush()` sends the
+INSERT so Postgres assigns the meeting's id — needed as the foreign key
+on each item row — but keeps the transaction open; nothing is durable
+until `commit()`. Flush = "show me the ids"; commit = "ink it". Also:
+the extractor uses `""` to mean "no due date / no note", but the
+database uses NULL — the repository translates (`item.due or None`) at
+the border, per the frontend-''-to-DB-NULL decision in the docs. New
+items are born with the api-design.md defaults: status "Not started",
+saved false, completed null. The shared per-test fixture moved to
+`tests/conftest.py` — a file pytest loads automatically for every test
+file — so the new meetings tests get the same fresh-fake isolation.
+
+**WHICH files:** `packages/shared/src/index.ts` (Meeting,
+CreateMeetingRequest, CreateMeetingResponse), `apps/api/app/schemas.py`
+(same four shapes), `apps/api/app/repository.py` (Protocol method, both
+implementations, `_new_item` birth-defaults helper),
+`apps/api/app/main.py` (the 201 route), `apps/api/tests/conftest.py`
+(new), `apps/api/tests/test_items.py` (fixture moved out),
+`apps/api/tests/test_meetings.py` (new — happy path incl. ''→null and
+birth defaults, plus 422).
+
+**WHY:** "Persist at extraction" is the Module 8 decision this endpoint
+enacts — Review items must already be rows for the saved workflow to
+work. Verified: 9 tests pass; live curl POSTed a two-item capture
+(201; meeting id 2, items 4-5; '' arrived as null in Postgres), psql
+showed the rows, and cleanup deleted the meeting — its items vanished
+with it, the `ondelete=CASCADE` rule doing its job — leaving only the
+survivor row.
+
+## 2026-08-18 — Module 10 step 4 finished: meetings GETs, save-to-tasks, and `meeting` on the wire
+
+**WHAT changed:** The API grew its last three Module 10 endpoints.
+`GET /api/meetings` returns recent captures newest-first with a `?limit`
+(default 3) for the Capture screen's RECENT strip — each with an
+`itemCount` that is _derived_ (computed by COUNTing the meeting's items
+at read time, never stored, so it can't drift). `GET /api/meetings/{id}`
+returns one full capture including the transcript, or 404.
+`POST /api/items/save-to-tasks` is the "Save N to Tasks" button as one
+_batch_ update — a single SQL `UPDATE ... WHERE saved = false AND
+status != 'Done'` that returns `{updated: N}`; one call can't partially
+fail the way N separate calls can. Also a contract change: every wire
+item now carries `meeting` — the meeting's _title_ — which the API joins
+in (a SQL JOIN pairs each item row with its meeting row) because the
+Review cards display it; the alternative was every client re-fetching
+the meetings list just to label cards. And one latent bug fixed:
+PATCHing a due date handed SQLAlchemy a "YYYY-MM-DD" _string_ where the
+column needs a Python `date` — the repository now converts at the
+border, the same place every other translation lives.
+
+**WHICH files:** `packages/shared/src/index.ts` (meeting field,
+ActionItemPatch + confidence, MeetingsResponse, MeetingDetail,
+SaveToTasksResponse; stub `Item` deleted), `apps/api/app/schemas.py`
+(same shapes), `apps/api/app/repository.py` (three Protocol methods ×
+two implementations; `to_wire` takes the meeting title; in-memory
+meetings became internal records with derived counts),
+`apps/api/app/main.py` (three routes), tests (meetings list/detail/404,
+save-to-tasks batch + no-op), `docs/api-design.md` (the `meeting`
+decision recorded).
+
+**WHY:** These are the last endpoints the Module 8 contract promised
+for Module 10. Verified: 13 API tests pass; live curls showed the
+meetings list, the transcript detail, items wearing their meeting
+title, and save-to-tasks returning `{"updated": 1}` (then reverted so
+the demo row stays pending).
+
+## 2026-08-18 — Module 10 steps 5-6: the web app talks to the database
+
+**WHAT changed:** The web app stopped being a beautiful liar. Before:
+every item lived in a _zustand_ store (client-side state kept in the
+browser tab) seeded from hardcoded constants — refresh the tab and
+everything reset. Now: items and meetings are _server state_, fetched
+from the API and cached by TanStack Query. A _query_ reads and caches
+(`useQuery(["items"])`); a _mutation_ changes data on the server and
+then _invalidates_ the cache — marks it stale so every view refetches
+fresh truth instead of trusting a local copy. New files:
+`lib/items.api.ts` and `lib/meetings.api.ts` (typed fetch functions per
+endpoint, zod-validated) and `lib/items.queries.ts` (the query/mutation
+hooks). Every user action became an API call: edit a field → PATCH
+(text fields save on _blur_ — when you leave the field — so typing
+doesn't fire a request per keystroke); Confirm → PATCH confidence 100;
+Discard → DELETE; Save N to Tasks → the batch endpoint; status changes
+and Reopen → PATCH; extraction → the AI app, then POST /api/meetings so
+the capture is rows _before_ Review ever shows it. The RECENT strip and
+transcript modal now show real captures from the API instead of
+hardcoded fakes. The store went on the Module 10 diet: it now holds
+ONLY client state — the capture draft, sample rotation, which modal is
+open, extraction-in-flight — and the seed items and fake RECENTS
+constants were deleted. One deliberate behavior change: re-extracting
+used to _replace_ the pending Review batch (a mock-era artifact); with
+persist-at-extraction each capture _adds_ its items, so Review
+accumulates until items are saved or discarded.
+
+**WHICH files:** new `apps/web/src/lib/items.api.ts`,
+`lib/meetings.api.ts`, `lib/items.queries.ts`; rewritten
+`store/actionItems.store.ts` (client-only) and
+`store/actionItems.types.ts` (view-model derived from the shared wire
+type — inputs can't hold null, so "" ↔ null translates in items.api.ts,
+the client's twin of the API's `to_wire`); `lib/http.ts` (204-no-body
+fix); `providers.tsx` (queryClient exported); views review/tasks/
+history/home; components review-card, task-row, history-row,
+sidebar-nav, completion-card, recent-captures, recent-modal;
+`lib/dates.ts` (timeAgo); `test/fixtures.ts`;
+`store/actionItems.constants.ts` (seeds/RECENTS removed).
+
+**WHY:** Module 10's whole point: after this, the browser is a _view_
+of the database, not the database. Verified: web typecheck clean, all
+33 web tests pass, production build succeeds, API suite 13 passed. The
+browser checkpoint (save items → hard refresh → still there → restart
+the stack → still there) is queued for Kyle's manual pass — it needs
+the API on port 8000, where the Vite proxy points.
+
+## 2026-08-19 — note2action's API officially moves to port 8001
+
+**WHAT changed:** The checkpoint instructions failed for two reasons.
+First, the instruction `lsof ... → kill <PIDs>` was prose typed into the
+shell — the arrow and the `<PIDs>` _placeholder_ (a stand-in you're
+meant to replace with a real value) aren't valid zsh, hence
+`parse error near '\n'`. Lesson: commands for the terminal must be
+copy-pasteable exactly as written. Second and more important: port 8000
+turned out to belong to a _different project_ — the hoops-tracker API
+(`fastapi dev --port 8000`) running on this machine — so "kill the 8000
+squatter" was the wrong plan entirely; that server is doing its job for
+another repo. The durable fix: note2action's API officially claims
+**8001** (where it has been running all module anyway). Changed the
+`dev:api` script, the Vite proxy default (`vite.config.ts`), the
+Docker port mapping (host 8001 → container 8000; inside the Compose
+network nothing changes), and swept every doc that said 8000.
+
+**WHICH files:** `package.json` (dev:api → 8001),
+`apps/web/vite.config.ts` (proxy default), `docker-compose.yml`
+(host mapping "8001:8000"), `README.md`, `docs/roadmap.md`,
+`docs/course/README.md` (Postman baseUrl), `docs/architecture/
+overview.md` and `web.md`.
+
+**WHY:** Two projects on one laptop can't share a port — a port is a
+parking spot, one car only. Verified end to end through the browser's
+actual route: started the Vite dev server and curled _through the
+proxy_ — `localhost:5173/api/health`, `/api/items`, and `/api/meetings`
+all returned live Postgres data. The web server was left running for
+the manual checkpoint.
+
+## 2026-08-19 — "Extraction failed" diagnosed: the AI app wasn't running
+
+**WHAT changed:** The Extract button showed "Extraction failed". The
+extraction flow now has two legs — leg 1 calls the AI app (port 3000)
+to turn notes into items; leg 2 POSTs the capture to the API (port 8001) so it becomes database rows — and the store's catch block shows
+one generic message for either leg failing. Diagnosis by testing each
+leg directly with curl through the Vite proxy (the browser's exact
+route): leg 1's port had _nothing listening_ — the AI app was simply
+never started. Started it (`pnpm --filter @note2action/ai dev`,
+left running), re-tested leg 1 (real extraction came back, "Friday"
+correctly inferred as 2026-08-22), then proved leg 2 with a debug
+capture (201, rows created) and deleted it again via psql — the
+CASCADE rule removing its item. One hardening from the lesson: the
+Capture screen's error line now shows the _actual_ error message
+(which names the failing URL and HTTP status) instead of a fixed
+sentence that always blamed the AI app.
+
+**WHICH files:** `apps/web/src/components/app/notes-editor.tsx` (the
+error line). Everything else was investigation and process
+management, not code.
+
+**WHY:** A fixed error message that guesses at the cause sends the
+next debugger in the wrong direction — surfacing the real failure
+(`POST /ai-api/extract failed (HTTP 500)` vs `POST /api/meetings
+failed…`) names the broken leg for free. Web typecheck re-verified
+clean after the copy change.
+
+## 2026-08-18 — #26 shipped: commit + PR with the new body format
+
+**WHAT changed:** Committed the #26 response-cache work as `c7052a4`
+(`feat(api): add FR-6 gateway exact-match response cache in Redis (#26)`),
+pushed `feat/26-gateway-response-cache`, and opened the pull request —
+this time with Kyle's new PR body layout: after the standard template
+sections, the ticket's Acceptance Criteria and Test Criteria are listed
+at the bottom under Observability, each mapped to the test that proves
+it, plus an example request and response inside a `<details>` element (an
+HTML tag GitHub renders as a collapsible dropdown, keeping big JSON
+blocks out of the way until a reviewer clicks). Two durable preferences
+were saved to long-term memory: the PR body format, and — reinforced
+after an earlier incident today where a review was posted to PR #91
+without approval — never comment on PRs or issues unless explicitly told
+to. GitHub's API was intermittently unreachable (connection and TLS
+handshake timeouts), so PR creation runs in a retry loop that first
+checks whether the PR already exists — because a timeout can happen
+_after_ the server created the PR, and blind retries would create
+duplicates.
+
+**WHICH files:** No source changes — `git commit`/`git push` in
+`/Users/macbook/Blen/agency-intelligence-wt/feat-26-gateway-response-cache`,
+the PR body draft in the session scratchpad, and two memory files in the
+Claude memory directory.
+
+**WHY:** Kyle approved shipping and specified the new PR format. The
+check-then-retry pattern matters any time a network call is not
+_idempotent_ (safe to repeat): "did my last attempt actually succeed?"
+must be answered before trying again.
+
+## 2026-08-18 — PR status audit: #91 fully pushed, #26 has in-flight follow-up
+
+**WHAT changed:** No source edits — this was an investigation session
+answering "what is uncommitted to PR #91?". Verified with git that the
+answer is: nothing anymore. The hardening edits I had earlier seen
+sitting in the #18 _worktree_ (a second checkout of the repo on its own
+branch) as _uncommitted changes_ (edits saved to disk but not yet
+recorded as a commit) were since committed by Kyle as `ee0f38d` and
+pushed, so PR #91's remote branch matches the local one exactly —
+`git status` empty, all 11 CI checks green. Lesson: a "worktree has
+uncommitted changes" observation is a snapshot, not a fact that stays
+true; re-verify before repeating it. Also surfaced the mirror-image
+situation: the #26 worktree currently holds uncommitted security
+follow-up (a production-only `rediss://` TLS validator, loopback-only
+dev Redis, a new config test) that is NOT yet in PR #93.
+
+**WHICH files:** none edited; read-only `git status` / `git log` /
+`gh pr checks` in both worktrees under
+`/Users/macbook/Blen/agency-intelligence-wt/`.
+
+**WHY:** When someone asks "I thought we pushed everything?", the
+trustworthy answer comes from comparing the local branch tip to the
+remote one (`git log origin/<branch>`) and checking `git status` —
+not from memory of what the tree looked like an hour ago.
+
+## 2026-08-18 — Reviewing PR #93 (Redis response cache): two vulnerabilities fixed
+
+**WHAT:** Reviewed PR #93 — a _response cache_ for the AI gateway (it
+remembers answers to identical requests in _Redis_, an in-memory data
+store, so repeat requests skip the expensive AI call) — with strict
+instructions: post nothing to GitHub, fix only real vulnerabilities. Two
+were found and fixed. First, the development _docker-compose_ file (a
+recipe describing the containers a project runs locally) published Redis
+on port 6379 to every network interface; Docker binds published ports to
+`0.0.0.0` (meaning "all networks, not just this machine") and even
+bypasses the host firewall, and this Redis has no password — so anyone on
+the network could read cached AI responses or plant forged entries the
+gateway would then serve to real callers (_cache poisoning_). Fix: bind
+the port to `127.0.0.1` (loopback — reachable only from the machine
+itself); containers still talk over their private network. Second, no
+rule stopped a production deploy from using a plain `redis://` URL, which
+moves cached government data and any password inside the URL unencrypted
+across the network. Fix: a settings _validator_ (a function that rejects
+bad configuration at startup) requiring `rediss://` (the TLS-encrypted
+variant) when `API_ENV=production`, loopback exempt, dev unchanged —
+written test-first (watched the rejection test fail before implementing).
+Also reported without fixing: the cache's per-use-case isolation relies on
+caller-supplied headers under one shared gateway key, so it is labeling
+hygiene, not an enforced boundary, until per-use-case credentials arrive.
+
+**WHICH files:** In
+`/Users/macbook/Blen/agency-intelligence-wt/feat-26-gateway-response-cache/`:
+`docker-compose.yml` (loopback bind), `apps/api/app/core/config.py`
+(TLS validator), `apps/api/tests/test_response_cache_config.py` (new — 6
+tests), `.env.example` (production note), and
+`docs/plans/2026-08-18-26-gateway-response-cache.md` (addendum). All
+uncommitted, awaiting Kyle's go-ahead.
+
+**WHY:** Kyle asked for a government-gateway-grade review of PR #93 with
+no PR comments and fixes only for actual vulnerabilities. Both fixes
+close network-exposure holes (unauthenticated reads/writes of cached
+responses; cleartext transport) while leaving development workflows
+untouched. Verified before claiming success: 683 API tests passed,
+coverage 92.96%, lint/type/contract checks all clean.
+
+## 2026-08-18 — Extract to_wire so list and update share one row-to-API mapping
+
+**WHAT changed:** Added a _module-level function_ named `to_wire`. A
+function is a named recipe of steps you can call from other places;
+_module-level_ means it sits at the top of the file, not inside a
+_class_ (a class is a blueprint that groups related data and
+functions). `to_wire` takes one _row_ — a single action item as stored
+in the database, using snake_case names like `meeting_id` and Python
+_date_ objects (calendar dates the program can compute with) — and
+returns an `ActionItem` _schema_ object. A schema here is the shape of
+data the API sends over the network: camelCase names like `meetingId`,
+and dates turned into text with `.isoformat()` (a method that writes a
+date as `"2026-08-20"`). If a date column is empty, the API sends
+`None` (Python's "no value") instead. Both `list_items` (read every
+item) and `update_item` (change one item, then return it) now call
+`to_wire` instead of each copying the same 11-field constructor.
+`update_item`'s body was also indented so it actually belongs to the
+method, and `from datetime import date` was added because that method
+uses `date.today()` when status becomes `"Done"`. A new test builds a
+fake row and checks all 11 fields come out correctly.
+
+**WHICH files:** `apps/api/app/repository.py` (the `to_wire` helper and
+the two call sites) and `apps/api/tests/test_repository.py` (new test).
+
+**WHY:** The two database methods were about to return items to the
+caller using identical mapping code. Duplicating that mapping is
+risky: if one field is added or renamed later, one path can be
+updated and the other forgotten, so list and update would disagree
+about what an item looks like. One shared function is the single
+place that translation lives.
+
+## 2026-08-18 — The deep review aimed at the wrong repo (and hit this one)
+
+**WHAT:** The background automated review launched for agency-intelligence
+PR #93 turned out to have run against the wrong project: a _subagent_ (a
+helper program spawned to work independently) inherits its _working
+directory_ (the folder a program treats as "here") from the session that
+launches it, and this session lives in `note2action` — so the reviewer
+found no PR #93 there and reviewed the local `refactor/web-restructure`
+branch instead. The hand-done security review of the real PR #93, with
+its two applied fixes, is unaffected. The mis-fire still produced value:
+15 verified findings about note2action, several reproduced by actually
+running the failing commands. Highlights: the new Postgres wiring crashes
+every entry point on a machine without a hand-made `.env` file (settings
+are required and the database _engine_ — the object managing connections —
+is built at _import time_, i.e. the moment the code loads, even when the
+in-memory mode is selected); an over-strict settings rule aborts on any
+extra `.env` line; date helpers give wrong days outside UTC but the test
+script pins `TZ=UTC` so tests can't see it; a typo'd `REPOSITORY` value
+silently serves stub data; and the repo's own journal _hook_ (a script
+the coding tool runs automatically around actions) flags files written
+outside the repo — explaining this session's repeated journal prompts.
+
+**WHICH files:** None edited in this segment — the only repo change
+remains the uncommitted PR #93 fixes in
+`/Users/macbook/Blen/agency-intelligence-wt/feat-26-gateway-response-cache/`
+listed in the previous entry. The findings list lives in the session's
+task output; nothing was posted to GitHub.
+
+**WHY:** Lesson recorded for future sessions: when launching a review
+subagent for another repository, state the absolute repo path in its
+prompt (or launch from that directory), because subagents inherit this
+session's working directory and will happily review whatever they find
+there. Kyle has two open decisions: commit/push the PR #93 fixes, and
+whether to re-run the deep review pointed at the right repo.
+
+## 2026-08-18 — ActionItem schema fields can be left blank
+
+**WHAT changed:** On the `ActionItem` _schema_ (the written description
+of what one action item looks like when the API — the program that
+answers web requests — sends or receives it), several fields are now
+_optional_. Optional means the program will still accept the object if
+that field is missing. In Python this is written `str | None = None`:
+`str` is text, `|` means "or", `None` means "no value", and `= None`
+is the _default_ (what to use when the caller does not provide
+anything). `title`, `owner`, `due`, `priority`, `saved`, `note`, and
+`status` all follow that pattern. `id`, `meetingId`, and `confidence`
+still must be given. This sits alongside the earlier same-day change
+that added `to_wire` (a shared translator from a database row to this
+schema).
+
+**WHICH files:** `apps/api/app/schemas.py`. (The mapper and its test
+are in `apps/api/app/repository.py` and
+`apps/api/tests/test_repository.py`, logged in the earlier
+`to_wire` entry.)
+
+**WHY:** The in-memory sample items and work-in-progress update path
+construct `ActionItem` objects without filling every field. If the
+schema required every field, those objects would be rejected as
+invalid. Making the unused-for-now fields optional lets the rest of
+the code run while the full create/update contract is still being
+built.
+
+## 2026-08-18 — Clarifying who reviewed what (no code changed)
+
+**WHAT:** Nothing was edited this segment; this entry records a
+clarification Kyle asked for. Question: did the review cover
+agency-intelligence PR #93 or the note2action _monorepo_ (one repository
+holding several apps/packages together)? Answer: both, by different
+reviewers. PR #93 was reviewed by hand, directly against the real pull
+request's changes and its checked-out branch — that review produced the
+two security fixes recorded earlier. Separately, the automated background
+reviewer launched to double-check PR #93 inherited this session's working
+directory (the folder a program treats as "here"), found no PR #93 in
+note2action, and reviewed the local `refactor/web-restructure` branch
+instead — producing 15 findings that belong to note2action, not to the
+PR.
+
+**WHICH files:** No repository files changed. The only pending change
+remains the uncommitted PR #93 security fixes in
+`/Users/macbook/Blen/agency-intelligence-wt/feat-26-gateway-response-cache/`.
+A reusable lesson ("pin the absolute repo path when launching review
+agents") was saved outside the repo in the personal memory folder at
+`~/.claude/projects/-Users-macbook-note2action/memory/`.
+
+**WHY:** The distinction matters for trust in the review: the security
+verdict and fixes for PR #93 came from the hands-on review of the actual
+PR, so the wrong-repo mishap cost only the extra automated pass, not the
+correctness of the delivered review. Kyle's two open decisions are
+unchanged: commit/push the PR #93 fixes, and optionally re-run the deep
+review pointed at the right repository.
+
+## 2026-08-18 — PR #93 security fixes shipped (commit efa36e4)
+
+**WHAT:** With Kyle's approval the two response-cache security fixes were
+committed and pushed to the PR #93 branch — and nothing was posted on the
+pull request itself (no comments, no description edits): pushing new
+commits to a PR's branch updates the PR automatically, so the code change
+travels without any commentary. The commit's subject line starts with a
+lowercase verb ("harden…") to satisfy the repo's commitlint format rule,
+and its body records both fixes plus the real verification numbers, per
+the repo's evidence-before-claims habit. The repository's own _git hooks_
+(scripts that run automatically around git actions) re-verified everything
+in transit: the _pre-commit_ hook ran the guardrail sync check, contract
+checks, web type check, and API lint; the _pre-push_ hook ran the test
+suites. A background monitor now watches the PR's _CI_ (continuous
+integration — the checks GitHub runs on every push) and will report when
+all checks finish.
+
+**WHICH files:** Committed in
+`/Users/macbook/Blen/agency-intelligence-wt/feat-26-gateway-response-cache/`
+as commit `efa36e4`: `docker-compose.yml` (Redis bound to 127.0.0.1),
+`apps/api/app/core/config.py` (TLS-in-production validator),
+`apps/api/tests/test_response_cache_config.py` (new, 6 tests),
+`.env.example` (production note), and
+`docs/plans/2026-08-18-26-gateway-response-cache.md` (addendum). Pushed to
+`origin/feat/26-gateway-response-cache` (`c7052a4..efa36e4`).
+
+**WHY:** Kyle said "commit fixes to pr but do not comment on pr" — so the
+branch push is the whole update. The fixes close the two network-exposure
+holes found in review (unauthenticated Redis reachable from the network;
+cleartext cache transport allowed in production) while leaving the dev
+workflow untouched.

@@ -8,7 +8,7 @@ flowchart TD
     Browser[User / Browser]
 
     Web["web — React + Vite (:5173)"]
-    API["api — FastAPI (:8000)"]
+    API["api — FastAPI (:8001)"]
     AI["ai — Next.js + Vercel AI SDK (:3000)"]
     DB[("PostgreSQL (:5432) — Module 9")]
     LLM[Anthropic]

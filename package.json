@@ -7,7 +7,7 @@
     "dev": "docker compose up --build",
     "dev:down": "docker compose down",
     "dev:local": "concurrently -k -n web,api,ai -c blue,green,magenta \"pnpm --filter @note2action/web dev\" \"pnpm run dev:api\" \"pnpm --filter @note2action/ai dev\"",
-    "dev:api": "cd apps/api && uv run uvicorn app.main:app --reload --port 8000",
+    "dev:api": "cd apps/api && uv run uvicorn app.main:app --reload --port 8001",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",

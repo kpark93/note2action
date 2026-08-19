@@ -36,7 +36,7 @@ pnpm dev:down       # stop everything
 ```
 
 - web → <http://localhost:5173>
-- api → <http://localhost:8000> (docs at `/docs`)
+- api → <http://localhost:8001> (docs at `/docs`)
 - ai → <http://localhost:3000>
 
 ## Quickstart — local (no Docker)
@@ -64,7 +64,7 @@ pnpm dev:api                          # api only (uv run uvicorn …)
 | App | URL                   | Port |
 | --- | --------------------- | ---- |
 | web | http://localhost:5173 | 5173 |
-| api | http://localhost:8000 | 8000 |
+| api | http://localhost:8001 | 8001 |
 | ai  | http://localhost:3000 | 3000 |
 
 In dev, the web app proxies `/api/*` to the API, so there's no CORS config to

@@ -213,7 +213,7 @@ instead of one hour.
    round trip is the whole lesson.
 3. Install Postman → create a collection "note2action API" → one saved
    request per endpoint, with example bodies → set a collection variable
-   `baseUrl = http://localhost:8000`.
+   `baseUrl = http://localhost:8001`.
 4. Break something on purpose (send a bad body) and read the API's error
    response in Postman.
 

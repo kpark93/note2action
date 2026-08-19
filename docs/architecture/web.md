@@ -29,7 +29,7 @@ flowchart LR
     Items --> ItemsApi
     ItemsApi --> Http
     Health --> Http
-    Http -->|"/api/*"| API["FastAPI :8000"]
+    Http -->|"/api/*"| API["FastAPI :8001"]
     Http -->|"/ai-api/*"| AI["AI app :3000"]
 ```
 

@@ -43,7 +43,7 @@ stays out of it (JS monorepo tooling and Python don't mix — `uv` + root
 scripts is the clean seam).
 
 **Ports (chosen to not collide with other local projects):** web 5173,
-api 8000, ai 3000.
+api 8001, ai 3000.
 
 **Prove it:** `pnpm dev` (Docker) and `pnpm dev:local` (native) both bring up
 all three apps.
