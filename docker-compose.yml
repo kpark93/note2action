@@ -3,7 +3,9 @@ services:
     build:
       context: ./apps/api
     ports:
-      - "8000:8000"
+      # Container listens on 8000 internally; host port is 8001 (8000 belongs
+      # to other local projects).
+      - "8001:8000"
 
   web:
     build:
@@ -31,3 +33,17 @@ services:
     env_file:
       - path: apps/ai/.env
         required: false
+
+  postgres:
+    image: postgres:17.1-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=note2action
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:

@@ -20,7 +20,9 @@ export function ConfidencePill({ pct, low }: ConfidencePillProps) {
       }`}
     >
       <span className="h-[6px] w-[6px] rounded-full bg-primary" />
-      <span className={`text-[11.5px] font-semibold tabular-nums ${fg}`}>{pct}</span>
+      <span className={`text-[11.5px] font-semibold tabular-nums ${fg}`}>
+        {pct}
+      </span>
       <span className={`text-[11.5px] font-medium ${fg}`}>
         {low ? "needs review" : "confident"}
       </span>

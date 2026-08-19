@@ -1,37 +1,36 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useActionItems } from "@/store/actionItems.store";
+import { useItemsQuery, usePatchItem } from "@/lib/items.queries";
 import { useTasksStore } from "./tasks.store";
-import { OWNERS, STATUSES } from "@/store/actionItems.constants";
+import { OWNERS, PRIORITIES, STATUSES } from "@/store/actionItems.constants";
 import { savedTasks } from "@/lib/items";
 import { taskRows } from "./tasks.utils";
-import { TaskRow } from "./task-row";
+import { TaskRow } from "@/components/app/task-row";
 import { playPop } from "@/lib/sound";
 import type { Status } from "@/store/actionItems.types";
 import { Button } from "@/components/ui/button";
-import { StepLabel } from "@/components/step-label";
-import { ViewHeader } from "@/components/view-header";
-import { SectionHeading } from "@/components/section-heading";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { StepLabel } from "@/components/app/step-label";
+import { ViewHeader } from "@/components/app/view-header";
+import { SectionHeading } from "@/components/app/section-heading";
+import { ViewShell } from "@/components/app/view-shell";
+import { ScrollRegion } from "@/components/app/scroll-region";
+import { Toolbar } from "@/components/app/toolbar";
+import { FilterSelect } from "@/components/app/filter-select";
 
 const OPEN_STATUSES = STATUSES.slice(0, 3);
 // Tasks are grouped into these sections, most-active first.
 const STATUS_SECTIONS: Status[] = ["In progress", "Blocked", "Not started"];
 
 export function TasksView() {
-  const items = useActionItems((s) => s.items);
+  const items = useItemsQuery().data ?? [];
   const filterOwner = useTasksStore((s) => s.filterOwner);
   const filterStatus = useTasksStore((s) => s.filterStatus);
+  const filterPriority = useTasksStore((s) => s.filterPriority);
   const setFilterOwner = useTasksStore((s) => s.setFilterOwner);
   const setFilterStatus = useTasksStore((s) => s.setFilterStatus);
+  const setFilterPriority = useTasksStore((s) => s.setFilterPriority);
   const clearFilters = useTasksStore((s) => s.clearFilters);
-  const update = useActionItems((s) => s.update);
+  const patchItem = usePatchItem();
   const navigate = useNavigate();
 
   // Track the row being completed so it stays mounted long enough to play the
@@ -43,19 +42,19 @@ export function TasksView() {
       playPop();
       setCompletingId(id);
       window.setTimeout(() => {
-        update(id, "status", "Done");
+        patchItem.mutate({ id, patch: { status: "Done" } });
         setCompletingId((cur) => (cur === id ? null : cur));
       }, 500);
     } else {
-      update(id, "status", value);
+      patchItem.mutate({ id, patch: { status: value } });
     }
   };
 
-  const rows = taskRows(items, filterOwner, filterStatus);
+  const rows = taskRows(items, filterOwner, filterStatus, filterPriority);
   const savedCount = savedTasks(items).length;
 
   return (
-    <div className="n2a-view flex min-h-0 flex-1 flex-col overflow-hidden">
+    <ViewShell>
       <ViewHeader
         eyebrow={<StepLabel step={3} label="Tasks" />}
         title="Tasks"
@@ -74,39 +73,35 @@ export function TasksView() {
           </>
         }
         actions={
-          <Button variant="cta" onClick={() => navigate("/capture")} className="flex-none">
+          <Button
+            variant="cta"
+            onClick={() => navigate("/capture")}
+            className="flex-none"
+          >
             New capture
           </Button>
         }
       />
 
-      <div className="my-3 flex items-center gap-[9px]">
-        <Select value={filterOwner} onValueChange={setFilterOwner}>
-          <SelectTrigger className="min-w-[164px] rounded-[12px] border-border bg-card px-[13px] text-[13px] text-foreground data-[size=default]:h-[38px]">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="All">All owners</SelectItem>
-            {OWNERS.map((o) => (
-              <SelectItem key={o} value={o}>
-                {o}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Select value={filterStatus} onValueChange={setFilterStatus}>
-          <SelectTrigger className="min-w-[164px] rounded-[12px] border-border bg-card px-[13px] text-[13px] text-foreground data-[size=default]:h-[38px]">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="All">All statuses</SelectItem>
-            {OPEN_STATUSES.map((s) => (
-              <SelectItem key={s} value={s}>
-                {s}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+      <Toolbar className="gap-[9px]">
+        <FilterSelect
+          value={filterOwner}
+          onValueChange={setFilterOwner}
+          allLabel="All owners"
+          options={OWNERS}
+        />
+        <FilterSelect
+          value={filterStatus}
+          onValueChange={setFilterStatus}
+          allLabel="All statuses"
+          options={OPEN_STATUSES}
+        />
+        <FilterSelect
+          value={filterPriority}
+          onValueChange={setFilterPriority}
+          allLabel="All priorities"
+          options={PRIORITIES}
+        />
         <Button
           variant="ghost"
           onClick={clearFilters}
@@ -114,9 +109,9 @@ export function TasksView() {
         >
           Clear
         </Button>
-      </div>
+      </Toolbar>
 
-      <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-x-hidden overflow-y-auto -mr-1 pr-1">
+      <ScrollRegion className="flex flex-col gap-4">
         {rows.length === 0 ? (
           <div className="rounded-[16px] bg-card px-5 py-[52px] text-center text-[13.5px] text-muted-foreground">
             {savedCount === 0
@@ -144,7 +139,7 @@ export function TasksView() {
             );
           })
         )}
-      </div>
-    </div>
+      </ScrollRegion>
+    </ViewShell>
   );
 }

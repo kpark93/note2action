@@ -14,7 +14,13 @@ interface StatCardProps {
 }
 
 /** Compact metric tile: label, big number, thin progress bar, footnote. */
-export function StatCard({ label, value, percent, barColor, delta }: StatCardProps) {
+export function StatCard({
+  label,
+  value,
+  percent,
+  barColor,
+  delta,
+}: StatCardProps) {
   return (
     <Card className="gap-0 rounded-[16px] border-0 px-4 py-[13px] shadow-none">
       <div className="text-[12.5px] text-muted-foreground">{label}</div>

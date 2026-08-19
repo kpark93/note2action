@@ -1,31 +1,38 @@
 import { useNavigate } from "react-router-dom";
-import { useActionItems } from "@/store/actionItems.store";
+import { useItemsQuery, useSaveToTasks } from "@/lib/items.queries";
 import { useReviewStore } from "./review.store";
 import { flagSentence, reviewItems } from "./review.utils";
-import { ReviewCard } from "./review-card";
-import { StepLabel } from "@/components/step-label";
-import { ViewHeader } from "@/components/view-header";
-import { EmptyState } from "@/components/empty-state";
+import { ReviewCard } from "@/components/app/review-card";
+import { StepLabel } from "@/components/app/step-label";
+import { ViewHeader } from "@/components/app/view-header";
+import { EmptyState } from "@/components/app/empty-state";
+import { ViewShell } from "@/components/app/view-shell";
+import { ScrollRegion } from "@/components/app/scroll-region";
+import { Toolbar } from "@/components/app/toolbar";
 import { Button } from "@/components/ui/button";
 
 export function ReviewView() {
-  const items = useActionItems((s) => s.items);
+  const { data, isPending } = useItemsQuery();
+  const items = data ?? [];
   const onlyLow = useReviewStore((s) => s.onlyLow);
   const navigate = useNavigate();
   const toggleOnlyLow = useReviewStore((s) => s.toggleOnlyLow);
-  const saveToTasks = useActionItems((s) => s.saveToTasks);
+  const saveToTasks = useSaveToTasks();
 
   const all = reviewItems(items);
   const flagCount = all.filter((i) => i.low).length;
   const visible = onlyLow ? all.filter((i) => i.low) : all;
 
   return (
-    <div className="n2a-view flex min-h-0 flex-1 flex-col overflow-hidden">
+    <ViewShell>
       <ViewHeader
         eyebrow={<StepLabel step={2} label="Review" />}
         title={`${all.length} action items extracted`}
         description={
-          <>Owners and dates were inferred from the transcript. {flagSentence(flagCount)}</>
+          <>
+            Owners and dates were inferred from the transcript.{" "}
+            {flagSentence(flagCount)}
+          </>
         }
         actions={
           <>
@@ -38,11 +45,12 @@ export function ReviewView() {
             </Button>
             <Button
               variant="cta"
-              onClick={() => {
-                saveToTasks();
-                navigate("/tasks");
-              }}
-              disabled={all.length === 0}
+              onClick={() =>
+                saveToTasks.mutate(undefined, {
+                  onSuccess: () => navigate("/tasks"),
+                })
+              }
+              disabled={all.length === 0 || saveToTasks.isPending}
               className="disabled:pointer-events-auto disabled:opacity-100"
               style={
                 all.length === 0
@@ -61,8 +69,10 @@ export function ReviewView() {
         }
       />
 
-      <div className="my-3 flex items-center gap-[14px]">
-        <span className="text-[13px] text-muted-foreground">{flagCount} need review</span>
+      <Toolbar className="gap-[14px]">
+        <span className="text-[13px] text-muted-foreground">
+          {flagCount} need review
+        </span>
         <span className="h-[14px] w-px bg-border" />
         <Button
           variant="ghost"
@@ -70,7 +80,9 @@ export function ReviewView() {
           className="h-[31px] rounded-full px-[13px] text-[12.5px] font-medium"
           style={{
             background: onlyLow ? "hsl(var(--primary) / 0.15)" : "transparent",
-            color: onlyLow ? "hsl(var(--pill-blue))" : "hsl(var(--muted-foreground))",
+            color: onlyLow
+              ? "hsl(var(--pill-blue))"
+              : "hsl(var(--muted-foreground))",
             border: `1px solid ${onlyLow ? "hsl(var(--primary) / 0.5)" : "hsl(var(--border))"}`,
           }}
         >
@@ -78,11 +90,15 @@ export function ReviewView() {
         </Button>
         <span className="flex-1" />
         <span className="text-[12.5px] text-muted-foreground">
-          Edit any field inline · saves as you type
+          Edit any field inline · saves when you leave a field
         </span>
-      </div>
+      </Toolbar>
 
-      {all.length === 0 ? (
+      {isPending ? (
+        <div className="flex min-h-0 flex-1 items-center justify-center">
+          <EmptyState title="Loading…">Fetching your items.</EmptyState>
+        </div>
+      ) : all.length === 0 ? (
         <div className="flex min-h-0 flex-1 items-center justify-center">
           <EmptyState title="Nothing to review">
             Head to Capture and extract action items from your notes.
@@ -95,20 +111,19 @@ export function ReviewView() {
           </EmptyState>
         </div>
       ) : (
-        <div className="grid min-h-0 flex-1 auto-rows-min grid-cols-[repeat(auto-fill,minmax(252px,1fr))] content-start gap-[10px] overflow-x-hidden overflow-y-auto -mr-1 pr-1">
+        <ScrollRegion className="grid auto-rows-min grid-cols-[repeat(auto-fill,minmax(252px,1fr))] content-start gap-[10px]">
           {visible.map((item) => (
             <ReviewCard key={item.id} item={item} />
           ))}
-        </div>
+        </ScrollRegion>
       )}
 
       {all.length > 0 && (
         <p className="mt-3 text-[12px] text-muted-foreground">
-          {all.length} extracted · owners and dates inferred · edits save as you
-          type
+          {all.length} extracted · owners and dates inferred · edits save when
+          you leave a field
         </p>
       )}
-    </div>
+    </ViewShell>
   );
 }
-

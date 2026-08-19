@@ -24,7 +24,7 @@ export function PriorityBadge({
       className={cn(
         "border-0 rounded-full px-[10px] py-[3px] text-[11.5px] font-semibold",
         PRIORITY_CLASSES[priority],
-        className
+        className,
       )}
     >
       {priority}

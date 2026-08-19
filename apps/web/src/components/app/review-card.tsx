@@ -1,13 +1,13 @@
 import type { CSSProperties } from "react";
-import { useActionItems } from "@/store/actionItems.store";
+import { useDeleteItem, usePatchItem } from "@/lib/items.queries";
 import { OWNERS } from "@/store/actionItems.constants";
-import { reviewStyle } from "./review.utils";
+import { reviewStyle } from "@/views/review/review.utils";
 import type { Priority } from "@/store/actionItems.types";
-import type { ReviewItemVM } from "./review.utils";
+import type { ReviewItemVM } from "@/views/review/review.utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { ConfidencePill } from "@/components/confidence-pill";
+import { ConfidencePill } from "@/components/app/confidence-pill";
 import {
   Select,
   SelectContent,
@@ -18,10 +18,14 @@ import {
 
 /** One editable card in the Review grid: confidence pill, title, owner/due/priority fields, confirm/discard. */
 export function ReviewCard({ item }: { item: ReviewItemVM }) {
-  const update = useActionItems((s) => s.update);
-  const confirm = useActionItems((s) => s.confirm);
-  const discard = useActionItems((s) => s.discard);
+  const patchItem = usePatchItem();
+  const deleteItem = useDeleteItem();
   const st = reviewStyle(item.low);
+
+  // Text fields save on blur (one PATCH per edit, not per keystroke);
+  // selects and buttons save immediately.
+  const patch = (patchBody: Parameters<typeof patchItem.mutate>[0]["patch"]) =>
+    patchItem.mutate({ id: item.id, patch: patchBody });
 
   return (
     <article
@@ -44,19 +48,20 @@ export function ReviewCard({ item }: { item: ReviewItemVM }) {
       </div>
 
       <Textarea
-        value={item.title}
-        onChange={(e) => update(item.id, "title", e.target.value)}
+        defaultValue={item.title}
+        onBlur={(e) => {
+          if (e.target.value !== item.title) patch({ title: e.target.value });
+        }}
         rows={2}
         className="review-title mb-[9px] block field-sizing-fixed min-h-[38px] w-full resize-none overflow-hidden rounded-[11px] border-transparent bg-transparent px-[7px] py-[5px] text-[14.5px] leading-[1.35] font-semibold tracking-[-0.02em] text-foreground shadow-none md:text-[14.5px] dark:bg-transparent"
       />
 
       <div className="grid grid-cols-[minmax(0,1fr)] gap-[9px]">
         <label className="flex flex-col gap-[6px]">
-          <span className="text-[11px] font-medium text-muted-foreground">Owner</span>
-          <Select
-            value={item.owner}
-            onValueChange={(v) => update(item.id, "owner", v)}
-          >
+          <span className="text-[11px] font-medium text-muted-foreground">
+            Owner
+          </span>
+          <Select value={item.owner} onValueChange={(v) => patch({ owner: v })}>
             <SelectTrigger className="w-full rounded-[10px] border-border bg-secondary px-2 text-[12.5px] text-foreground data-[size=default]:h-8">
               <SelectValue />
             </SelectTrigger>
@@ -71,11 +76,15 @@ export function ReviewCard({ item }: { item: ReviewItemVM }) {
         </label>
         <div className="grid grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] gap-[9px]">
           <label className="flex min-w-0 flex-col gap-[6px]">
-            <span className="text-[11px] font-medium text-muted-foreground">Due</span>
+            <span className="text-[11px] font-medium text-muted-foreground">
+              Due
+            </span>
             <Input
               type="date"
-              value={item.due}
-              onChange={(e) => update(item.id, "due", e.target.value)}
+              defaultValue={item.due}
+              onBlur={(e) => {
+                if (e.target.value !== item.due) patch({ due: e.target.value });
+              }}
               className="h-8 rounded-[10px] border-border bg-secondary px-2 text-[12.5px] text-foreground shadow-none md:text-[12.5px] dark:bg-secondary"
             />
           </label>
@@ -85,7 +94,7 @@ export function ReviewCard({ item }: { item: ReviewItemVM }) {
             </span>
             <Select
               value={item.priority}
-              onValueChange={(v) => update(item.id, "priority", v as Priority)}
+              onValueChange={(v) => patch({ priority: v as Priority })}
             >
               <SelectTrigger className="w-full rounded-[10px] border-border bg-secondary px-2 text-[12.5px] text-foreground data-[size=default]:h-8">
                 <SelectValue />
@@ -110,7 +119,7 @@ export function ReviewCard({ item }: { item: ReviewItemVM }) {
         <span className="flex w-[82px] flex-none flex-col gap-[6px]">
           {item.low && (
             <Button
-              onClick={() => confirm(item.id)}
+              onClick={() => patch({ confidence: 100 })}
               className="h-[29px] w-full rounded-[9px] px-0 text-[12.5px] font-semibold"
             >
               Confirm
@@ -118,7 +127,7 @@ export function ReviewCard({ item }: { item: ReviewItemVM }) {
           )}
           <Button
             variant="outline"
-            onClick={() => discard(item.id)}
+            onClick={() => deleteItem.mutate(item.id)}
             className="h-[29px] w-full rounded-[9px] border-border bg-transparent px-0 text-[12.5px] font-medium text-muted-foreground shadow-none dark:border-border dark:bg-transparent"
           >
             Discard

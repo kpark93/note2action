@@ -18,12 +18,12 @@ workspace — it uses **uv** — but the root scripts still drive it.
 
 ## Prerequisites
 
-| Tool | Version | Notes |
-| --- | --- | --- |
-| Node | 20+ | 20 or newer |
-| pnpm | 9+ | `corepack enable pnpm` (ships with Node) |
-| uv | latest | Python package manager — <https://docs.astral.sh/uv/> |
-| Docker | with Compose v2 | Only needed for the Docker quickstart |
+| Tool   | Version         | Notes                                                 |
+| ------ | --------------- | ----------------------------------------------------- |
+| Node   | 20+             | 20 or newer                                           |
+| pnpm   | 9+              | `corepack enable pnpm` (ships with Node)              |
+| uv     | latest          | Python package manager — <https://docs.astral.sh/uv/> |
+| Docker | with Compose v2 | Only needed for the Docker quickstart                 |
 
 ## Quickstart — Docker (one command)
 
@@ -36,8 +36,8 @@ pnpm dev:down       # stop everything
 ```
 
 - web → <http://localhost:5173>
-- api → <http://localhost:8000> (docs at `/docs`)
-- ai  → <http://localhost:3000>
+- api → <http://localhost:8001> (docs at `/docs`)
+- ai → <http://localhost:3000>
 
 ## Quickstart — local (no Docker)
 
@@ -61,10 +61,10 @@ pnpm dev:api                          # api only (uv run uvicorn …)
 
 ## Ports
 
-| App | URL | Port |
-| --- | --- | --- |
+| App | URL                   | Port |
+| --- | --------------------- | ---- |
 | web | http://localhost:5173 | 5173 |
-| api | http://localhost:8000 | 8000 |
+| api | http://localhost:8001 | 8001 |
 | ai  | http://localhost:3000 | 3000 |
 
 In dev, the web app proxies `/api/*` to the API, so there's no CORS config to
@@ -72,13 +72,13 @@ manage.
 
 ## Scripts (run from the repo root)
 
-| Command | What it does |
-| --- | --- |
-| `pnpm dev` | Build + run everything with Docker Compose |
-| `pnpm dev:down` | Stop the Docker Compose stack |
-| `pnpm dev:local` | Run web + api + ai natively (no Docker) |
-| `pnpm lint` | Type-check the JS/TS apps (`--if-present`) |
-| `pnpm test` | Run workspace tests + the API's pytest suite |
+| Command          | What it does                                 |
+| ---------------- | -------------------------------------------- |
+| `pnpm dev`       | Build + run everything with Docker Compose   |
+| `pnpm dev:down`  | Stop the Docker Compose stack                |
+| `pnpm dev:local` | Run web + api + ai natively (no Docker)      |
+| `pnpm lint`      | Type-check the JS/TS apps (`--if-present`)   |
+| `pnpm test`      | Run workspace tests + the API's pytest suite |
 
 ## Where to add your code
 

@@ -11,7 +11,12 @@ interface ViewHeaderProps {
 }
 
 /** Standard page header: eyebrow + 25px title + muted description left, actions right. */
-export function ViewHeader({ eyebrow, title, description, actions }: ViewHeaderProps) {
+export function ViewHeader({
+  eyebrow,
+  title,
+  description,
+  actions,
+}: ViewHeaderProps) {
   return (
     <div className="flex items-start justify-between gap-10">
       <div>

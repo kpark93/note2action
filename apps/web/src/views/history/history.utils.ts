@@ -30,7 +30,8 @@ export function historyGroups(
     .map((k) => ({
       key: k,
       label: k === weekOf(TODAY) ? "This week" : "Week of " + formatDate(k),
-      count: groupMap[k].length + (groupMap[k].length === 1 ? " item" : " items"),
+      count:
+        groupMap[k].length + (groupMap[k].length === 1 ? " item" : " items"),
       items: groupMap[k].map((it) => ({
         ...it,
         completedLabel: formatDate(it.completed || ""),
@@ -47,17 +48,40 @@ export interface StatVM {
   delta: string;
 }
 
-export function historyStats(items: ActionItem[]): StatVM[] {
+export function historyStats(
+  items: ActionItem[],
+  meetingCount: number,
+): StatVM[] {
   const done = doneItems(items);
   const open = openItems(items);
   const total = items.length;
-  const onTime = done.filter((i) => !i.due || (i.completed || "") <= i.due).length;
+  const onTime = done.filter(
+    (i) => !i.due || (i.completed || "") <= i.due,
+  ).length;
   const donePct = total ? Math.round((done.length / total) * 100) : 0;
   const onTimePct = done.length ? Math.round((onTime / done.length) * 100) : 0;
 
   return [
-    { label: "Completed all time", value: done.length, percent: donePct, barColor: "hsl(var(--primary))", delta: "across 4 meetings" },
-    { label: "Closed on or before due date", value: done.length ? onTimePct + "%" : "—", percent: onTimePct, barColor: "hsl(var(--primary) / 0.65)", delta: onTime + " of " + done.length },
-    { label: "Still open", value: open.length, percent: total ? Math.round((open.length / total) * 100) : 0, barColor: "hsl(var(--muted-foreground))", delta: "in Tasks" },
+    {
+      label: "Completed all time",
+      value: done.length,
+      percent: donePct,
+      barColor: "hsl(var(--primary))",
+      delta: `across ${meetingCount} ${meetingCount === 1 ? "meeting" : "meetings"}`,
+    },
+    {
+      label: "Closed on or before due date",
+      value: done.length ? onTimePct + "%" : "—",
+      percent: onTimePct,
+      barColor: "hsl(var(--primary) / 0.65)",
+      delta: onTime + " of " + done.length,
+    },
+    {
+      label: "Still open",
+      value: open.length,
+      percent: total ? Math.round((open.length / total) * 100) : 0,
+      barColor: "hsl(var(--muted-foreground))",
+      delta: "in Tasks",
+    },
   ];
 }

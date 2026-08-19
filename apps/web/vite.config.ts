@@ -3,8 +3,9 @@ import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import path from "path";
 // Where /api/* is forwarded in dev. Locally that's the FastAPI service on
-// localhost:8000; in Docker Compose it's the `api` service. Override via env.
-const apiTarget = process.env.VITE_API_PROXY_TARGET ?? "http://localhost:8000";
+// localhost:8001 (8000 belongs to other local projects); in Docker Compose
+// it's the `api` service. Override via env.
+const apiTarget = process.env.VITE_API_PROXY_TARGET ?? "http://localhost:8001";
 // Where /ai-api/* is forwarded — the Next.js AI app (its routes live under
 // /api, so we strip the /ai-api prefix). localhost:3000 locally, `ai` in Compose.
 const aiTarget = process.env.VITE_AI_PROXY_TARGET ?? "http://localhost:3000";

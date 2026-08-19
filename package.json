@@ -7,13 +7,37 @@
     "dev": "docker compose up --build",
     "dev:down": "docker compose down",
     "dev:local": "concurrently -k -n web,api,ai -c blue,green,magenta \"pnpm --filter @note2action/web dev\" \"pnpm run dev:api\" \"pnpm --filter @note2action/ai dev\"",
-    "dev:api": "cd apps/api && uv run uvicorn app.main:app --reload --port 8000",
-    "lint": "pnpm -r --if-present lint",
+    "dev:api": "cd apps/api && uv run uvicorn app.main:app --reload --port 8001",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "typecheck": "pnpm -r --if-present typecheck",
     "test": "pnpm -r --if-present test && pnpm run test:api",
-    "test:api": "cd apps/api && uv run pytest -q"
+    "test:api": "cd apps/api && uv run pytest -q",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,mjs}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{js,json,md,css,yml,yaml}": [
+      "prettier --write"
+    ]
   },
   "devDependencies": {
-    "concurrently": "^9.1.2"
+    "@eslint/js": "^10.0.1",
+    "@tanstack/eslint-plugin-query": "^5.101.4",
+    "concurrently": "^9.1.2",
+    "eslint": "^10.8.1",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.4",
+    "globals": "^17.11.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.3.0",
+    "prettier": "^3.9.6",
+    "typescript-eslint": "^8.67.0"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.101.4",

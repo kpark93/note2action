@@ -22,6 +22,12 @@ export function weekOf(d: string): string {
   return monday.toISOString().slice(0, 10);
 }
 
+/** Relative day label for an ISO timestamp: "today", "1d ago", "12d ago". */
+export function timeAgo(iso: string): string {
+  const days = Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000);
+  return days <= 0 ? "today" : `${days}d ago`;
+}
+
 /** Sort comparator for ISO date strings: earliest first; empty dates sort last. */
 export function compareDueAsc(a: string, b: string): number {
   if (!a) return b ? 1 : 0;

@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useActionItems } from "@/store/actionItems.store";
+import { useItemsQuery } from "@/lib/items.queries";
 import { USER } from "@/store/actionItems.constants";
 import { pendingItems, savedTasks } from "@/lib/items";
 import { Button } from "@/components/ui/button";
+import { ViewShell } from "@/components/app/view-shell";
+import { RecapCard } from "@/components/app/recap-card";
 
 // A few welcome messages; one is chosen at random each time Home mounts.
 const GREETINGS = [
@@ -13,7 +15,7 @@ const GREETINGS = [
 ];
 
 export function HomeView() {
-  const items = useActionItems((s) => s.items);
+  const items = useItemsQuery().data ?? [];
   const navigate = useNavigate();
   const [greeting] = useState(
     () => GREETINGS[Math.floor(Math.random() * GREETINGS.length)],
@@ -29,7 +31,7 @@ export function HomeView() {
         `${openTasks} open ${openTasks === 1 ? "task" : "tasks"}.`;
 
   return (
-    <div className="n2a-view flex min-h-0 flex-1 flex-col overflow-x-hidden overflow-y-auto -mr-1 pr-1">
+    <ViewShell className="overflow-x-hidden overflow-y-auto -mr-1 pr-1">
       <div className="text-[10.5px] font-semibold tracking-[0.14em] text-muted-foreground">
         HOME
       </div>
@@ -62,33 +64,6 @@ export function HomeView() {
       >
         New capture
       </Button>
-    </div>
-  );
-}
-
-function RecapCard({
-  value,
-  label,
-  cta,
-  onClick,
-}: {
-  value: number;
-  label: string;
-  cta: string;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className="recent-btn flex flex-col items-start gap-1 rounded-[16px] border border-border bg-card px-5 py-[18px] text-left"
-    >
-      <span className="text-[40px] font-bold leading-none tracking-[-0.03em] tabular-nums">
-        {value}
-      </span>
-      <span className="mt-1 text-[13.5px] text-muted-foreground">{label}</span>
-      <span className="mt-2 text-[12.5px] font-medium text-primary">
-        {cta} →
-      </span>
-    </button>
+    </ViewShell>
   );
 }

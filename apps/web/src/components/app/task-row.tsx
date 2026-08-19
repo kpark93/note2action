@@ -1,11 +1,11 @@
-import { useActionItems } from "@/store/actionItems.store";
+import { usePatchItem } from "@/lib/items.queries";
 import { STATUSES } from "@/store/actionItems.constants";
-import { STATUS_STYLE } from "./tasks.utils";
-import type { TaskRowVM } from "./tasks.utils";
+import { STATUS_STYLE } from "@/views/tasks/tasks.utils";
+import type { TaskRowVM } from "@/views/tasks/tasks.utils";
 import type { Status } from "@/store/actionItems.types";
 import { Undo2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { PriorityBadge } from "@/components/priority-badge";
+import { PriorityBadge } from "@/components/app/priority-badge";
 import {
   Select,
   SelectContent,
@@ -26,7 +26,7 @@ interface TaskRowProps {
 
 /** One task in the Tasks list: owner initials, title, due, priority pill, status select, send-back. */
 export function TaskRow({ row, isCompleting, onStatusChange }: TaskRowProps) {
-  const sendToReview = useActionItems((s) => s.sendToReview);
+  const patchItem = usePatchItem();
   const sc = STATUS_STYLE[row.status];
 
   return (
@@ -79,7 +79,9 @@ export function TaskRow({ row, isCompleting, onStatusChange }: TaskRowProps) {
       <Button
         variant="outline"
         size="icon"
-        onClick={() => sendToReview(row.id)}
+        onClick={() =>
+          patchItem.mutate({ id: row.id, patch: { saved: false } })
+        }
         title="Send back to Review"
         aria-label="Send back to Review"
         className="h-7 w-7 justify-self-center rounded-[9px] border-border bg-transparent text-muted-foreground shadow-none dark:border-border dark:bg-transparent"
