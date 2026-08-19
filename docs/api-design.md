@@ -79,9 +79,13 @@ recent-capture modal and "Load into capture".
 
 **What:** all action items for the user — Review, Tasks, History, and the
 Home counts are all client-side slices of this one list.
-**Response:** `{items: [...]}` — full shape: `{id, meetingId, title, owner,
-due, priority, confidence, status, saved, note, completed}`.
+**Response:** `{items: [...]}` — full shape: `{id, meetingId, meeting, title,
+owner, due, priority, confidence, status, saved, note, completed}`.
 **Errors:** none.
+**Decision — `meeting` (the title) rides along on every item.** The Review
+cards display the meeting name; making the API join it in (one query,
+server-side) beats every client fetching and cross-referencing the meetings
+list just to label cards.
 **Decision — no server-side filters yet.** The UI's owner/status filters
 stay client-side: the dataset is one user's items, small enough that a
 second round-trip per dropdown change buys nothing. Add query params only
