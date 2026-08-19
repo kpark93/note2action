@@ -1,29 +1,28 @@
-// Client state for the action-items app.
+// Client-only state for the action-items app.
 //
-// The v2 mock kept everything in one component's `this.state` and mutated it
-// with `setState`. Here that same state lives in a Zustand store so the four
-// views can read/update it without prop-drilling — matching the app's existing
-// use of Zustand for client state.
+// Server data (the items, the recent meetings) lives in TanStack Query — see
+// lib/items.queries.ts. What remains here is state that exists only in this
+// browser tab: the capture draft, which transcript modal is open, and the
+// extraction-in-flight flag. That split is the Module 10 rule: server state
+// is cached, client state is owned.
 import { create } from "zustand";
-import type { ExtractRequest, ExtractedItem } from "@note2action/shared";
+import type { ExtractRequest } from "@note2action/shared";
 import { extractActionItems } from "@/lib/actionItems.api";
-import type { ActionItem } from "./actionItems.types";
+import { createMeeting } from "@/lib/meetings.api";
+import { itemsKey, meetingsKey } from "@/lib/items.queries";
+import { queryClient } from "@/providers";
 import {
   DEFAULT_MEETING_TITLE,
   DEFAULT_RAW,
-  RECENTS,
   SAMPLES,
-  SEED_ITEMS,
-  TODAY,
 } from "./actionItems.constants";
 
 interface ActionItemsState {
   sampleIndex: number;
-  /** Index into RECENTS for the open transcript modal, or null when closed. */
-  modalIndex: number | null;
+  /** Meeting id for the open transcript modal, or null when closed. */
+  modalMeetingId: number | null;
   raw: string;
   meetingTitle: string;
-  items: ActionItem[];
   /** True while an AI extraction is in flight (survives tab switches). */
   extracting: boolean;
   /** Message from the last failed extraction, or null. */
@@ -32,37 +31,23 @@ interface ActionItemsState {
   setRaw: (raw: string) => void;
   setMeetingTitle: (title: string) => void;
   loadSample: () => void;
-  openRecent: (index: number) => void;
+  openRecent: (meetingId: number) => void;
   closeModal: () => void;
-  /** Load the open recent's transcript into Capture, then close + navigate. */
-  loadRecent: () => void;
-  /** Edit one field of one item; toggling to/from "Done" maintains `completed`. */
-  update: <K extends keyof ActionItem>(
-    id: number,
-    key: K,
-    value: ActionItem[K],
-  ) => void;
-  confirm: (id: number) => void;
-  discard: (id: number) => void;
-  /** Replace the pending Review batch with freshly extracted items (keeps saved tasks + history). */
-  applyExtraction: (extracted: ExtractedItem[]) => void;
-  /** Move all pending Review items into the Tasks list; they leave Review. */
-  saveToTasks: () => void;
-  /** Send a saved task back to the Review queue (unsave it). */
-  sendToReview: (id: number) => void;
+  /** Load a recent capture's transcript into the editor (from the modal). */
+  loadTranscript: (title: string, text: string) => void;
   /**
-   * Run an AI extraction. Lives in the store (not a component) so it keeps
-   * running — and applies its result — even if the user leaves the Capture tab.
+   * Run an AI extraction, then persist the capture through the API. Lives in
+   * the store (not a component) so it keeps running — and lands its result —
+   * even if the user leaves the Capture tab.
    */
   extractNotes: (payload: ExtractRequest) => void;
 }
 
 export const useActionItems = create<ActionItemsState>((set, get) => ({
   sampleIndex: 0,
-  modalIndex: null,
+  modalMeetingId: null,
   raw: DEFAULT_RAW,
   meetingTitle: DEFAULT_MEETING_TITLE,
-  items: SEED_ITEMS,
   extracting: false,
   extractError: null,
 
@@ -79,87 +64,33 @@ export const useActionItems = create<ActionItemsState>((set, get) => ({
       };
     }),
 
-  openRecent: (index) => set({ modalIndex: index }),
-  closeModal: () => set({ modalIndex: null }),
-  loadRecent: () =>
-    set((s) => {
-      if (s.modalIndex === null) return {};
-      const r = RECENTS[s.modalIndex];
-      return {
-        raw: r.text,
-        meetingTitle: r.name,
-        modalIndex: null,
-      };
-    }),
-
-  update: (id, key, value) =>
-    set((s) => ({
-      items: s.items.map((it) => {
-        if (it.id !== id) return it;
-        const next = { ...it, [key]: value };
-        if (key === "status") {
-          next.completed = value === "Done" ? TODAY : null;
-        }
-        return next;
-      }),
-    })),
-
-  confirm: (id) =>
-    set((s) => ({
-      items: s.items.map((it) =>
-        it.id === id ? { ...it, confidence: 100 } : it,
-      ),
-    })),
-
-  discard: (id) =>
-    set((s) => ({ items: s.items.filter((it) => it.id !== id) })),
-
-  applyExtraction: (extracted) =>
-    set((s) => {
-      // Keep already-saved tasks and completed history; only the pending
-      // (unsaved, non-done) Review batch is replaced.
-      const keep = s.items.filter((it) => it.status === "Done" || it.saved);
-      let nextId = s.items.reduce((max, it) => Math.max(max, it.id), 0);
-      const pending: ActionItem[] = extracted.map((e) => {
-        // Accept confidence as either 0-1 or 0-100, then clamp.
-        const raw = e.confidence <= 1 ? e.confidence * 100 : e.confidence;
-        return {
-          id: ++nextId,
-          title: e.title,
-          owner: e.owner,
-          due: e.due,
-          priority: e.priority,
-          confidence: Math.round(Math.max(0, Math.min(100, raw))),
-          status: "Not started",
-          saved: false,
-          note: e.note,
-          meeting: s.meetingTitle,
-          completed: null,
-        };
-      });
-      return { items: [...pending, ...keep] };
-    }),
-
-  saveToTasks: () =>
-    set((s) => ({
-      items: s.items.map((it) =>
-        it.status !== "Done" && !it.saved ? { ...it, saved: true } : it,
-      ),
-    })),
-
-  sendToReview: (id) =>
-    set((s) => ({
-      items: s.items.map((it) => (it.id === id ? { ...it, saved: false } : it)),
-    })),
+  openRecent: (meetingId) => set({ modalMeetingId: meetingId }),
+  closeModal: () => set({ modalMeetingId: null }),
+  loadTranscript: (title, text) =>
+    set({ raw: text, meetingTitle: title, modalMeetingId: null }),
 
   extractNotes: async (payload) => {
     if (get().extracting) return; // ignore double-clicks
     set({ extracting: true, extractError: null });
     try {
-      const items = await extractActionItems(payload);
-      // Apply + navigate happen here — independent of any mounted component,
-      // so switching tabs mid-extraction can't drop the result.
-      get().applyExtraction(items);
+      const extracted = await extractActionItems(payload);
+      // Persist at extraction (the Module 8 decision): the capture becomes
+      // database rows NOW, so the Review queue survives any refresh.
+      await createMeeting({
+        title: get().meetingTitle,
+        rawNotes: payload.notes,
+        items: extracted.map((e) => {
+          // Accept confidence as either 0-1 or 0-100, then clamp to 0-100.
+          const raw = e.confidence <= 1 ? e.confidence * 100 : e.confidence;
+          return {
+            ...e,
+            confidence: Math.round(Math.max(0, Math.min(100, raw))),
+          };
+        }),
+      });
+      // The server now owns the truth — make every view refetch it.
+      await queryClient.invalidateQueries({ queryKey: itemsKey });
+      await queryClient.invalidateQueries({ queryKey: meetingsKey });
       set({ extracting: false });
     } catch (err) {
       set({

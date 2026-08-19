@@ -1,4 +1,4 @@
-import { useActionItems } from "@/store/actionItems.store";
+import { useItemsQuery } from "@/lib/items.queries";
 import { useHistoryStore } from "./history.store";
 import { OWNERS } from "@/store/actionItems.constants";
 import { historyGroups, historyStats } from "./history.utils";
@@ -12,7 +12,7 @@ import { StatCard } from "@/components/app/stat-card";
 import { FilterSelect } from "@/components/app/filter-select";
 
 export function HistoryView() {
-  const items = useActionItems((s) => s.items);
+  const items = useItemsQuery().data ?? [];
   const historyOwner = useHistoryStore((s) => s.historyOwner);
   const setHistoryOwner = useHistoryStore((s) => s.setHistoryOwner);
 

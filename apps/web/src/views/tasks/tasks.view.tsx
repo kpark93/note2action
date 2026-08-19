@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useActionItems } from "@/store/actionItems.store";
+import { useItemsQuery, usePatchItem } from "@/lib/items.queries";
 import { useTasksStore } from "./tasks.store";
 import { OWNERS, STATUSES } from "@/store/actionItems.constants";
 import { savedTasks } from "@/lib/items";
@@ -22,13 +22,13 @@ const OPEN_STATUSES = STATUSES.slice(0, 3);
 const STATUS_SECTIONS: Status[] = ["In progress", "Blocked", "Not started"];
 
 export function TasksView() {
-  const items = useActionItems((s) => s.items);
+  const items = useItemsQuery().data ?? [];
   const filterOwner = useTasksStore((s) => s.filterOwner);
   const filterStatus = useTasksStore((s) => s.filterStatus);
   const setFilterOwner = useTasksStore((s) => s.setFilterOwner);
   const setFilterStatus = useTasksStore((s) => s.setFilterStatus);
   const clearFilters = useTasksStore((s) => s.clearFilters);
-  const update = useActionItems((s) => s.update);
+  const patchItem = usePatchItem();
   const navigate = useNavigate();
 
   // Track the row being completed so it stays mounted long enough to play the
@@ -40,11 +40,11 @@ export function TasksView() {
       playPop();
       setCompletingId(id);
       window.setTimeout(() => {
-        update(id, "status", "Done");
+        patchItem.mutate({ id, patch: { status: "Done" } });
         setCompletingId((cur) => (cur === id ? null : cur));
       }, 500);
     } else {
-      update(id, "status", value);
+      patchItem.mutate({ id, patch: { status: value } });
     }
   };
 

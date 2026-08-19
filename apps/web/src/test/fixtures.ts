@@ -7,6 +7,7 @@ let nextId = 1000;
 export function makeItem(overrides: Partial<ActionItem> = {}): ActionItem {
   return {
     id: nextId++,
+    meetingId: 1,
     title: "Test item",
     owner: "Kyle Park",
     due: "2026-08-14",
@@ -15,6 +16,7 @@ export function makeItem(overrides: Partial<ActionItem> = {}): ActionItem {
     status: "Not started",
     saved: true,
     meeting: "Weekly Sync — Aug 10",
+    completed: null,
     ...overrides,
   };
 }

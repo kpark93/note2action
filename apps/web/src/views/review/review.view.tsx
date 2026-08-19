@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { useActionItems } from "@/store/actionItems.store";
+import { useItemsQuery, useSaveToTasks } from "@/lib/items.queries";
 import { useReviewStore } from "./review.store";
 import { flagSentence, reviewItems } from "./review.utils";
 import { ReviewCard } from "@/components/app/review-card";
@@ -12,11 +12,12 @@ import { Toolbar } from "@/components/app/toolbar";
 import { Button } from "@/components/ui/button";
 
 export function ReviewView() {
-  const items = useActionItems((s) => s.items);
+  const { data, isPending } = useItemsQuery();
+  const items = data ?? [];
   const onlyLow = useReviewStore((s) => s.onlyLow);
   const navigate = useNavigate();
   const toggleOnlyLow = useReviewStore((s) => s.toggleOnlyLow);
-  const saveToTasks = useActionItems((s) => s.saveToTasks);
+  const saveToTasks = useSaveToTasks();
 
   const all = reviewItems(items);
   const flagCount = all.filter((i) => i.low).length;
@@ -44,11 +45,12 @@ export function ReviewView() {
             </Button>
             <Button
               variant="cta"
-              onClick={() => {
-                saveToTasks();
-                navigate("/tasks");
-              }}
-              disabled={all.length === 0}
+              onClick={() =>
+                saveToTasks.mutate(undefined, {
+                  onSuccess: () => navigate("/tasks"),
+                })
+              }
+              disabled={all.length === 0 || saveToTasks.isPending}
               className="disabled:pointer-events-auto disabled:opacity-100"
               style={
                 all.length === 0
@@ -88,11 +90,15 @@ export function ReviewView() {
         </Button>
         <span className="flex-1" />
         <span className="text-[12.5px] text-muted-foreground">
-          Edit any field inline · saves as you type
+          Edit any field inline · saves when you leave a field
         </span>
       </Toolbar>
 
-      {all.length === 0 ? (
+      {isPending ? (
+        <div className="flex min-h-0 flex-1 items-center justify-center">
+          <EmptyState title="Loading…">Fetching your items.</EmptyState>
+        </div>
+      ) : all.length === 0 ? (
         <div className="flex min-h-0 flex-1 items-center justify-center">
           <EmptyState title="Nothing to review">
             Head to Capture and extract action items from your notes.
@@ -114,8 +120,8 @@ export function ReviewView() {
 
       {all.length > 0 && (
         <p className="mt-3 text-[12px] text-muted-foreground">
-          {all.length} extracted · owners and dates inferred · edits save as you
-          type
+          {all.length} extracted · owners and dates inferred · edits save when
+          you leave a field
         </p>
       )}
     </ViewShell>

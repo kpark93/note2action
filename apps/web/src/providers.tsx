@@ -3,8 +3,9 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 
 // One QueryClient for the app's lifetime, created at module load so the query
-// cache survives re-renders.
-const queryClient = new QueryClient({
+// cache survives re-renders. Exported so non-component code (the zustand
+// store's extraction flow) can invalidate queries after it writes data.
+export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       // Serve cached data for 30s before refetching, so remounting a view

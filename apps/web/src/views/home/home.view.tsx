@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useActionItems } from "@/store/actionItems.store";
+import { useItemsQuery } from "@/lib/items.queries";
 import { USER } from "@/store/actionItems.constants";
 import { pendingItems, savedTasks } from "@/lib/items";
 import { Button } from "@/components/ui/button";
@@ -15,7 +15,7 @@ const GREETINGS = [
 ];
 
 export function HomeView() {
-  const items = useActionItems((s) => s.items);
+  const items = useItemsQuery().data ?? [];
   const navigate = useNavigate();
   const [greeting] = useState(
     () => GREETINGS[Math.floor(Math.random() * GREETINGS.length)],

@@ -1,10 +1,10 @@
-import { useActionItems } from "@/store/actionItems.store";
+import { useItemsQuery } from "@/lib/items.queries";
 import { summary } from "@/lib/items";
 import { SlotNumber } from "./slot-number";
 
 /** "Completion this month" widget: animated percent, progress bar, closed/open counts. */
 export function CompletionCard() {
-  const items = useActionItems((s) => s.items);
+  const items = useItemsQuery().data ?? [];
   const { donePct, doneCount, openCount } = summary(items);
   const pct = parseInt(donePct, 10) || 0;
 

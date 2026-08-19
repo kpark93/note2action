@@ -1,4 +1,4 @@
-import { useActionItems } from "@/store/actionItems.store";
+import { usePatchItem } from "@/lib/items.queries";
 import type { ActionItem } from "@/store/actionItems.types";
 import { Button } from "@/components/ui/button";
 
@@ -11,7 +11,7 @@ interface HistoryRowProps {
 
 /** One completed item: check mark, struck-through title, owner, completion date, Reopen. */
 export function HistoryRow({ item }: HistoryRowProps) {
-  const update = useActionItems((s) => s.update);
+  const patchItem = usePatchItem();
 
   return (
     <div
@@ -33,7 +33,9 @@ export function HistoryRow({ item }: HistoryRowProps) {
       </span>
       <Button
         variant="outline"
-        onClick={() => update(item.id, "status", "In progress")}
+        onClick={() =>
+          patchItem.mutate({ id: item.id, patch: { status: "In progress" } })
+        }
         className="h-[31px] justify-self-end rounded-[10px] border-border bg-transparent px-[13px] text-[12.5px] font-medium text-muted-foreground shadow-none dark:border-border dark:bg-transparent"
       >
         Reopen

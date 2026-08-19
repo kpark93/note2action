@@ -1,5 +1,5 @@
 import { NavLink } from "react-router-dom";
-import { useActionItems } from "@/store/actionItems.store";
+import { useItemsQuery } from "@/lib/items.queries";
 import { summary } from "@/lib/items";
 import { Badge } from "@/components/ui/badge";
 
@@ -13,7 +13,7 @@ const NAV = [
 
 /** Workspace nav links; Review carries a badge counting items awaiting review. */
 export function SidebarNav() {
-  const items = useActionItems((s) => s.items);
+  const items = useItemsQuery().data ?? [];
   const { flagCount } = summary(items);
 
   return (

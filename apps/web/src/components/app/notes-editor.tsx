@@ -68,7 +68,9 @@ export function NotesEditor() {
             }}
           >
             {extractError ? (
-              "Extraction failed — is the AI app running (and API key set)?"
+              // Surface the real error: it names which leg failed (the AI
+              // app on :3000, or the API on :8001 persisting the capture).
+              `${extractError} — check the AI app and API terminals.`
             ) : busy ? (
               <>
                 Reading your notes

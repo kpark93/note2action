@@ -55,6 +55,9 @@ export async function request<T = unknown>(
     );
   }
 
+  // 204 No Content has an empty body — res.json() would throw on it.
+  if (res.status === 204) return undefined as T;
+
   const data: unknown = await res.json();
   return opts.schema ? opts.schema.parse(data) : (data as T);
 }
