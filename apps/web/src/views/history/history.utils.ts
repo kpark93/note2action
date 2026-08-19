@@ -48,7 +48,10 @@ export interface StatVM {
   delta: string;
 }
 
-export function historyStats(items: ActionItem[]): StatVM[] {
+export function historyStats(
+  items: ActionItem[],
+  meetingCount: number,
+): StatVM[] {
   const done = doneItems(items);
   const open = openItems(items);
   const total = items.length;
@@ -64,7 +67,7 @@ export function historyStats(items: ActionItem[]): StatVM[] {
       value: done.length,
       percent: donePct,
       barColor: "hsl(var(--primary))",
-      delta: "across 4 meetings",
+      delta: `across ${meetingCount} ${meetingCount === 1 ? "meeting" : "meetings"}`,
     },
     {
       label: "Closed on or before due date",

@@ -1,4 +1,4 @@
-import { useItemsQuery } from "@/lib/items.queries";
+import { useItemsQuery, useMeetingsQuery } from "@/lib/items.queries";
 import { useHistoryStore } from "./history.store";
 import { OWNERS } from "@/store/actionItems.constants";
 import { historyGroups, historyStats } from "./history.utils";
@@ -13,11 +13,14 @@ import { FilterSelect } from "@/components/app/filter-select";
 
 export function HistoryView() {
   const items = useItemsQuery().data ?? [];
+  // All meetings, not the RECENT strip's three — the stat counts the lot.
+  // (limit=1000 stands in for "no limit" until the API needs real paging.)
+  const meetings = useMeetingsQuery(1000).data ?? [];
   const historyOwner = useHistoryStore((s) => s.historyOwner);
   const setHistoryOwner = useHistoryStore((s) => s.setHistoryOwner);
 
   const groups = historyGroups(items, historyOwner);
-  const stats = historyStats(items);
+  const stats = historyStats(items, meetings.length);
 
   return (
     <ViewShell>

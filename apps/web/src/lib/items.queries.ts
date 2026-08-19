@@ -48,8 +48,11 @@ export function useSaveToTasks() {
   });
 }
 
-export function useMeetingsQuery() {
-  return useQuery({ queryKey: meetingsKey, queryFn: () => fetchMeetings() });
+export function useMeetingsQuery(limit = 3) {
+  return useQuery({
+    queryKey: [...meetingsKey, limit],
+    queryFn: () => fetchMeetings(limit),
+  });
 }
 
 /** One meeting's detail; only fires while a meeting is actually open. */

@@ -36,24 +36,42 @@ describe("historyGroups", () => {
 
 describe("historyStats", () => {
   it("computes completed, on-time, and open tiles", () => {
-    const [completed, onTime, open] = historyStats([
-      makeItem({ status: "Done", due: "2026-08-10", completed: "2026-08-10" }),
-      makeItem({ status: "Done", due: "2026-08-10", completed: "2026-08-12" }),
-      makeItem({ status: "In progress" }),
-    ]);
+    const [completed, onTime, open] = historyStats(
+      [
+        makeItem({
+          status: "Done",
+          due: "2026-08-10",
+          completed: "2026-08-10",
+        }),
+        makeItem({
+          status: "Done",
+          due: "2026-08-10",
+          completed: "2026-08-12",
+        }),
+        makeItem({ status: "In progress" }),
+      ],
+      3,
+    );
     expect(completed.value).toBe(2);
     expect(onTime.value).toBe("50%");
     expect(onTime.delta).toBe("1 of 2");
     expect(open.value).toBe(1);
   });
 
+  it("derives the meeting count from the database, pluralized", () => {
+    const done = makeItem({ status: "Done", completed: "2026-08-12" });
+    expect(historyStats([done], 3)[0].delta).toBe("across 3 meetings");
+    expect(historyStats([done], 1)[0].delta).toBe("across 1 meeting");
+  });
+
   it("treats undated done items as on time and shows — with no completions", () => {
-    const [, onTime] = historyStats([
-      makeItem({ status: "Done", due: "", completed: "2026-08-12" }),
-    ]);
+    const [, onTime] = historyStats(
+      [makeItem({ status: "Done", due: "", completed: "2026-08-12" })],
+      1,
+    );
     expect(onTime.value).toBe("100%");
 
-    const [, none] = historyStats([makeItem()]);
+    const [, none] = historyStats([makeItem()], 1);
     expect(none.value).toBe("—");
   });
 });
