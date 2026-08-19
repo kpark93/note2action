@@ -9,6 +9,7 @@ const NAV = [
   { to: "/review", label: "Review" },
   { to: "/tasks", label: "Tasks" },
   { to: "/history", label: "History" },
+  { to: "/meetings", label: "Meetings" },
 ];
 
 /** Workspace nav links; Review carries a badge counting items awaiting review. */
