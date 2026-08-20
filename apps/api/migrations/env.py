@@ -11,7 +11,11 @@ from app.models import Base
 config = context.config
 
 from app.settings import settings
-config.set_main_option("sqlalchemy.url", settings.database_url)
+# Migrations run as the admin role (DDL powers); the app runs as the
+# low-privilege RLS-bound role. Two URLs, two jobs.
+config.set_main_option(
+    "sqlalchemy.url", settings.migrations_database_url or settings.database_url
+)
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.

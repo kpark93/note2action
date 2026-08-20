@@ -7,13 +7,15 @@ nothing else knows which is running.
 
 from __future__ import annotations
 
+from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import date, datetime, timezone
-from typing import Protocol
+from typing import Iterator, Protocol
 
-from sqlalchemy import func, select
+from sqlalchemy import func, select, text
 from sqlalchemy import update as sql_update
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import Session
 
 from .db import SessionLocal
 from .models import ActionItem as ActionItemRow
@@ -273,8 +275,32 @@ class InMemoryItemRepository:
         return None
 
 
+@contextmanager
+def _rls_session(user_id: int) -> Iterator[Session]:
+    """A session whose transaction carries the caller's identity for RLS.
+
+    set_config(..., is_local => true) is `SET LOCAL`: the value lives only
+    until this transaction ends, so pooled connections can never leak one
+    request's identity into the next. Postgres' policies compare every row
+    against app.user_id — if any code path forgets to set it, the policies
+    see NULL and return zero rows: forgetting fails closed, not open.
+    """
+    with SessionLocal() as session:
+        session.execute(
+            text("SELECT set_config('app.user_id', :uid, true)"),
+            {"uid": str(user_id)},
+        )
+        yield session
+
+
 class PostgresItemRepository:
-    """Store backed by the real users, meetings, and action_items tables."""
+    """Store backed by the real users, meetings, and action_items tables.
+
+    Two layers enforce per-user isolation: the explicit user_id filters below
+    (application layer) and Postgres RLS policies (database layer). The
+    duplication is the point — defense in depth, either survives the other's
+    bugs.
+    """
 
     def get_or_create_user(self, clerk_id: str, name: str | None) -> int:
         with SessionLocal() as session:
@@ -303,7 +329,7 @@ class PostgresItemRepository:
             return user.id
 
     def list_items(self, user_id: int) -> list[ActionItem]:
-        with SessionLocal() as session:
+        with _rls_session(user_id) as session:
             rows = session.execute(
                 select(ActionItemRow, MeetingRow.title)
                 .join(MeetingRow, ActionItemRow.meeting_id == MeetingRow.id)
@@ -314,7 +340,7 @@ class PostgresItemRepository:
     def update_item(
         self, user_id: int, item_id: int, patch: ActionItemPatch
     ) -> ActionItem | None:
-        with SessionLocal() as session:
+        with _rls_session(user_id) as session:
             row = session.get(ActionItemRow, item_id)
             # Someone else's row answers exactly like a missing row (→ 404):
             # admitting "it exists but isn't yours" would leak other users' ids.
@@ -333,7 +359,7 @@ class PostgresItemRepository:
             return to_wire(row, meeting_title)
 
     def delete_item(self, user_id: int, item_id: int) -> bool:
-        with SessionLocal() as session:
+        with _rls_session(user_id) as session:
             row = session.get(ActionItemRow, item_id)
             if row is None or row.user_id != user_id:
                 return False
@@ -342,7 +368,7 @@ class PostgresItemRepository:
             return True
 
     def save_all_to_tasks(self, user_id: int) -> int:
-        with SessionLocal() as session:
+        with _rls_session(user_id) as session:
             result = session.execute(
                 sql_update(ActionItemRow)
                 .where(
@@ -358,7 +384,7 @@ class PostgresItemRepository:
     def create_meeting(
         self, user_id: int, request: CreateMeetingRequest
     ) -> CreateMeetingResponse:
-        with SessionLocal() as session:
+        with _rls_session(user_id) as session:
             # user_id arrives from the verified token via the route — never
             # from the request body, and no more "first user in the table".
             captured_at = datetime.now(timezone.utc)
@@ -406,7 +432,7 @@ class PostgresItemRepository:
             return response
 
     def list_meetings(self, user_id: int, limit: int) -> list[Meeting]:
-        with SessionLocal() as session:
+        with _rls_session(user_id) as session:
             rows = session.execute(
                 select(MeetingRow, func.count(ActionItemRow.id))
                 .outerjoin(ActionItemRow, ActionItemRow.meeting_id == MeetingRow.id)
@@ -426,7 +452,7 @@ class PostgresItemRepository:
             ]
 
     def get_meeting(self, user_id: int, meeting_id: int) -> MeetingDetail | None:
-        with SessionLocal() as session:
+        with _rls_session(user_id) as session:
             row = session.get(MeetingRow, meeting_id)
             if row is None or row.user_id != user_id:
                 return None

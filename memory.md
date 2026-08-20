@@ -2813,3 +2813,61 @@ bodies are the client talking (never trusted for identity/profile),
 but claims inside a verified signature are the auth provider talking.
 Extending the token is how you move a fact across the trust boundary
 without a per-request API call to Clerk.
+
+## 2026-08-19 — Module 13: Row-Level Security — the database enforces "yours only"
+
+**WHAT changed:** Module 12's isolation lived in application code — a
+`WHERE user_id = …` someone must remember in every query. _RLS_
+(Row-Level Security) moves that rule into Postgres: a _policy_ attached
+to the table that acts like a WHERE clause the database appends for you
+and you cannot forget. Three pieces: (1) a new low-privilege role
+`note2action_app` the API connects as — because superusers and table
+owners BYPASS RLS entirely, the classic gotcha; connecting as `postgres`
+would make every policy silently useless. (2) `ENABLE ROW LEVEL
+SECURITY` on meetings + action_items. (3) Policies comparing each row's
+user_id to `app.user_id`, a per-transaction variable the API sets from
+the verified identity via `set_config(..., is_local=true)` (=`SET
+LOCAL`, dies at transaction end so pooled connections can't leak one
+request's identity into the next). `current_setting('app.user_id',
+true)` returns NULL when unset and NULL compares false → forgetting to
+set the user _fails closed_ (zero rows), never open. The `users` table
+deliberately has no policy — identity lookup must run before a user id
+exists (bootstrap). Migrations now run under a separate
+MIGRATIONS_DATABASE_URL (admin role) while the app runs de-privileged —
+two URLs, two jobs.
+
+**WHICH files (apps/api):**
+`migrations/versions/ba1b688e106a_…py` (role + grants + RLS + policies;
+dev-only password committed knowingly — prod roles live in secret
+managers, not git), `app/repository.py` (`_rls_session(user_id)`
+contextmanager: first statement of every user-scoped transaction is
+set_config; app-level WHERE filters kept on purpose — defense in depth),
+`app/settings.py` + `migrations/env.py` (migrations_database_url),
+`.env.example` (both URLs documented). 23 tests green.
+
+**WHY:** Proof by psql: superuser sees all 26 rows (bypass demo); app
+role with no identity sees 0 (fail-closed); as user 1 sees exactly the
+13 owned rows; as user 999 sees 0, `UPDATE … WHERE id=7` hits 0 rows,
+and an INSERT forging user_id=1 dies with "violates row-level security
+policy". The lesson is _defense in depth_: two independent layers
+enforcing one rule, so a bug in either isn't a breach. Checkpoint
+pending: switch the app's DATABASE_URL to the new role, then the
+comment-out-the-WHERE drill — the app must still leak nothing.
+
+## 2026-08-19 — Module 13 checkpoint: the comment-out-WHERE drill
+
+**WHAT changed:** Nothing permanent — the drill. With the app verified
+to connect as `note2action_app`, Claude deliberately disabled the
+app-layer filter (`.where(ActionItemRow.user_id == user_id)`) in
+`list_items` — the classic "one forgotten WHERE" bug. The table held 31
+rows; the unfiltered query returned 13 for user 1, 9 for user 2, 0 for
+a stranger. Postgres appended the WHERE itself via the RLS policy. The
+filter was then restored (diff clean, 23 tests green).
+
+**WHICH files:** `apps/api/app/repository.py` (edited and reverted —
+net zero).
+
+**WHY:** This is the whole argument for _defense in depth_ made
+visible: the exact bug that would have leaked every user's data under
+Module 12's app-only filtering was a non-event under RLS. Two
+independent layers, one rule; either survives the other's failure.
