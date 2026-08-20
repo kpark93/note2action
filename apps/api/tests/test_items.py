@@ -1,9 +1,11 @@
 from fastapi.testclient import TestClient
 
 from app.main import app
+from tests.conftest import AUTH
 
 # A fresh in-memory repository per test comes from conftest.py (autouse).
-client = TestClient(app)
+# Default headers authenticate every request as the seeded user.
+client = TestClient(app, headers=AUTH)
 
 
 def test_list_items_returns_full_action_items() -> None:

@@ -1,25 +1,29 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useUser } from "@clerk/clerk-react";
 import { useItemsQuery } from "@/lib/items.queries";
-import { USER } from "@/store/actionItems.constants";
 import { pendingItems, savedTasks } from "@/lib/items";
 import { Button } from "@/components/ui/button";
 import { ViewShell } from "@/components/app/view-shell";
 import { RecapCard } from "@/components/app/recap-card";
 
 // A few welcome messages; one is chosen at random each time Home mounts.
+// Templates, not strings: the name comes from the signed-in Clerk user.
 const GREETINGS = [
-  `Hello ${USER.firstName}, welcome back!`,
-  `Good to see you again, ${USER.firstName}`,
-  `Welcome back, ${USER.firstName}!`,
+  (name: string) => `Hello ${name}, welcome back!`,
+  (name: string) => `Good to see you again, ${name}`,
+  (name: string) => `Welcome back, ${name}!`,
 ];
 
 export function HomeView() {
   const items = useItemsQuery().data ?? [];
   const navigate = useNavigate();
-  const [greeting] = useState(
+  const { user } = useUser();
+  const firstName = user?.firstName ?? "there";
+  const [greet] = useState(
     () => GREETINGS[Math.floor(Math.random() * GREETINGS.length)],
   );
+  const greeting = greet(firstName);
 
   const toReview = pendingItems(items).length;
   const openTasks = savedTasks(items).length;

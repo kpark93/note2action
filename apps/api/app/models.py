@@ -12,6 +12,9 @@ class User(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str]
     role: Mapped[str | None]
+    # Clerk's user id (`user_…`) — the link between a verified token and our
+    # row. Unique; nullable so pre-auth rows can exist until they're linked.
+    clerk_id: Mapped[str | None] = mapped_column(unique=True)
 
 class Meeting(Base):
     __tablename__ = "meetings"
@@ -41,6 +44,9 @@ class ActionItem(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     meeting_id: Mapped[int] = mapped_column(ForeignKey("meetings.id", ondelete="CASCADE"))
+    # Denormalized owner (the meeting already knows it) so per-row security
+    # checks — and Module 13's RLS policies — never need a join.
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
     title: Mapped[str]
     owner: Mapped[str]
     due: Mapped[date | None]

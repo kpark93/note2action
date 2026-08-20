@@ -2577,3 +2577,239 @@ branch push is the whole update. The fixes close the two network-exposure
 holes found in review (unauthenticated Redis reachable from the network;
 cleartext cache transport allowed in production) while leaving the dev
 workflow untouched.
+
+## 2026-08-19 — #27 built: semantic (embedding-similarity) response cache
+
+**WHAT changed:** Implemented ticket #27 for agency-intelligence: the
+gateway cache can now serve _near-duplicate_ prompts, not just identical
+ones. The idea: turn each prompt into an _embedding_ (a list of numbers
+whose direction encodes the text's content, so similar texts point in
+similar directions) and compare with _cosine similarity_ (the angle
+between two vectors: 1.0 = same direction, 0 = unrelated). A "semantic
+hit" needs cosine ≥ a configurable threshold AND an identical _params
+fingerprint_ (a hash of everything in the request except the messages —
+model, temperature, tools — because those change what a correct answer
+is; only the prompt wording may vary). Scope, phi-exclusion, and
+fail-open rules are inherited from the #26 exact-match cache rather than
+reimplemented. Hits carry a new `x-ai-cache-match: semantic|exact`
+header and a `match` field in the log event — the acceptance criterion
+that semantic hits be distinguishable in telemetry. A deterministic
+_eval_ (a scored, repeatable quality test that gates CI like a unit
+test) measures hit precision on a labeled fixture set of duplicate and
+distinct prompt pairs: precision 1.00, recall 0.83, wired into the
+existing `api:eval` gate so it's never an orphaned test.
+
+**WHICH files** (in `/Users/macbook/Blen/agency-intelligence-wt/feat-27-semantic-cache`,
+a _stacked branch_ — built on the still-open #26 branch instead of main,
+because it extends that PR's code):
+
+- `apps/api/app/helpers/semantic_cache.py` — new: cosine, fingerprint,
+  prompt extraction, deterministic hashing embedder, fail-open
+  `SemanticCache` over Redis, Foundry embedder client.
+- `apps/api/app/helpers/response_cache.py` — factored `get_redis_client()`
+  so both cache layers share one client and one test seam.
+- `apps/api/app/api/v1/routes.py` — exact lookup → semantic lookup →
+  forward → store both (embedding computed once, reused).
+- `apps/api/app/core/config.py`, `.env.example` — two settings, off by
+  default.
+- `apps/api/evals/semantic_cache_cases.py` + registration in
+  `evals/cases.py`; tests `test_semantic_cache_unit.py` and
+  `test_semantic_cache_gateway.py` (28 cases, written first).
+
+**WHY:** Users re-ask the same question with tiny wording changes; an
+exact-match cache misses all of them. Two bugs avoided by design: the
+embedding must come from the prompt _before_ prompt-shaping mutates the
+payload, and a top-level import of the API layer from a helper created a
+_circular import_ (module A needs B which needs A, so one is only
+half-loaded) — fixed with the repo's lazy-import-inside-the-function
+pattern. The trickiest test-design point: a precision eval can pass
+vacuously by never hitting anything, so a second "recall floor" case
+requires most labeled duplicates to actually hit.
+
+## 2026-08-19 — #27 security/best-practices review; embedder pinned into fingerprint
+
+**WHAT changed:** Pre-ship review of the #27 semantic-cache branch. The
+security question that mattered most: does the new embedding call leak
+unredacted PII? Verified no — the FR-5 redaction _middleware_ (code that
+runs on every request before the route handler sees it) rewrites the
+request body first, so the text we embed is already redacted. Secrets
+sweep clean; no prompt text, embeddings, or URLs in any log call. One
+best-practices defect found and fixed TDD: the semantic _fingerprint_
+didn't include which embedding model produced the vectors. Embeddings
+from different models live in unrelated _vector spaces_ — comparing them
+with cosine is meaningless — so switching deployments could have compared
+new requests against stale incompatible vectors for up to one TTL. Fix:
+the deployment name is now part of the fingerprint, so a switch instantly
+strands old entries. Full hygiene re-run: black/ruff/mypy clean, 712
+tests passed (92.91% coverage), evals 23/23 (precision 1.00), eslint and
+prettier clean.
+
+**WHICH files** (in `/Users/macbook/Blen/agency-intelligence-wt/feat-27-semantic-cache`):
+`apps/api/app/helpers/semantic_cache.py` (embedder in fingerprint),
+`apps/api/app/api/v1/routes.py` (threads the deployment name),
+`apps/api/tests/test_semantic_cache_unit.py` (the failing-first test).
+
+**WHY:** A cache key must capture everything that makes two cached values
+comparable — for vectors, that includes the model that produced them.
+This is the same key-completeness principle as the #26 delimiter fix:
+review by asking "what change would make two incomparable things collide?"
+Uncommitted; results handed to Kyle in chat.
+
+## 2026-08-19 — Module 11: DBeaver + Postman, and the triage drill
+
+**WHAT changed:** No code this module — I added two inspection tools and
+ran a bug-triage drill. _DBeaver_ is a database GUI: it connects straight
+to Postgres (localhost:5432, db note2action) and shows tables as
+spreadsheets, answering "what is actually stored at rest?". _Postman_ is
+an API client: a saved collection of requests against
+`{{baseUrl}} = http://localhost:8001`, answering "what does the API say
+and accept right now?". The drill: Claude secretly corrupted a row with
+raw SQL (`UPDATE action_items SET status='In progress', completed=NULL
+WHERE id=7`) — a write that bypassed the API, like a real-world manual
+hotfix or rogue script — then filed a fake user bug report ("my Done task
+un-did itself"). My job was to convict one layer: client, API, or data.
+
+**WHICH files:** none in the repo — only database rows and my two new
+tool setups. Repaired via Postman: `PATCH /api/items/7 {"status":"Done"}`
+(the server re-stamped `completed`), confirmed at rest in DBeaver.
+
+**WHY:** I got the verdict right (data layer) but my evidence was broken
+in a way worth remembering. I reported "Postman says In progress, DBeaver
+says Done" — an _impossible observation_, because GET /api/items runs a
+live SELECT with no cache in between, so fresh reads can never disagree.
+My DBeaver grid was a _stale snapshot_ (it queries once and never
+auto-refreshes; hit ⌘R before trusting it). Lesson: when two instruments
+contradict each other about the same fact, suspect an instrument before
+the app. The clean chain: Postman shows the API believes the wrong value
+→ fresh DBeaver shows the same wrong value at rest → API acquitted
+(faithful reporter), data convicted (changed outside the API). Bonus: the
+DB blocked Claude's first sabotage (`completed=NULL` while still Done)
+via our CHECK constraint `ck_action_items_completed_iff_done` —
+constraints defend invariants even against raw SQL, so the corruption
+that gets through is always self-consistent-but-false, the sneakiest
+kind.
+
+## 2026-08-19 — Module 12 (web half): Clerk sign-in gate + token on every request
+
+**WHAT changed:** The web app now has real authentication. _Clerk_ is a
+hosted auth provider: it renders the sign-in/sign-up UI, stores the user
+accounts, and hands the browser a _session token_ — a _JWT_ (a signed
+blob naming the user) that our API will later verify on its own. The app
+is gated: visiting any route while signed out redirects to /sign-in, and
+every API request now carries an `Authorization: Bearer <token>` header.
+The hardcoded USER constant ("Kyle Park / Product") is deleted — the
+sidebar and the Home greeting now show the real signed-in account.
+
+**WHICH files (all in apps/web):**
+
+- `providers.tsx` — outermost `<ClerkProvider>` (reads
+  `VITE_CLERK_PUBLISHABLE_KEY`, with a friendly on-screen message if it's
+  missing) + `AuthTokenBridge`, a render-nothing component that registers
+  Clerk's `getToken` with…
+- `src/lib/auth-token.ts` (new) — a tiny bridge module, because hooks
+  only work inside components but `http.ts` is a plain module. Providers
+  register a token getter; http asks for it per request.
+- `src/lib/http.ts` — awaits `getAuthToken()` and attaches the
+  `Authorization` header when a token exists; tests and signed-out
+  requests just omit it (the API decides what that means).
+- `src/App.tsx` + `components/app/require-auth.tsx` (new) — public
+  /sign-in and /sign-up routes; the layout route is wrapped in
+  `RequireAuth`, which handles Clerk's three async states: loading (show
+  "Checking session…", never redirect early), signed in (render app),
+  signed out (redirect).
+- `views/auth/sign-in.view.tsx` + `sign-up.view.tsx` (new) — Clerk's
+  prebuilt components, `routing="hash"` so their multi-step flows
+  navigate inside the widget without extra routes from us.
+- `components/app/sidebar.tsx` — `<UserButton>` (avatar menu with
+  sign-out) + real name/email via `useUser()`.
+- `views/home/home.view.tsx` — greeting templates take the Clerk first
+  name. `store/actionItems.constants.ts` — USER deleted.
+- `.env.example` (new, checked in) — documents the key; the real
+  `.env` stays gitignored. `vite-env.d.ts` — types the env var.
+- `pnpm-workspace.yaml` — pnpm blocked @clerk/shared's _postinstall
+  script_ (supply-chain guard: new deps can't run arbitrary code at
+  install time) and wrote a placeholder that failed every install until
+  a human decided; set to `false` because Clerk works without it.
+
+**WHY:** Auth is the boundary between demo and product. The key mental
+model: the _publishable key_ is public by design (it only identifies
+which Clerk app the widget talks to); the browser gets a short-lived
+signed token; and the backend must verify that token itself — never
+trust the frontend. This half only makes the web app carry identity;
+the API half (verify JWT, 401 strangers, stamp user_id from the
+verified token) is next. Proof: 35 web tests, typecheck, build, lint
+all green.
+
+## 2026-08-19 — Module 12 (API half): verify the JWT, own the data
+
+**WHAT changed:** The API now proves who's calling instead of trusting
+whatever the browser says. A _middleware_ (code that runs on every
+request before any endpoint) reads `Authorization: Bearer <token>`,
+verifies the JWT's signature against Clerk's _JWKS_ (the app's published
+_public_ keys — verification is local math, no call to Clerk and no
+shared secret), and stashes the verified Clerk user id on
+`request.state`. No/bad token → 401 before a handler ever runs; only
+/api/health and the docs pages stay public. A route _dependency_ maps
+that Clerk id to our `users` row (creating one on first visit), and
+every repository method now takes `user_id` and answers only for that
+user's rows — someone else's row returns 404, indistinguishable from a
+missing row, so ids never leak. `user_id` is written from the verified
+token, never from the request body. Also my first schema _change_
+migration: add-nullable → backfill (items inherit their meeting's
+owner) → tighten to NOT NULL — the three-step dance any live table
+demands.
+
+**WHICH files (apps/api):** `app/auth.py` (new: TokenVerifier protocol +
+ClerkJWKSVerifier via PyJWT's PyJWKClient), `app/main.py` (middleware,
+`current_user_id` dependency, all routes scoped), `app/models.py`
+(users.clerk_id unique, action_items.user_id FK),
+`migrations/versions/3337459970d8_…py` (the schema-change migration,
+applied to the live DB), `app/repository.py` (get_or_create_user with an
+IntegrityError race-retry; every method takes user_id; the in-memory
+fake derives item ownership from its meeting), `app/settings.py` +
+`.env.example` (CLERK_JWKS_URL), `tests/conftest.py` (FakeVerifier — the
+auth seam's twin of the fake repository; in tests the bearer token IS
+the user id), `tests/test_auth.py` (new: 401s, per-user isolation,
+stranger-can't-touch), and auth headers added to the existing test
+clients. `docs/api-design.md` auth convention updated. 20 API tests
+green.
+
+**WHY:** "The backend never trusts the frontend" is the whole lesson —
+the token is the only claim of identity the API accepts, and it checks
+the signature itself. Making 404 (not 403) the answer for other users'
+rows keeps existence private. My old data needs a one-time link
+(`UPDATE users SET clerk_id = 'user_…' WHERE id = 1`) because the app
+can't know which Clerk account owns the pre-auth rows — account linking
+is a data decision, not code.
+
+## 2026-08-19 — Module 12 follow-up: users.name from a custom session claim
+
+**WHAT changed:** Kyle's review caught that every authenticated signup
+got `name="New user"` — the default Clerk session JWT carries only
+identity claims (sub, exp, iss…), no profile. Fix: a _custom session
+claim_ — the Clerk dashboard can embed extra fields inside the signed
+token (`{"name": "{{user.full_name}}"}`), which makes them exactly as
+tamper-proof as `sub`, unlike anything the client could send in a body.
+`verify()` now returns a `VerifiedUser` dataclass (clerk_id + optional
+name) instead of a bare string; claim parsing lives in
+`identity_from_claims()`, a pure function unit-tested without any keys.
+`get_or_create_user(clerk_id, name)` obeys two laws in both
+implementations: use the name at creation (fallback "New user"), and
+refresh it when the claim differs — but never erase on a missing claim
+(None means "token doesn't say", not "no name").
+
+**WHICH files (apps/api):** `app/auth.py` (VerifiedUser,
+identity_from_claims), `app/main.py` (request.state.identity; dependency
+passes name through), `app/repository.py` (both get_or_create_user
+implementations + the fake's `_user_names`), `tests/conftest.py`
+(FakeVerifier token grammar: "user_x|Jane Doe" — the pipe stands in for
+the name claim), `tests/test_auth.py` (claims unit tests + end-to-end
+name flow), `tests/test_repository.py` (the name laws). 23 API tests
+green. Kyle's dashboard side: Sessions → Customize session token →
+`{"name": "{{user.full_name}}"}`.
+
+**WHY:** The lesson is _where_ trusted data can come from: request
+bodies are the client talking (never trusted for identity/profile),
+but claims inside a verified signature are the auth provider talking.
+Extending the token is how you move a fact across the trust boundary
+without a per-request API call to Clerk.
