@@ -5,6 +5,9 @@ packages:
   - "apps/ai"
   - "packages/shared"
 allowBuilds:
+  # Clerk works without its postinstall script; don't run arbitrary build
+  # scripts we haven't needed.
+  "@clerk/shared": false
   esbuild: true
   sharp: true
 minimumReleaseAgeExclude:

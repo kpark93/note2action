@@ -8,6 +8,8 @@
 // Paths stay relative (`/api/…`, `/ai-api/…`) so the Vite dev proxy keeps
 // working; add a base URL here if the app is ever deployed on split origins.
 
+import { getAuthToken } from "./auth-token";
+
 /** Thrown on a non-2xx response. `status` is the HTTP status code. */
 export class HttpError extends Error {
   constructor(
@@ -38,12 +40,19 @@ export async function request<T = unknown>(
   opts: RequestOptions<T> = {},
 ): Promise<T> {
   const method = opts.method ?? (opts.body !== undefined ? "POST" : "GET");
+
+  // Who's calling: attach the Clerk session token so the API can verify the
+  // user. Null (signed out / tests) simply omits the header — the API answers
+  // 401 if the endpoint requires identity.
+  const token = await getAuthToken();
+
+  const headers: Record<string, string> = {};
+  if (opts.body !== undefined) headers["Content-Type"] = "application/json";
+  if (token) headers.Authorization = `Bearer ${token}`;
+
   const res = await fetch(path, {
     method,
-    headers:
-      opts.body !== undefined
-        ? { "Content-Type": "application/json" }
-        : undefined,
+    headers,
     body: opts.body !== undefined ? JSON.stringify(opts.body) : undefined,
     signal: opts.signal,
   });

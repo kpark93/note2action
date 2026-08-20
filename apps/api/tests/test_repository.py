@@ -1,7 +1,7 @@
 from datetime import date
 
 from app.models import ActionItem as ActionItemRow
-from app.repository import to_wire
+from app.repository import InMemoryItemRepository, to_wire
 
 
 def test_to_wire_maps_row_fields_onto_the_wire_schema() -> None:
@@ -33,3 +33,26 @@ def test_to_wire_maps_row_fields_onto_the_wire_schema() -> None:
     assert item.note == "from notes"
     assert item.status == "In progress"
     assert item.completed is None
+
+
+def test_get_or_create_user_name_laws() -> None:
+    """Same laws both repository implementations must obey (white-box on the fake)."""
+    repo = InMemoryItemRepository()
+
+    # New user with a name claim → the name sticks.
+    jane = repo.get_or_create_user("user_jane", "Jane Doe")
+    assert repo._user_names[jane] == "Jane Doe"
+
+    # New user without a name claim → placeholder.
+    anon = repo.get_or_create_user("user_anon", None)
+    assert repo._user_names[anon] == "New user"
+
+    # Same clerk id always maps to the same user…
+    assert repo.get_or_create_user("user_jane", "Jane Doe") == jane
+
+    # …a changed claim refreshes the name (Clerk is the profile's source of
+    # truth), and a missing claim never erases what we have.
+    repo.get_or_create_user("user_jane", "Jane Smith")
+    assert repo._user_names[jane] == "Jane Smith"
+    repo.get_or_create_user("user_jane", None)
+    assert repo._user_names[jane] == "Jane Smith"

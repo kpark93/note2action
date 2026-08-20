@@ -1,6 +1,6 @@
+import { UserButton, useUser } from "@clerk/clerk-react";
 import { useHealth } from "@/lib/health";
 import { useTheme } from "@/store/theme.store";
-import { USER } from "@/store/actionItems.constants";
 import { Button } from "@/components/ui/button";
 import { SidebarNav } from "./sidebar-nav";
 import { CompletionCard } from "./completion-card";
@@ -8,6 +8,12 @@ import { CompletionCard } from "./completion-card";
 export function Sidebar() {
   const theme = useTheme((s) => s.theme);
   const setTheme = useTheme((s) => s.setTheme);
+
+  // The real signed-in account, from Clerk. The sidebar only renders inside
+  // <RequireAuth>, so `user` is loaded — the fallbacks are just type safety.
+  const { user } = useUser();
+  const displayName = user?.fullName ?? user?.username ?? "Account";
+  const email = user?.primaryEmailAddress?.emailAddress ?? "";
 
   // Live API health, surfaced as a small dot — keeps the TanStack Query
   // health check and the Vite /api proxy wired into the real UI.
@@ -67,12 +73,17 @@ export function Sidebar() {
       </div>
 
       <div className="mt-[14px] flex items-center gap-[11px] border-t border-border pt-[14px]">
-        <span className="flex h-8 w-8 items-center justify-center rounded-[11px] bg-primary text-[12px] font-bold text-primary-foreground">
-          {USER.initials}
-        </span>
-        <span className="flex flex-col leading-[1.3]">
-          <span className="text-[13px] font-semibold">{USER.name}</span>
-          <span className="text-[11px] text-muted-foreground">{USER.role}</span>
+        {/* Clerk avatar + account menu (manage account, sign out). */}
+        <UserButton
+          appearance={{ elements: { avatarBox: "h-8 w-8 rounded-[11px]" } }}
+        />
+        <span className="flex min-w-0 flex-col leading-[1.3]">
+          <span className="truncate text-[13px] font-semibold">
+            {displayName}
+          </span>
+          <span className="truncate text-[11px] text-muted-foreground">
+            {email}
+          </span>
         </span>
         <span
           className="ml-auto h-[7px] w-[7px] flex-none rounded-full"

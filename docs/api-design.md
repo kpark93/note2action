@@ -16,9 +16,16 @@ the tables defined there. Implemented across Modules 9–10.
   layer translates at the boundary, both directions.
 - Errors use FastAPI's shape: `{"detail": ...}`. `422` = body failed
   validation (wrong enum value, malformed date); `404` = no such row.
-- **Auth (Module 12):** every `/api/*` endpoint below will require
-  `Authorization: Bearer <token>` and answer `401` without it. Until then,
-  all data implicitly belongs to the single seeded user.
+- **Auth (Module 12, implemented):** middleware verifies a Clerk JWT
+  (`Authorization: Bearer <token>`, checked against the JWKS public keys)
+  on every request before any endpoint runs; only `/api/health` (and the
+  docs pages) are public. No/invalid token → `401`. The verified Clerk user
+  id maps to `users.id` (created on first visit), every query is scoped to
+  it, and `user_id` is written from the verified identity — never from the
+  request body. Someone else's row answers `404`, indistinguishable from a
+  missing row, so ids don't leak. The optional custom `name` session claim
+  (configured in the Clerk dashboard) keeps `users.name` in sync — set at
+  creation, refreshed when Clerk's value changes.
 
 ## Existing endpoints (implemented today)
 
