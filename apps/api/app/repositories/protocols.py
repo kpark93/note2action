@@ -18,12 +18,7 @@ from app.schemas.meetings import (
 
 
 class UserRepository(Protocol):
-    """The persistence boundary for items and their meetings.
-
-    Every method takes the *verified* user id and answers only for that
-    user's rows. Asking about someone else's row looks identical to asking
-    about a row that doesn't exist (None/False → 404) — no existence leaks.
-    """
+    """Maps a verified Clerk id onto our users.id, creating on first visit."""
 
     def get_or_create_user(self, clerk_id: str, name: str | None) -> int:
         """Map a verified Clerk user id to our users.id, creating on first visit.
@@ -36,6 +31,13 @@ class UserRepository(Protocol):
 
 
 class ItemRepository(Protocol):
+    """The persistence boundary for a user's action items.
+
+    Every method takes the *verified* user id and answers only for that
+    user's rows. Asking about someone else's row looks identical to asking
+    about a row that doesn't exist (None/False → 404) — no existence leaks.
+    """
+
     def list_items(self, user_id: int) -> list[ActionItem]: ...
 
     def update_item(
@@ -48,6 +50,13 @@ class ItemRepository(Protocol):
 
 
 class MeetingRepository(Protocol):
+    """The persistence boundary for meetings and the items captured with them.
+
+    Same law as ItemRepository: every method takes the *verified* user id
+    and answers only for that user's rows — someone else's meeting looks
+    identical to one that doesn't exist (None → 404), no existence leaks.
+    """
+
     def create_meeting(
         self, user_id: int, request: CreateMeetingRequest
     ) -> CreateMeetingResponse: ...

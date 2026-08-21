@@ -12,6 +12,14 @@ from .session import rls_session
 
 
 class PostgresItemRepository:
+    """Store backed by the real meetings and action_items tables.
+
+    Two layers enforce per-user isolation: the explicit user_id filters
+    below (application layer) and Postgres RLS policies (database layer).
+    The duplication is the point — defense in depth, either survives the
+    other's bugs.
+    """
+
     def list_items(self, user_id: int) -> list[ActionItem]:
         with rls_session(user_id) as session:
             rows = session.execute(
