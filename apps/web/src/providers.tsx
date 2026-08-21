@@ -1,22 +1,9 @@
 import { useEffect, type ReactNode } from "react";
 import { ClerkProvider, useAuth } from "@clerk/clerk-react";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { setAuthTokenGetter } from "@/lib/auth-token";
-
-// One QueryClient for the app's lifetime, created at module load so the query
-// cache survives re-renders. Exported so non-component code (the zustand
-// store's extraction flow) can invalidate queries after it writes data.
-export const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      // Serve cached data for 30s before refetching, so remounting a view
-      // (e.g. the sidebar health dot) doesn't refire the request each time.
-      staleTime: 30_000,
-      retry: 1,
-    },
-  },
-});
+import { queryClient } from "@/lib/query-client";
 
 /**
  * Registers Clerk's getToken with the auth-token bridge so http.ts (a plain
@@ -34,8 +21,8 @@ function AuthTokenBridge() {
 
 /** Wraps the app in shared context providers (Clerk auth + TanStack Query). */
 export function AppProviders({ children }: { children: ReactNode }) {
-  // Read inside the component (not module scope) so importing this file for
-  // `queryClient` — as tests and the zustand store do — never requires a key.
+  // Read inside the component (not module scope) so importing this file —
+  // as tests do — never requires a key; only rendering AppProviders does.
   const publishableKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 
   if (!publishableKey) {

@@ -1,4 +1,4 @@
-import { useActionItems } from "@/store/actionItems.store";
+import { useActionItems } from "@/domain/extraction/extraction.store";
 import { OWNERS } from "@/domain/items/items.constants";
 import { todayISO } from "@/lib/dates";
 import { Button } from "@/components/ui/button";

@@ -1,5 +1,5 @@
 import { useMeetingsQuery } from "@/domain/meetings/meetings.queries";
-import { useActionItems } from "@/store/actionItems.store";
+import { useActionItems } from "@/domain/extraction/extraction.store";
 import { timeAgo } from "@/lib/dates";
 
 /** Strip of recent captures below the editor (from the API); click to preview. */

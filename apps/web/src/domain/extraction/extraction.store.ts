@@ -1,22 +1,22 @@
 // Client-only state for the action-items app.
 //
 // Server data (the items, the recent meetings) lives in TanStack Query — see
-// lib/items.queries.ts. What remains here is state that exists only in this
-// browser tab: the capture draft, which transcript modal is open, and the
-// extraction-in-flight flag. That split is the Module 10 rule: server state
-// is cached, client state is owned.
+// domain/items/items.queries.ts. What remains here is state that exists only
+// in this browser tab: the capture draft, which transcript modal is open, and
+// the extraction-in-flight flag. That split is the Module 10 rule: server
+// state is cached, client state is owned.
 import { create } from "zustand";
 import type { ExtractRequest } from "@note2action/shared";
-import { extractActionItems } from "@/lib/actionItems.api";
+import { extractActionItems } from "@/domain/extraction/extraction.api";
 import { createMeeting } from "@/domain/meetings/meetings.api";
-import { meetingsKey } from "@/domain/meetings/meetings.queries";
 import { itemsKey } from "@/domain/items/items.queries";
-import { queryClient } from "@/providers";
+import { meetingsKey } from "@/domain/meetings/meetings.queries";
+import { queryClient } from "@/lib/query-client";
 import {
   DEFAULT_MEETING_TITLE,
   DEFAULT_RAW,
   SAMPLES,
-} from "./actionItems.constants";
+} from "./extraction.constants";
 
 interface ActionItemsState {
   sampleIndex: number;
