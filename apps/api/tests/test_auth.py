@@ -9,7 +9,7 @@ from fastapi.testclient import TestClient
 from jwt.exceptions import InvalidTokenError
 
 import app.main as main_module
-from app.auth import VerifiedUser, identity_from_claims
+from app.core.security import VerifiedUser, identity_from_claims
 from app.main import app
 from tests.conftest import AUTH
 

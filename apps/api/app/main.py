@@ -8,7 +8,7 @@ from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
 from jwt.exceptions import PyJWTError
 
-from .auth import ClerkJWKSVerifier, TokenVerifier
+from .core.security import ClerkJWKSVerifier, TokenVerifier
 from .schemas import (
     ActionItem,
     ActionItemPatch,
@@ -21,7 +21,7 @@ from .schemas import (
     SaveToTasksResponse,
 )
 from .repository import InMemoryItemRepository, ItemRepository, PostgresItemRepository
-from .settings import settings
+from .core.config import settings
 
 app = FastAPI(title="note2action API")
 

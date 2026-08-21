@@ -17,7 +17,7 @@ from sqlalchemy import update as sql_update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from .db import SessionLocal
+from .core.db import SessionLocal
 from .models import ActionItem as ActionItemRow
 from .models import Meeting as MeetingRow
 from .models import User

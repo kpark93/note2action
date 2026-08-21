@@ -4,7 +4,7 @@ import pytest
 from jwt.exceptions import InvalidTokenError
 
 import app.main as main_module
-from app.auth import VerifiedUser
+from app.core.security import VerifiedUser
 from app.repository import InMemoryItemRepository, SEED_CLERK_ID
 
 # What test clients send to authenticate as the seeded user. With the fake
