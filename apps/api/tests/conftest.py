@@ -5,7 +5,7 @@ from jwt.exceptions import InvalidTokenError
 
 import app.main as main_module
 from app.core.security import VerifiedUser
-from app.repository import InMemoryItemRepository, SEED_CLERK_ID
+from app.repositories.memory import build_memory_repositories, SEED_CLERK_ID
 
 # What test clients send to authenticate as the seeded user. With the fake
 # verifier below, the bearer token simply IS the Clerk user id — legible in
@@ -38,5 +38,5 @@ def fresh_repository() -> None:
     test shrinking the list a later test counts). The fake verifier is set
     here too, so tests never depend on CLERK_JWKS_URL.
     """
-    main_module.repository = InMemoryItemRepository()
+    main_module.repositories = build_memory_repositories()
     main_module.app.state.token_verifier = FakeVerifier()
