@@ -165,21 +165,41 @@ Husky + lint-staged format and lint staged files on every commit.
 ## Where things live
 
 - **`apps/web/src/views/`** — one folder per screen (`capture`, `review`,
-  `tasks`, `meetings`, `history`, `home`, `auth`), each with its view and any
-  screen-local store/utils/tests.
-- **`apps/web/src/components/`** — `ui/` (shadcn primitives) and `app/`
-  (app-specific pieces: layout, sidebar, auth gate).
-- **`apps/web/src/lib/`** — `http.ts` (fetch wrapper that validates responses
-  against the zod contract and attaches the auth token) and friends.
-- **`apps/api/app/`** — `main.py` (routes + auth middleware), `auth.py` (JWT
-  verification), `repository.py` (Postgres + in-memory implementations),
-  `models.py` (tables), `schemas.py` (request/response models), `settings.py`.
-- **`apps/api/tests/`** — pytest suite; runs against the in-memory repository
-  and a fake token verifier, so no database or Clerk account is needed.
-- **`apps/ai/app/api/`** — the `extract` and `chat` routes; model/provider in
-  `provider.ts`.
-- **`packages/shared/src/index.ts`** — the zod contract. Change shapes here
-  first, then mirror in `apps/api/app/models.py`/`schemas.py`.
+  `tasks`, `meetings`, `history`, `home`, `auth`), each with its view and a
+  local `components/` folder for pieces only that screen uses.
+- **`apps/web/src/domain/`** — state and queries shared _between_ views:
+  `items/`, `meetings/`, `extraction/`, `health/`. Each exposes an `.api.ts` +
+  `.queries.ts`/`.store.ts` surface; views and app components call these, never
+  `lib/http.ts` directly.
+- **`apps/web/src/components/`** — `ui/` (shadcn primitives) and `app/` (app
+  chrome and pieces shared by 2+ features: layout, sidebar, auth gate,
+  view-shell).
+- **`apps/web/src/lib/`** — the shared kernel: `http.ts` (fetch + zod
+  validation + bearer token), `query-client.ts`, `auth-token.ts`,
+  `theme.store.ts`, `dates.ts`, `sound.ts`, `utils.ts` (`cn()`).
+- **`apps/api/app/api/routes/`** — one file per resource (`health.py`,
+  `items.py`, `meetings.py`) plus `deps.py` (repositories accessor,
+  current-user resolution); `app/core/` holds config/db/security/middleware
+  plumbing that the rest of the app depends on but that depends on nothing
+  above it.
+- **`apps/api/app/services/`** — business rules, one file per domain; the only
+  layer routes call, and the only layer allowed to sit between routes and
+  repositories.
+- **`apps/api/app/repositories/`** — the seam: `protocols.py` (the typed
+  contracts), `memory.py` (in-memory fakes for tests), `postgres/` (the real
+  implementations, split per domain).
+- **`apps/api/app/models/`** and **`apps/api/app/schemas/`** — SQLAlchemy
+  tables and pydantic request/response models, each split one file per domain.
+- **`apps/api/tests/`** — pytest suite mirroring `app/`'s structure; runs
+  against the in-memory repository and a fake token verifier, so no database
+  or Clerk account is needed.
+- **`apps/ai/lib/`** — `provider.ts` (model/provider config) and
+  `extraction.ts` (extract prompt + schema handling); `app/api/` routes stay
+  thin wrappers around these.
+- **`packages/shared/src/`** — the zod contract, split per domain
+  (`items.ts`, `meetings.ts`, `extraction.ts`, `health.ts`, …) and re-exported
+  from `index.ts`. Change shapes here first, then mirror in
+  `apps/api/app/models/`/`apps/api/app/schemas/`.
 - **`docs/`** — roadmap, API + schema design docs, and the backend course
   (`docs/course/`) this was built through.
 
