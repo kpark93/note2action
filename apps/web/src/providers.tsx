@@ -21,8 +21,8 @@ function AuthTokenBridge() {
 
 /** Wraps the app in shared context providers (Clerk auth + TanStack Query). */
 export function AppProviders({ children }: { children: ReactNode }) {
-  // Read inside the component (not module scope) so importing this file —
-  // as tests do — never requires a key; only rendering AppProviders does.
+  // Read inside the component (not module scope) so importing this file
+  // never requires a key; only rendering AppProviders does.
   const publishableKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 
   if (!publishableKey) {
