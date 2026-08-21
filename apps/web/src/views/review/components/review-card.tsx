@@ -7,7 +7,7 @@ import type { ReviewItemVM } from "@/views/review/review.utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { ConfidencePill } from "@/components/app/confidence-pill";
+import { ConfidencePill } from "./confidence-pill";
 import {
   Select,
   SelectContent,

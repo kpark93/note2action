@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useItemsQuery, useSaveToTasks } from "@/domain/items/items.queries";
 import { useReviewStore } from "./review.store";
 import { flagSentence, reviewItems } from "./review.utils";
-import { ReviewCard } from "@/components/app/review-card";
+import { ReviewCard } from "./components/review-card";
 import { StepLabel } from "@/components/app/step-label";
 import { ViewHeader } from "@/components/app/view-header";
 import { EmptyState } from "@/components/app/empty-state";

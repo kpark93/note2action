@@ -5,7 +5,7 @@ import { useTasksStore } from "./tasks.store";
 import { OWNERS, PRIORITIES, STATUSES } from "@/domain/items/items.constants";
 import { savedTasks } from "@/domain/items/items.utils";
 import { taskRows } from "./tasks.utils";
-import { TaskRow } from "@/components/app/task-row";
+import { TaskRow } from "./components/task-row";
 import { playPop } from "@/lib/sound";
 import type { Status } from "@/domain/items/items.types";
 import { Button } from "@/components/ui/button";

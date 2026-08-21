@@ -5,7 +5,7 @@ import { useItemsQuery } from "@/domain/items/items.queries";
 import { pendingItems, savedTasks } from "@/domain/items/items.utils";
 import { Button } from "@/components/ui/button";
 import { ViewShell } from "@/components/app/view-shell";
-import { RecapCard } from "@/components/app/recap-card";
+import { RecapCard } from "./components/recap-card";
 
 // A few welcome messages; one is chosen at random each time Home mounts.
 // Templates, not strings: the name comes from the signed-in Clerk user.
