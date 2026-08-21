@@ -32,3 +32,6 @@ __pycache__/
 logs/
 
 .memory.md
+
+# SDD scratch workspaces (ledgers, briefs, review packages)
+.superpowers/

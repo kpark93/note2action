@@ -2871,3 +2871,96 @@ net zero).
 visible: the exact bug that would have leaked every user's data under
 Module 12's app-only filtering was a non-event under RLS. Two
 independent layers, one rule; either survives the other's failure.
+
+## 2026-08-20 — README rewritten to match the finished app
+
+**WHAT changed:** The root `README.md` still described the Module 1
+scaffold ("no auth, no database, bare-bones on purpose") — none of
+which has been true since Phase B. It was rewritten to describe the
+app as it exists after Module 13: what the product does (capture →
+extract → review → tasks), the four packages and what each one is now
+(web with Clerk sign-in + shadcn/ui, api with JWT middleware +
+Postgres + Row-Level Security, ai with the extract route, shared as
+the zod contract), a first-time setup section (the three `.env` files,
+starting Postgres in Docker, running migrations, and the three Clerk
+dashboard steps including the `name` session claim), the real API
+surface (all eight routes and which need a token), a short
+plain-language explanation of the three security layers, the
+migration workflow, and updated script/port tables. It also documents
+honestly that `pnpm dev` (the full Docker stack) predates the
+database/auth modules — the api container has no `DATABASE_URL` or
+Clerk env wired in, so today Compose is for Postgres only and the
+apps run natively via `dev:local`.
+
+**WHICH files:** `README.md` (full rewrite, then formatted with
+Prettier so lint-staged has nothing to redo).
+
+**WHY:** A README is the front door — the first thing a new developer
+(or future me) reads. An outdated one is worse than none, because it
+makes confident claims that are false ("no auth") and gives commands
+that no longer produce a working app. The rewrite states the current
+truth: what runs where, what secrets go in which gitignored file, and
+which single stale path (`pnpm dev`) to avoid until the deploy/CI
+phase wires the containers properly.
+
+## 2026-08-21 — Restructure designed: spec written, nothing moved yet
+
+**WHAT changed:** Kyle asked for a full restructure of the monorepo —
+single responsibility everywhere — modeled on the FastAPI full-stack
+template (but keeping all apps under `apps/`). No code moved yet; this
+step produced the **design spec**: the complete target directory trees
+(api gets the template's `api/routes` + `core` + new `services` +
+split `repositories` layers; web gets a `domain/` layer between views
+and lib, with feature components moving into their view's folder; the
+shared zod contract and ai app split per domain), four boundary rules
+(one-direction imports so circular dependencies are structurally
+impossible), an evidence-backed old→new mapping for every file, and a
+reference flow tracing one meeting from Postgres row to screen. Work
+happens on a new branch `refactor/monorepo-restructure` cut from main
+(PR #3 merged), carrying the uncommitted README rewrite along.
+
+**WHICH files:** `docs/superpowers/specs/2026-08-21-monorepo-restructure-design.md`
+(new). Also removed a stray empty `apps/web/src/docs/` folder created
+by a mkdir that ran from the wrong working directory.
+
+**WHY:** A restructure this size fails without a map: every file move
+breaks imports, and the only way to keep 58 tests green throughout is
+to know the destination and the rules before touching anything. The
+spec is that map. A _design spec_ is the written agreement of what
+we're building before building it — cheaper to argue with a document
+than with a half-moved codebase. Approval gates stay as always: Kyle
+reviews the spec before any implementation plan, and the plan before
+any code moves.
+
+## 2026-08-21 — Restructure planned: 14 tasks, every move mapped
+
+**WHAT changed:** With the design spec approved (plus Kyle's added
+style laws: loose coupling, glance-readable, neat and uniform — now
+spec §4.5), the **implementation plan** was written: 14 tasks in three
+phases. Phase 1 rebuilds the API onto the template skeleton (core →
+models/schemas → repositories seam split → services → api package →
+mirrored tests). Phase 2 rebuilds the web app (meetings/health domain,
+items domain, extraction domain + query-client, feature components
+into their views, kebab-case entry + layer sweep). Phase 3 splits the
+shared zod contract and the ai app's extraction logic, then updates
+the README. Every task ends with a verification gate (23 pytest / 35
+vitest / typecheck / lint) and its own commit, so any wrong step is
+one `git revert` away. Planning also caught real facts the design had
+guessed wrong: `recent-modal` and `completion-card` belong to the
+chrome (app-layout and sidebar import them), `slot-number.tsx` and the
+`Screen` type are dead code with zero importers (deleted), the ai
+app's `provider.ts` was already in `lib/`, and the zustand store
+imports `queryClient` from `providers.tsx` — an upward import the plan
+fixes by moving it to `lib/query-client.ts`.
+
+**WHICH files:**
+`docs/superpowers/plans/2026-08-21-monorepo-restructure.md` (new),
+`docs/superpowers/specs/2026-08-21-monorepo-restructure-design.md`
+(style laws added; mapping table corrected to match import evidence).
+
+**WHY:** A plan for a refactor is a map of moves, and a wrong map is
+worse than none — so every destination in this one is backed by a
+grep of who actually imports the file, not by what "sounds right."
+The per-task green-suite gates are the refactorer's seat belt: 58
+tests that must pass after every step mean a behavior change can't
+hide inside a file move.
