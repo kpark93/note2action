@@ -10,10 +10,9 @@ import {
   saveAllToTasks,
   type ItemPatch,
 } from "@/lib/items.api";
-import { fetchMeeting, fetchMeetings } from "@/lib/meetings.api";
+import { meetingsKey } from "@/domain/meetings/meetings.queries";
 
 export const itemsKey = ["items"] as const;
-export const meetingsKey = ["meetings"] as const;
 
 export function useItemsQuery() {
   return useQuery({ queryKey: itemsKey, queryFn: fetchItems });
@@ -45,21 +44,5 @@ export function useSaveToTasks() {
   return useMutation({
     mutationFn: saveAllToTasks,
     onSettled: () => queryClient.invalidateQueries({ queryKey: itemsKey }),
-  });
-}
-
-export function useMeetingsQuery(limit = 3) {
-  return useQuery({
-    queryKey: [...meetingsKey, limit],
-    queryFn: () => fetchMeetings(limit),
-  });
-}
-
-/** One meeting's detail; only fires while a meeting is actually open. */
-export function useMeetingQuery(id: number | null) {
-  return useQuery({
-    queryKey: [...meetingsKey, id],
-    queryFn: () => fetchMeeting(id as number),
-    enabled: id !== null,
   });
 }

@@ -1,4 +1,5 @@
-import { useItemsQuery, useMeetingsQuery } from "@/lib/items.queries";
+import { useMeetingsQuery } from "@/domain/meetings/meetings.queries";
+import { useItemsQuery } from "@/lib/items.queries";
 import { useHistoryStore } from "./history.store";
 import { OWNERS } from "@/store/actionItems.constants";
 import { historyGroups, historyStats } from "./history.utils";

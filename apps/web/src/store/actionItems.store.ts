@@ -8,8 +8,9 @@
 import { create } from "zustand";
 import type { ExtractRequest } from "@note2action/shared";
 import { extractActionItems } from "@/lib/actionItems.api";
-import { createMeeting } from "@/lib/meetings.api";
-import { itemsKey, meetingsKey } from "@/lib/items.queries";
+import { createMeeting } from "@/domain/meetings/meetings.api";
+import { meetingsKey } from "@/domain/meetings/meetings.queries";
+import { itemsKey } from "@/lib/items.queries";
 import { queryClient } from "@/providers";
 import {
   DEFAULT_MEETING_TITLE,

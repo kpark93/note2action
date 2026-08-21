@@ -1,4 +1,4 @@
-import { useMeetingsQuery } from "@/lib/items.queries";
+import { useMeetingsQuery } from "@/domain/meetings/meetings.queries";
 import { useActionItems } from "@/store/actionItems.store";
 import { timeAgo } from "@/lib/dates";
 

@@ -1,5 +1,5 @@
 import { UserButton, useUser } from "@clerk/clerk-react";
-import { useHealth } from "@/lib/health";
+import { useHealth } from "@/domain/health/health.queries";
 import { useTheme } from "@/store/theme.store";
 import { Button } from "@/components/ui/button";
 import { SidebarNav } from "./sidebar-nav";
