@@ -38,5 +38,5 @@ def fresh_repository() -> None:
     test shrinking the list a later test counts). The fake verifier is set
     here too, so tests never depend on CLERK_JWKS_URL.
     """
-    main_module.repositories = build_memory_repositories()
+    main_module.app.state.repositories = build_memory_repositories()
     main_module.app.state.token_verifier = FakeVerifier()

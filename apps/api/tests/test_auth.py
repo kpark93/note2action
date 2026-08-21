@@ -36,7 +36,7 @@ def test_name_claim_flows_from_token_to_user_record() -> None:
     named = {"Authorization": "Bearer user_named|Priya Shah"}
     assert client.get("/api/items", headers=named).status_code == 200
 
-    users = main_module.repositories.users
+    users = main_module.app.state.repositories.users
     user_id = users.get_or_create_user("user_named", None)
     assert users.state.user_names[user_id] == "Priya Shah"
 
