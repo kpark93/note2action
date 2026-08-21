@@ -7,7 +7,7 @@ import {
   pendingItems,
   savedTasks,
   summary,
-} from "./items";
+} from "./items.utils";
 import { makeItem } from "@/test/fixtures";
 
 describe("initials", () => {

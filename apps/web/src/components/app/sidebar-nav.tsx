@@ -1,6 +1,6 @@
 import { NavLink } from "react-router-dom";
-import { useItemsQuery } from "@/lib/items.queries";
-import { summary } from "@/lib/items";
+import { useItemsQuery } from "@/domain/items/items.queries";
+import { summary } from "@/domain/items/items.utils";
 import { Badge } from "@/components/ui/badge";
 
 const NAV = [

@@ -9,7 +9,7 @@ import {
   type ActionItemPatch,
 } from "@note2action/shared";
 import { request } from "@/lib/http";
-import type { ActionItem } from "@/store/actionItems.types";
+import type { ActionItem } from "@/domain/items/items.types";
 
 function fromWire(item: WireActionItem): ActionItem {
   return { ...item, due: item.due ?? "", note: item.note ?? undefined };

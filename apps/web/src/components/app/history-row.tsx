@@ -1,5 +1,5 @@
-import { usePatchItem } from "@/lib/items.queries";
-import type { ActionItem } from "@/store/actionItems.types";
+import { usePatchItem } from "@/domain/items/items.queries";
+import type { ActionItem } from "@/domain/items/items.types";
 import { Button } from "@/components/ui/button";
 
 /** Shared grid template so every row's columns line up without a header row. */

@@ -1,8 +1,8 @@
 import type { CSSProperties } from "react";
-import { useDeleteItem, usePatchItem } from "@/lib/items.queries";
-import { OWNERS } from "@/store/actionItems.constants";
+import { useDeleteItem, usePatchItem } from "@/domain/items/items.queries";
+import { OWNERS } from "@/domain/items/items.constants";
 import { reviewStyle } from "@/views/review/review.utils";
-import type { Priority } from "@/store/actionItems.types";
+import type { Priority } from "@/domain/items/items.types";
 import type { ReviewItemVM } from "@/views/review/review.utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

@@ -1,8 +1,8 @@
-import { usePatchItem } from "@/lib/items.queries";
-import { STATUSES } from "@/store/actionItems.constants";
+import { usePatchItem } from "@/domain/items/items.queries";
+import { STATUSES } from "@/domain/items/items.constants";
 import { STATUS_STYLE } from "@/views/tasks/tasks.utils";
 import type { TaskRowVM } from "@/views/tasks/tasks.utils";
-import type { Status } from "@/store/actionItems.types";
+import type { Status } from "@/domain/items/items.types";
 import { Undo2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PriorityBadge } from "@/components/app/priority-badge";

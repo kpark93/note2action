@@ -1,5 +1,5 @@
-import { useItemsQuery } from "@/lib/items.queries";
-import { summary } from "@/lib/items";
+import { useItemsQuery } from "@/domain/items/items.queries";
+import { summary } from "@/domain/items/items.utils";
 import { SlotNumber } from "./slot-number";
 
 /** "Completion this month" widget: animated percent, progress bar, closed/open counts. */

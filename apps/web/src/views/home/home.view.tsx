@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "@clerk/clerk-react";
-import { useItemsQuery } from "@/lib/items.queries";
-import { pendingItems, savedTasks } from "@/lib/items";
+import { useItemsQuery } from "@/domain/items/items.queries";
+import { pendingItems, savedTasks } from "@/domain/items/items.utils";
 import { Button } from "@/components/ui/button";
 import { ViewShell } from "@/components/app/view-shell";
 import { RecapCard } from "@/components/app/recap-card";

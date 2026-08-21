@@ -7,8 +7,6 @@ import type { ActionItem as WireActionItem } from "@note2action/shared";
 
 export type { Priority, Status } from "@note2action/shared";
 
-export type Screen = "home" | "capture" | "review" | "tasks" | "history";
-
 export interface ActionItem extends Omit<WireActionItem, "due" | "note"> {
   /** ISO date `YYYY-MM-DD`, or "" when no date was inferred. */
   due: string;

@@ -1,5 +1,5 @@
-import type { ActionItem, Status } from "@/store/actionItems.types";
-import { initials, savedTasks } from "@/lib/items";
+import type { ActionItem, Status } from "@/domain/items/items.types";
+import { initials, savedTasks } from "@/domain/items/items.utils";
 import { compareDueAsc, formatDate } from "@/lib/dates";
 
 export const STATUS_STYLE: Record<

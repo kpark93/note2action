@@ -10,7 +10,7 @@ import type { ExtractRequest } from "@note2action/shared";
 import { extractActionItems } from "@/lib/actionItems.api";
 import { createMeeting } from "@/domain/meetings/meetings.api";
 import { meetingsKey } from "@/domain/meetings/meetings.queries";
-import { itemsKey } from "@/lib/items.queries";
+import { itemsKey } from "@/domain/items/items.queries";
 import { queryClient } from "@/providers";
 import {
   DEFAULT_MEETING_TITLE,

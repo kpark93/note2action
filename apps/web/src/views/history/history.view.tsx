@@ -1,7 +1,7 @@
 import { useMeetingsQuery } from "@/domain/meetings/meetings.queries";
-import { useItemsQuery } from "@/lib/items.queries";
+import { useItemsQuery } from "@/domain/items/items.queries";
 import { useHistoryStore } from "./history.store";
-import { OWNERS } from "@/store/actionItems.constants";
+import { OWNERS } from "@/domain/items/items.constants";
 import { historyGroups, historyStats } from "./history.utils";
 import { HistoryRow } from "@/components/app/history-row";
 import { ViewHeader } from "@/components/app/view-header";

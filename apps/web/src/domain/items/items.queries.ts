@@ -9,7 +9,7 @@ import {
   patchItem,
   saveAllToTasks,
   type ItemPatch,
-} from "@/lib/items.api";
+} from "@/domain/items/items.api";
 import { meetingsKey } from "@/domain/meetings/meetings.queries";
 
 export const itemsKey = ["items"] as const;

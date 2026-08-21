@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { useItemsQuery, useSaveToTasks } from "@/lib/items.queries";
+import { useItemsQuery, useSaveToTasks } from "@/domain/items/items.queries";
 import { useReviewStore } from "./review.store";
 import { flagSentence, reviewItems } from "./review.utils";
 import { ReviewCard } from "@/components/app/review-card";

@@ -1,30 +1,5 @@
 // Fixed options and sample notes. The v2 mock's seed items and fake "recent
 // captures" used to live here too — real data comes from the API now.
-import type { Priority, Status } from "./actionItems.types";
-
-export const OWNERS = [
-  "Rachel Ng",
-  "Kyle Park",
-  "Marcus Hale",
-  "Priya Shah",
-  "Unassigned",
-] as const;
-
-export const STATUSES: Status[] = [
-  "Not started",
-  "In progress",
-  "Blocked",
-  "Done",
-];
-
-export const PRIORITIES: Priority[] = ["High", "Medium", "Low"];
-
-/** "Today" is pinned so the seeded due/completed dates stay meaningful. */
-export const TODAY = "2026-08-11";
-
-/** Confidence below this is flagged as "needs review". */
-export const LOW_CONFIDENCE_THRESHOLD = 80;
-
 const SAMPLE = `Weekly sync — Aug 10
 
 Rachel: pricing page needs to be live before the board deck goes out. She'll own the copy, aiming for Friday.

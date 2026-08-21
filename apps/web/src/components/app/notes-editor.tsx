@@ -1,5 +1,5 @@
 import { useActionItems } from "@/store/actionItems.store";
-import { OWNERS } from "@/store/actionItems.constants";
+import { OWNERS } from "@/domain/items/items.constants";
 import { todayISO } from "@/lib/dates";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

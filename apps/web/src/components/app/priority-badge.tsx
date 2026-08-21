@@ -1,6 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import type { Priority } from "@/store/actionItems.types";
+import type { Priority } from "@/domain/items/items.types";
 
 // Theme-aware pill colors (see --pill-* / --magenta in global.css):
 // dark & saturated on light backgrounds, pastel on dark ones.

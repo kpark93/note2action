@@ -1,8 +1,8 @@
 // Shared, cross-view item selectors and helpers. Date helpers live in
 // lib/dates.ts; view-specific derivations (review cards, task rows, history
 // groups) live in each view's *.utils.ts.
-import type { ActionItem } from "@/store/actionItems.types";
-import { LOW_CONFIDENCE_THRESHOLD } from "@/store/actionItems.constants";
+import type { ActionItem } from "@/domain/items/items.types";
+import { LOW_CONFIDENCE_THRESHOLD } from "@/domain/items/items.constants";
 
 export function initials(owner: string): string {
   if (owner === "Unassigned") return "?";
