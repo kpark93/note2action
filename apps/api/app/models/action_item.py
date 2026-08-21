@@ -1,29 +1,9 @@
-from datetime import date, datetime
+from datetime import date
 
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
-from sqlalchemy import ForeignKey, Text, DateTime, CheckConstraint, text
+from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy import ForeignKey, CheckConstraint, text
 
-class Base(DeclarativeBase):
-    pass 
-
-class User(Base):
-    __tablename__ = "users"
-
-    id: Mapped[int] = mapped_column(primary_key=True)
-    name: Mapped[str]
-    role: Mapped[str | None]
-    # Clerk's user id (`user_…`) — the link between a verified token and our
-    # row. Unique; nullable so pre-auth rows can exist until they're linked.
-    clerk_id: Mapped[str | None] = mapped_column(unique=True)
-
-class Meeting(Base):
-    __tablename__ = "meetings"
-
-    id: Mapped[int] = mapped_column(primary_key=True)
-    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
-    title: Mapped[str]
-    raw_notes: Mapped[str] = mapped_column(Text)
-    captured_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+from .base import Base
 
 class ActionItem(Base):
     __tablename__ = "action_items"
