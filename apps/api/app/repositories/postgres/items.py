@@ -47,8 +47,12 @@ class PostgresItemRepository:
             if "status" in changes:
                 row.completed = date.today() if row.status == "Done" else None
             meeting_title = session.get(MeetingRow, row.meeting_id).title
+            # Build the response BEFORE commit: the RLS identity is SET LOCAL,
+            # so it dies with the transaction — reading row attributes after
+            # commit triggers a re-SELECT with no identity, which RLS rejects.
+            result = to_wire(row, meeting_title)
             session.commit()
-            return to_wire(row, meeting_title)
+            return result
 
     def delete_item(self, user_id: int, item_id: int) -> bool:
         with rls_session(user_id) as session:
