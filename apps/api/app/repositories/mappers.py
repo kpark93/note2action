@@ -1,8 +1,5 @@
 """Shape-shifting helpers shared by the Postgres repositories: DB rows
 and AI-extracted items in, wire schemas out.
-
-Called by repositories/memory.py and repositories/postgres/{items,
-meetings}.py.
 Path §1 [hop 12/15]: postgres rows (hop 11) → [this file] →
 schemas/items.py wire shapes (hop 13) — the return trip begins here.
 """

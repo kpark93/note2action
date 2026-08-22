@@ -1,9 +1,7 @@
 // Thin, typed wrapper over fetch, shared by the feature `api.ts` modules.
 // Keeps paths relative (`/api/…`) so the Vite dev proxy keeps working.
-// Path §1 [hop 5/15]: domain/*.api.ts (hop 4) → [this file] → fetch() →
-// Vite proxy (hop 6) → API. Return trip: [hop 14] — the JSON comes back
-// here for zod validation before the cache ever sees it.
-// (request-paths.md §1, §2, §3 — every journey passes through here)
+// Path §1 [hop 5/15]: domain/*.api.ts → [this file] → fetch() → Vite
+// proxy → API (return trip hop 14, parsed here). (request-paths.md §1-3)
 
 import { getAuthToken } from "./auth-token";
 

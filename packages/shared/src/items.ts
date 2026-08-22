@@ -1,8 +1,7 @@
-// Shared Zod contract: each export is a schema (runtime validation) plus,
-// via z.infer, a same-named type — `ActionItem.parse(x)` is the value,
-// `const a: ActionItem` the type. Imported by apps/web's items.* modules;
-// mirrored by hand in the API. Path: action_items table →
-// api/routes/items.py → [this file] → web's request() → items UI.
+// Shared Zod contract: each export is a schema + same-named type via
+// z.infer (`ActionItem.parse(x)` is the value, `ActionItem` the type).
+// Mirrored by hand in the API's schemas.
+// Path: action_items table → api/routes/items.py → [this file] → web UI.
 
 import { z } from "zod";
 

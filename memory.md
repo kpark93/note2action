@@ -3283,3 +3283,48 @@ lint + build.
 trail answers the question Kyle actually had — "where exactly is the
 request going next?" Now you can open any file on the route and walk
 forward or backward by number, with the guide as the bird's-eye view.
+
+## 2026-08-21 — Comment caps enforced on the API; every DB-bound step names its next hop
+
+**WHAT changed:** Kyle set hard rules: file-top comments max 4 lines,
+all other comments max 1–2 lines, and anything pointing toward the
+database must say the next hop it takes. The API side is done: all 44
+over-cap blocks compressed across 25 files, and 14 functions that were
+short enough but silent about their destination now name it exactly —
+each route says which service function it delegates to, each service
+names the repository method it calls, each Postgres method states the
+SQL it emits through the RLS session. Verified: an AST sweep shows
+zero over-cap docstrings, 23 pytest still green, and every protected
+fact (the commit-ordering rule, 404-not-403, name laws, fail-closed
+RLS) survived in shorter words. The web/shared/ai half is in progress.
+
+**WHICH files:** 25 files under `apps/api/app/`.
+
+**WHY:** A comment that's too long doesn't get read, and a chain with
+one silent link breaks the trail. The caps keep every note scannable;
+the next-hop rule means you can stand at any point in the request
+path and know, without guessing, where execution goes next.
+
+## 2026-08-21 — Caps enforced everywhere: zero over-long comments remain
+
+**WHAT changed:** The second half of Kyle's comment rules landed on the
+web app, the shared contract, and the AI app: all 59 remaining
+over-cap blocks compressed (file headers ≤4 lines, everything else
+≤1–2), every request-initiating hook and function now names its next
+hop inside its short comment, and one straggler the scanner missed (a
+4-line JSX hover note in the meetings view) was hand-tightened. A
+repo-wide rescan now reports **zero** violations, and the full gate is
+green: 42 vitest + 23 pytest + typecheck + lint + production build.
+The protected content survived compression everywhere — the optimistic
+mutation semantics, the wire↔view null/"" border, the note that the
+extraction schema's `.describe()` strings are instructions the AI
+model actually reads, and all the numbered `Path §1 [hop N/15]`
+markers.
+
+**WHICH files:** 44 files across `apps/web/src`, `packages/shared/src`,
+and `apps/ai` (plus `views/meetings/meetings.view.tsx` by hand).
+
+**WHY:** Rules only count when they hold everywhere — a cap with
+exceptions isn't a cap. The rescan-to-zero is the proof, the same way
+the test suite is proof for behavior: don't trust that the sweep
+worked, measure it.

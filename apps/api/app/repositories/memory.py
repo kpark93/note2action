@@ -1,8 +1,6 @@
 """In-memory repository implementation — a Python list standing in for
 Postgres; used by tests and local dev without Docker.
-Implements the same protocols (protocols.py) as postgres/*.py, so
-routes/services can't tell which is running. Built by
-build_memory_repositories(), assigned in app/main.py.
+Implements the same protocols (protocols.py) as postgres/*.py.
 Path: app/main.py → [this file] (one of the two implementations).
 """
 
@@ -37,9 +35,8 @@ class _MeetingRecord:
 
 
 class MemoryState:
-    """All the fake's data in one place, shared by the three repositories
-    (mirrors how the Postgres impls share one DB). Seeded: user 1,
-    meeting 1, items 1-2."""
+    """All the fake's data in one place, shared by the three repos
+    (mirrors how Postgres impls share one DB)."""
 
     def __init__(self) -> None:
         self.users: dict[str, int] = {SEED_CLERK_ID: 1}
@@ -140,9 +137,8 @@ class MemoryItemRepository:
     def update_item(
         self, user_id: int, item_id: int, patch: ActionItemPatch
     ) -> ActionItem | None:
-        """Applies a partial edit; stamps `completed` when status becomes
-        "Done" (clears it otherwise) — same Done-iff-completed rule as the
-        Postgres CHECK constraint. None if missing or not the caller's."""
+        """Applies a partial edit; stamps `completed` iff status is
+        "Done" (server-side). None if missing or not the caller's."""
         for index, item in enumerate(self.state.items):
             if item.id == item_id and self.state.owns_meeting(
                 user_id, item.meetingId

@@ -1,9 +1,7 @@
-"""Meeting routes — capture a meeting with its AI-extracted items, and
-browse past captures. Called by the browser via the /api proxy;
-delegates to services/meetings.py → whichever MeetingRepository is
-configured.
-Path: browser → [this file] → services/meetings.py → repositories/ →
-schemas/meetings.py. See request-paths.md §3 (an AI capture, end to end).
+"""Meeting routes — capture a meeting with AI-extracted items, and
+browse past captures; delegates to services/meetings.py.
+Path: browser → [this file] → services/meetings.py → repositories/.
+See request-paths.md §3.
 """
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -29,8 +27,8 @@ def create_meeting(
     user_id: int = Depends(current_user_id),
     repos: Repositories = Depends(get_repositories),
 ) -> CreateMeetingResponse:
-    """POST /api/meetings: persist a captured meeting plus its
-    AI-extracted action items in one call."""
+    """POST /api/meetings: delegates to services/meetings.py
+    create_meeting (meeting + extracted items, one call)."""
     return meetings_service.create_meeting(repos.meetings, user_id, request)
 
 
@@ -40,8 +38,8 @@ def list_meetings(
     user_id: int = Depends(current_user_id),
     repos: Repositories = Depends(get_repositories),
 ) -> MeetingsResponse:
-    """GET /api/meetings: the caller's most recent captures, newest
-    first (default 3)."""
+    """GET /api/meetings: delegates to services/meetings.py
+    list_meetings; newest first (default 3)."""
     return MeetingsResponse(
         meetings=meetings_service.list_meetings(repos.meetings, user_id, limit)
     )
@@ -53,8 +51,8 @@ def get_meeting(
     user_id: int = Depends(current_user_id),
     repos: Repositories = Depends(get_repositories),
 ) -> MeetingDetail:
-    """GET /api/meetings/{id}: one full capture, transcript included.
-    404s, never 403s, when it isn't the caller's — same non-leak rule."""
+    """GET /api/meetings/{id}: delegates to services/meetings.py;
+    404s not 403s when not the caller's — no leak."""
     meeting = meetings_service.get_meeting(repos.meetings, user_id, meeting_id)
     if meeting is None:
         raise HTTPException(status_code=404, detail="Meeting not found")

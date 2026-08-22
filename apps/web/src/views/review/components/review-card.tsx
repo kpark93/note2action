@@ -22,10 +22,8 @@ import {
 
 /** One editable card in the Review grid: confidence pill, title, owner/due/priority fields, confirm/discard. */
 export function ReviewCard({ item }: { item: ReviewItemVM }) {
-  // Both mutations are OPTIMISTIC (items.queries.ts): the edit shows
-  // immediately in the card and the list, then a PATCH/DELETE confirms it
-  // with the server — a toast + rollback if the request fails.
-  // (request-paths.md §2, applied here to Review's editors)
+  // Both mutations are OPTIMISTIC: edits show immediately, then PATCH/
+  // DELETE confirms — rollback + toast on failure. (request-paths.md §2)
   const patchItem = usePatchItem();
   const deleteItem = useDeleteItem();
   const st = reviewStyle(item.low);

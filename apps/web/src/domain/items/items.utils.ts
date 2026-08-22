@@ -1,8 +1,7 @@
-// Shared, cross-view item selectors and helpers. Date helpers live in
-// lib/dates.ts; view-specific derivations (review cards, task rows, history
-// groups) live in each view's *.utils.ts.
-// Path: view *.utils.ts files, sidebar-nav.tsx, completion-card.tsx →
-// [this file] (leaf — pure functions, no network).
+// Shared, cross-view item selectors and helpers. View-specific
+// derivations (review cards, task rows, history groups) live in each
+// view's own *.utils.ts instead.
+// Path: view *.utils.ts, sidebar-nav.tsx → [this file] (leaf, no network).
 import type { ActionItem } from "@/domain/items/items.types";
 import { LOW_CONFIDENCE_THRESHOLD } from "@/domain/items/items.constants";
 

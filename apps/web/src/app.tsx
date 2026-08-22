@@ -15,9 +15,8 @@ import { HistoryView } from "@/views/history/history.view";
 import { MeetingsView } from "@/views/meetings/meetings.view";
 
 /**
- * /sign-in and /sign-up are public; every other route is nested under
- * <RequireAuth><AppLayout /></RequireAuth>, so it needs a signed-in Clerk
- * session first (components/app/require-auth.tsx).
+ * /sign-in and /sign-up are public; everything else needs a signed-in
+ * Clerk session first (RequireAuth in components/app/require-auth.tsx).
  */
 export function App() {
   return (

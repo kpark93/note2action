@@ -1,9 +1,7 @@
 """Action item routes — list, edit, delete, and bulk-save items.
-Called by the browser via the /api proxy; each handler resolves the
-verified user (api/deps.py), then delegates to services/items.py.
+Each handler resolves the user (api/deps.py), delegates to services/items.py.
 Path §1 [hop 8/15]: middleware (hop 7) → [this file] → deps (hop 9) →
-services/items.py (hop 10); the response is serialized from
-schemas/items.py (hop 13). See request-paths.md §1, §2.
+services/items.py (hop 10). See request-paths.md §1, §2.
 """
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -26,7 +24,7 @@ def list_items(
     user_id: int = Depends(current_user_id),
     repos: Repositories = Depends(get_repositories),
 ) -> ItemsResponse:
-    """GET /api/items: every action item the caller owns."""
+    """GET /api/items: delegates to services/items.py list_items."""
     return ItemsResponse(items=items_service.list_items(repos.items, user_id))
 
 
@@ -37,8 +35,8 @@ def update_item(
     user_id: int = Depends(current_user_id),
     repos: Repositories = Depends(get_repositories),
 ) -> ActionItem:
-    """PATCH /api/items/{id}: applies a partial edit. 404s, never 403s,
-    when missing or someone else's — the two look identical, no leak."""
+    """PATCH /api/items/{id}: delegates to services/items.py
+    update_item; 404s not 403s when missing/not theirs — no leak."""
     item = items_service.update_item(repos.items, user_id, item_id, patch)
     if item is None:
         raise HTTPException(status_code=404, detail="Item not found")
@@ -51,7 +49,8 @@ def delete_item(
     user_id: int = Depends(current_user_id),
     repos: Repositories = Depends(get_repositories),
 ) -> None:
-    """DELETE /api/items/{id}: same 404-not-403 rule as update_item."""
+    """DELETE /api/items/{id}: delegates to services/items.py
+    delete_item; same 404-not-403 rule as update_item."""
     if not items_service.delete_item(repos.items, user_id, item_id):
         raise HTTPException(status_code=404, detail="Item not found")
 
@@ -61,8 +60,8 @@ def save_to_tasks(
     user_id: int = Depends(current_user_id),
     repos: Repositories = Depends(get_repositories),
 ) -> SaveToTasksResponse:
-    """POST /api/items/save-to-tasks: mark every not-yet-saved, not-Done
-    item as saved in one bulk call; returns how many changed."""
+    """POST /api/items/save-to-tasks: delegates to services/items.py
+    save_all_to_tasks; returns how many items changed."""
     return SaveToTasksResponse(
         updated=items_service.save_all_to_tasks(repos.items, user_id)
     )

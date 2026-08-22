@@ -1,9 +1,7 @@
-// One task row on the Tasks screen: owner, title, due, priority, status
-// dropdown, and a "send back to Review" icon button.
-// Path: tasks.view.tsx → [this file] → usePatchItem (domain, optimistic
-// write) for send-back; the status dropdown calls the onStatusChange prop
-// instead, so tasks.view.tsx can play the Done completion animation first.
-// (request-paths.md §2 — optimistic write, via this row's status dropdown)
+// One task row: owner, title, due, priority, status dropdown, and a
+// "send back to Review" icon button.
+// Path: tasks.view.tsx → [this file] → usePatchItem (optimistic write)
+// for send-back; status changes call onStatusChange (request-paths.md §2).
 import { usePatchItem } from "@/domain/items/items.queries";
 import { STATUSES } from "@/domain/items/items.constants";
 import { STATUS_STYLE } from "@/views/tasks/tasks.utils";

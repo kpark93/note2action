@@ -1,10 +1,8 @@
 """FastAPI application factory — wiring only: state, middleware, routers.
 
-Started by the ASGI server (uvicorn app.main:app); every request enters
-here first. Picks the repository and token verifier once at startup,
-attaches the auth middleware, then mounts all routes.
-Path: uvicorn → [this file] → core/middleware.py (verify) →
-app/api/main.py (routes) → services/ → repositories/.
+Runs once at startup: builds the repository and verifier, wires auth
+middleware, then mounts routes.
+Path: uvicorn → [this file] → middleware → api/main.py → services/ → repos.
 """
 
 from fastapi import FastAPI

@@ -1,11 +1,7 @@
-"""Re-exports every SQLAlchemy model so `from app.models import X` works
-from one place.
-
-Used by repositories/postgres/*.py (to build queries) and by
-migrations/env.py (Alembic autogenerate needs every model imported to
-see the full schema).
-Path: repositories/postgres/*.py → [this file] → models/{user,meeting,
-action_item}.py → Postgres tables.
+"""Re-exports every SQLAlchemy model so `from app.models import X`
+works from one place; also used by migrations/env.py (Alembic).
+Path: repositories/postgres/*.py → [this file] → models/{user,
+meeting,action_item}.py → Postgres tables.
 """
 
 from .action_item import ActionItem

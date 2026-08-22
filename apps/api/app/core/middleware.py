@@ -1,10 +1,8 @@
-"""Auth middleware — the central checkpoint that runs before any endpoint.
+"""Auth middleware — the central checkpoint before any endpoint runs.
 
-Registered once in app/main.py (app.middleware("http")(...)); calls
-core/security.py to verify the token, then stores the identity on
-request.state for api/deps.py to read.
-Path §1 [hop 7/15]: Vite proxy (hop 6) → [this file] → core/security.py
-(verify JWT) → routes (hop 8). A rejection here means no route ever runs.
+Stores the verified identity on request.state for api/deps.py to read.
+Path §1 [hop 7/15]: proxy (hop 6) → [this file] → security.py (verify)
+→ routes (hop 8); rejection here means no route runs.
 """
 
 from fastapi import Request
@@ -18,12 +16,8 @@ PUBLIC_PATHS = {"/api/health", "/docs", "/openapi.json"}
 
 
 async def require_verified_user(request: Request, call_next):
-    """Verify the caller on every request, before any endpoint runs.
-
-    Middleware is auth's classic home: one central checkpoint instead of a
-    check (that someone will eventually forget) in every handler. On success
-    the verified Clerk user id rides along on request.state for handlers.
-    """
+    """Verify the caller before any endpoint runs; the verified identity
+    rides on request.state for handlers."""
     if request.url.path in PUBLIC_PATHS:
         return await call_next(request)
 

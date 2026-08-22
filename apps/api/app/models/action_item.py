@@ -1,11 +1,7 @@
 """The action_items table — one row per extracted or edited task.
-
-Written/read by repositories/postgres/items.py and
-repositories/postgres/meetings.py. Row-level security restricts every
-query to rows whose user_id matches the caller — see
-repositories/postgres/session.py.
-Path: repositories/postgres/{items,meetings}.py → [this file] →
-Postgres `action_items`.
+RLS restricts every query to rows whose user_id matches the caller
+(see postgres/session.py).
+Path: repositories/postgres/{items,meetings}.py → [this file] → Postgres.
 """
 
 from datetime import date
@@ -17,10 +13,8 @@ from .base import Base
 
 
 class ActionItem(Base):
-    """One action item. The CHECK constraints below are the database's
-    own copy of rules the app also enforces: priority/status are closed
-    sets, and `completed` is set if and only if status is 'Done' — the
-    database rejects either one changing without the other."""
+    """One action item. CHECK constraints mirror app rules: closed
+    priority/status sets, and completed set iff status = 'Done'."""
 
     __tablename__ = "action_items"
     __table_args__ = (

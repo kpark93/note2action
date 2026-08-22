@@ -1,8 +1,7 @@
 // Typed API calls for meetings (captures), through the `/api` dev proxy.
 // Called by meetings.queries.ts (reads) and extraction.store.ts
 // (createMeeting, right after an AI extraction).
-// Path: meetings.queries.ts / extraction.store.ts → [this file] →
-// lib/http.ts → API.  (request-paths.md §3 for createMeeting)
+// Path: [this file] → lib/http.ts → API (request-paths.md §3).
 import {
   CreateMeetingResponse,
   MeetingDetail,

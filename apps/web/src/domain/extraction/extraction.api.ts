@@ -1,8 +1,7 @@
 // Calls the AI app's extraction endpoint — the first network hop of AI
 // capture. Called only by extraction.store.ts (extractNotes).
-// Path: extraction.store.ts → [this file] → lib/http.ts → AI app
-// (/ai-api/extract, rewritten by the Vite proxy to /api/extract).
-// (request-paths.md §3)
+// Path: [this file] → lib/http.ts → AI app (/ai-api/extract → proxy →
+// /api/extract). (request-paths.md §3)
 import {
   ExtractResponse,
   type ExtractRequest,
@@ -11,9 +10,8 @@ import {
 import { request } from "@/lib/http";
 
 /**
- * Send notes to the AI app (via the `/ai-api` dev proxy) and get back typed
- * action items. The shared `ExtractResponse` schema validates the payload, so a
- * drifting API surfaces here rather than deep in the UI.
+ * Sends notes to the AI app via lib/http.ts → /ai-api/extract; the shared
+ * `ExtractResponse` schema validates the reply so drift surfaces here.
  */
 export async function extractActionItems(
   payload: ExtractRequest,

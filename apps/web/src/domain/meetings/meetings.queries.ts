@@ -7,9 +7,8 @@ import { fetchMeeting, fetchMeetings } from "@/domain/meetings/meetings.api";
 export const meetingsKey = ["meetings"] as const;
 
 /**
- * Recent captures list, newest first (capped at `limit`). Fires
- * GET /api/meetings?limit=N (meetings.api.ts fetchMeetings). Used by the
- * home recap, capture's Recent strip, the Meetings view, and History.
+ * Recent captures, newest first (capped at `limit`). Fires GET
+ * /api/meetings via meetings.api.ts fetchMeetings; used app-wide.
  */
 export function useMeetingsQuery(limit = 3) {
   return useQuery({

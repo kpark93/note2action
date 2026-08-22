@@ -7,9 +7,8 @@ import { Sidebar } from "./sidebar";
 import { RecentModal } from "./recent-modal";
 
 /**
- * Fixed sidebar + the routed view in <Outlet/>. The transcript dialog
- * (RecentModal) lives here, not in a view, so it can open from any route —
- * it reads its own open/closed state from the extraction store, not props.
+ * Fixed sidebar + the routed view in <Outlet/>. RecentModal lives here
+ * (not in a view) so it can open from any route via the extraction store.
  */
 export function AppLayout() {
   return (

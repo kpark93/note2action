@@ -1,9 +1,7 @@
 """Meeting use-cases. The atomic meeting+items write lives behind create.
-
-Called by app/api/routes/meetings.py; calls the MeetingRepository
-protocol (app/repositories/).
-Path: route (api/routes/meetings.py) → [this file] → MeetingRepository
-(repositories/).
+Calls the MeetingRepository protocol (app/repositories/).
+Path: routes/meetings.py → [this file] → MeetingRepository
+(repositories/postgres/meetings.py).
 """
 
 from app.repositories.protocols import MeetingRepository
@@ -18,19 +16,21 @@ from app.schemas.meetings import (
 def create_meeting(
     meetings: MeetingRepository, user_id: int, request: CreateMeetingRequest
 ) -> CreateMeetingResponse:
-    """Persist a captured meeting and its extracted items as one unit."""
+    """Calls MeetingRepository.create_meeting (meeting + items,
+    one unit)."""
     return meetings.create_meeting(user_id, request)
 
 
 def list_meetings(
     meetings: MeetingRepository, user_id: int, limit: int
 ) -> list[Meeting]:
-    """The user's most recent meetings, newest first, capped at limit."""
+    """Calls MeetingRepository.list_meetings; newest first, capped."""
     return meetings.list_meetings(user_id, limit)
 
 
 def get_meeting(
     meetings: MeetingRepository, user_id: int, meeting_id: int
 ) -> MeetingDetail | None:
-    """One full meeting; None if missing or not theirs (route → 404)."""
+    """Calls MeetingRepository.get_meeting; None if missing/not
+    theirs (route → 404)."""
     return meetings.get_meeting(user_id, meeting_id)

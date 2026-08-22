@@ -16,9 +16,8 @@ export interface HistoryGroupVM {
 }
 
 /**
- * Completed items, filtered by owner and grouped into week buckets (newest
- * week first). Each group also carries its items with a pre-formatted
- * completedLabel for HistoryRow.
+ * Completed items, filtered by owner and grouped into week buckets
+ * (newest first); each item carries a pre-formatted completedLabel.
  */
 export function historyGroups(
   items: ActionItem[],

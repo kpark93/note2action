@@ -1,8 +1,7 @@
 // Pure transforms for optimistic updates: each mirrors a server-side rule,
 // applied to the TanStack cache before the server has answered. If the
 // server later disagrees, the mutation hooks roll the cache back.
-// Path: items.queries.ts (mutation onMutate) → [this file] (pure — no
-// network, no React).  (request-paths.md §2)
+// Path: items.queries.ts (onMutate) → [this file]. (request-paths.md §2)
 import { todayISO } from "@/lib/dates";
 import type { ItemPatch } from "./items.api";
 import type { ActionItem } from "./items.types";

@@ -1,8 +1,5 @@
-"""Re-exports every pydantic schema so `from app.schemas import X` works
-from one place.
-
-Imported by app/api/routes/*.py (response_model / request bodies) and
-by repositories/{memory,mappers,postgres/*}.py (the shapes they build).
+"""Re-exports every pydantic schema so `from app.schemas import X`
+works from one place.
 Path: routes/repositories → [this file] → schemas/{health,items,
 meetings}.py.
 """

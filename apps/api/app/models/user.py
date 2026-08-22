@@ -1,7 +1,6 @@
-"""The users table — one row per person, keyed to their Clerk identity.
-Deliberately has NO row-level security: identity lookup must run before
-a caller's user_id exists, so it can't be gated by that same id.
-Written/read by repositories/postgres/users.py.
+"""The users table — one row per person, keyed to Clerk identity.
+Deliberately has NO RLS: identity lookup must run before a user_id
+exists, so it can't be gated by that same id.
 Path: repositories/postgres/users.py → [this file] → Postgres `users`.
 """
 

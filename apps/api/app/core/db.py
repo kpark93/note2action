@@ -1,10 +1,8 @@
-"""The SQLAlchemy engine and session factory shared by every Postgres
-repository.
+"""The SQLAlchemy engine and session factory for every Postgres repo.
 
-Built once from settings.database_url (core/config.py); used directly
-by repositories/postgres/users.py and indirectly by the rest of the
-Postgres repositories via repositories/postgres/session.py.
-Path: core/config.py → [this file] → repositories/postgres/*.py.
+Built once from settings.database_url (core/config.py).
+Path: core/config.py → [this file] → Postgres (DATABASE_URL); used
+directly by postgres/users.py, via session.py by the rest.
 """
 
 from sqlalchemy import create_engine

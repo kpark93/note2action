@@ -1,8 +1,7 @@
 // Client-only state (draft text, open modal, extraction flag); server
 // data (items, meetings) lives in TanStack Query — see items.queries.ts.
-// Path: capture/notes/recent/meetings views → [this file] →
-// extraction.api.ts + meetings.api.ts → lib/query-client.ts (cache inval.).
-// (request-paths.md §3 AI capture)
+// Path: [this file] → extraction.api.ts (/ai-api extract), then
+// meetings.api.ts createMeeting → lib/query-client.ts (request-paths.md §3).
 import { create } from "zustand";
 import type { ExtractRequest } from "@note2action/shared";
 import { extractActionItems } from "@/domain/extraction/extraction.api";

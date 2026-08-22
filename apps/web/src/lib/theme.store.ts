@@ -1,9 +1,7 @@
-// Light/dark theme, kept in a tiny Zustand store (matching the app's use of
-// Zustand for client state). The initial value comes from the `.dark` class
-// that index.html sets before paint, so there's no flash and no double source
-// of truth.
-// Path: sidebar.tsx, toaster.tsx → [this file] (leaf — localStorage only,
-// no network).
+// Light/dark theme, kept in a tiny Zustand store. Initial value comes
+// from the `.dark` class index.html sets before paint — no flash, no
+// double source of truth.
+// Path: sidebar.tsx, toaster.tsx → [this file] (leaf, localStorage only).
 import { create } from "zustand";
 
 export type Theme = "light" | "dark";

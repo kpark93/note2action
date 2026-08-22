@@ -1,8 +1,7 @@
-// Full list of saved captures (unlike the Capture screen's 3-item RECENT
-// strip, this has no limit). No view-local store — filters/toggles aren't
-// needed here.
-// Path: app.tsx (route "/meetings") → [this file] → meetings.queries
-// (domain, read) + extraction.store's openRecent() (opens RecentModal).
+// Full list of saved captures (Capture screen's RECENT strip caps at 3;
+// this has no limit). No view-local store — no filters/toggles needed.
+// Path: [this file] → meetings.queries (read) + extraction.store's
+// openRecent() (opens RecentModal).
 import { useMeetingsQuery } from "@/domain/meetings/meetings.queries";
 import { useActionItems } from "@/domain/extraction/extraction.store";
 import { formatDate, timeAgo } from "@/lib/dates";
@@ -12,9 +11,8 @@ import { ScrollRegion } from "@/components/app/scroll-region";
 import { EmptyState } from "@/components/app/empty-state";
 
 /**
- * All saved captures, newest first, as full-width cards. Clicking one opens
- * the shared transcript modal (RecentModal, mounted in the app layout) via
- * the same store action the Capture screen's RECENT strip uses.
+ * All saved captures, newest first, as full-width cards. Clicking one
+ * opens the shared RecentModal via the same store action RECENT uses.
  */
 export function MeetingsView() {
   // All meetings, not the RECENT strip's three (limit=1000 stands in for
@@ -58,10 +56,8 @@ export function MeetingsView() {
                   {meeting.itemCount === 1 ? "item" : "items"} extracted
                 </span>
               </span>
-              {/* Hover swaps "1d ago" for the capture date. Both labels are
-                  stacked in one grid cell so the width never changes — a
-                  self-hiding hover target would flicker (hide → hover lost →
-                  show → hover again). The hover lives on the wrapper. */}
+              {/* Hover swaps "1d ago" for the date; both labels share one
+                  grid cell so the hover target never moves (no flicker). */}
               <span className="group/when grid flex-none text-right text-[12px] tabular-nums text-muted-foreground">
                 <span className="col-start-1 row-start-1 transition-opacity duration-150 group-hover/when:opacity-0">
                   {timeAgo(meeting.capturedAt)}

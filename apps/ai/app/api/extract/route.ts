@@ -1,10 +1,7 @@
-// Next.js route handler for POST /api/extract — reached by the web app via
-// its `/ai-api` dev proxy (vite.config.ts rewrites /ai-api/* to /api/*).
-// A thin HTTP adapter: parses the body against the shared ExtractRequest
-// schema, hands it to lib/extraction.ts, and returns the result as-is —
-// all the prompt/model logic lives there, not here.
-// Path: web capture form → POST /ai-api/extract → [this file] →
-// lib/extraction.ts's extractItems().
+// Next.js route handler for POST /api/extract, reached via the web app's
+// `/ai-api` dev proxy. A thin HTTP adapter: parses the body against the
+// shared ExtractRequest schema and hands it to lib/extraction.ts — all
+// prompt/model logic lives there. Path: [this file] → extractItems().
 import { ExtractRequest } from "@note2action/shared";
 import { extractItems } from "@/lib/extraction";
 

@@ -1,9 +1,7 @@
-// Streaming chat route for the standalone Module-7 chat demo (app/page.tsx).
+// Streaming chat route for the standalone Module-7 chat demo (page.tsx).
 // Not part of the main capture flow — the web app never calls this; it's
-// reached only by visiting the ai app directly and driven by `useChat` on
-// the client, which expects this exact streamed-response shape.
-// Path: app/page.tsx's useChat() → [this file] → lib/provider.ts's
-// chatModel().
+// reached only by visiting the ai app directly, driven by `useChat`.
+// Path: page.tsx's useChat() → [this file] → lib/provider.ts's chatModel().
 import { convertToModelMessages, streamText, type UIMessage } from "ai";
 import { chatModel } from "@/lib/provider";
 

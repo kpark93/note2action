@@ -1,9 +1,7 @@
-"""The real MeetingRepository — backed by the meetings and action_items
-tables. Called by services/meetings.py; every method opens an
-rls_session (postgres/session.py) so RLS scopes each query to the
-caller's rows.
-Path: services/meetings.py → [this file] → postgres/session.py →
-Postgres. See request-paths.md §3 (an AI capture, end to end).
+"""The real MeetingRepository — backed by meetings and action_items.
+Called by services/meetings.py.
+Path: services/meetings.py → [this file] → session.py → Postgres.
+See request-paths.md §3.
 """
 
 from datetime import date, datetime, timezone
@@ -24,9 +22,8 @@ from .session import rls_session
 
 
 class PostgresMeetingRepository:
-    """Store backed by the real meetings and action_items tables. Two
-    layers enforce isolation — user_id filters here, RLS in Postgres —
-    so either can survive the other's bugs."""
+    """Every method opens an rls_session (session.py) so RLS scopes
+    queries to the caller's rows; user_id also filters here."""
 
     def create_meeting(
         self, user_id: int, request: CreateMeetingRequest

@@ -10,9 +10,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 
 /**
- * The Capture editor card: meeting-title input, notes textarea, and the footer
- * with sample loader, status line, and the Extract button. Reads and writes the
- * shared store directly; the view only decides what happens after extraction.
+ * The Capture editor card: title input, notes textarea, and the footer
+ * (sample loader, status, Extract button). Reads/writes the store directly.
  */
 export function NotesEditor() {
   const raw = useActionItems((s) => s.raw);

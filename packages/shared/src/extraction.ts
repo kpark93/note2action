@@ -1,20 +1,15 @@
 // Request/response contract for the ai app's POST /api/extract, plus the
-// ExtractedItem shape it produces (later wrapped into a full ActionItem by
-// the API once persisted — see items.ts).
-// Used by apps/ai (lib/extraction.ts, api/extract/route.ts) on the server
-// side, and apps/web (extraction.api.ts, extraction.store.ts) as the client;
-// meetings.ts also reuses ExtractedItem for the not-yet-persisted capture.
-// Path: web's capture form → POST /ai-api/extract (proxy) →
-// apps/ai route → [this file] → generateObject's schema/prompt.
+// ExtractedItem shape (later wrapped into an ActionItem once persisted).
+// Used by apps/ai (extraction.ts) and apps/web (extraction.api/.store.ts).
+// Path: capture → POST /ai-api/extract → [this file] → generateObject.
 
 import { z } from "zod";
 
 import { Priority } from "./items";
 
 /**
- * One action item extracted from raw notes by the AI. The `.describe()` calls
- * are sent to the model (via the AI SDK) to steer the extraction — keep them
- * accurate.
+ * One extracted action item. `.describe()` calls below are sent to the
+ * model as instructions — keep them accurate.
  */
 export const ExtractedItem = z.object({
   title: z

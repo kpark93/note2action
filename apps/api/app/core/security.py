@@ -1,6 +1,5 @@
-"""Verifies Clerk session JWTs locally against Clerk's public JWKS keys —
-no network call per request, no shared secret to leak. Behind a small
-interface (like the repository) so tests can fake it.
+"""Verifies Clerk session JWTs locally against Clerk's JWKS keys — no
+network call per request, no shared secret to leak.
 Called by core/middleware.py on every request, before any route runs.
 Path: browser token → core/middleware.py → [this file] → Clerk's JWKS.
 """
@@ -53,12 +52,7 @@ class ClerkJWKSVerifier:
         self._jwks = PyJWKClient(jwks_url, cache_keys=True)
 
     def verify(self, token: str) -> VerifiedUser:
-        """Verify the token's signature and claims; return the identity,
-        or raise a PyJWTError subclass if it's forged/expired/malformed."""
-        # The token's header names which key signed it (`kid`); the client
-        # looks that key up in the cached set.
+        """Verify signature and claims; raise PyJWTError if invalid."""
         key = self._jwks.get_signing_key_from_jwt(token)
-        # decode() checks the signature and the exp/nbf time claims; any
-        # failure raises a PyJWTError subclass.
         payload = jwt.decode(token, key.key, algorithms=["RS256"])
         return identity_from_claims(payload)

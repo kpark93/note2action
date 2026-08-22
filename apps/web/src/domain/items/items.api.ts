@@ -1,12 +1,7 @@
-// Typed API calls for action items, through the `/api` dev proxy (Vite
-// forwards `/api/*` requests to FastAPI in dev, so the browser never makes a
-// cross-origin call).
-//
-// This is the wire↔view border: the API says `null` for "none"; the UI's
-// inputs say "". Both translations live here and nowhere else.
-// Path §1 [hop 4/15]: items.queries (hop 3) → [this file] → lib/http.ts
-// (hop 5).
-// (request-paths.md §1 fetchItems, §2 patchItem/deleteItem)
+// Typed API calls for action items, via the `/api` dev proxy to FastAPI.
+// Wire↔view border: API says `null` for "none", UI inputs say "" — both
+// translations live here, nowhere else.
+// Path §1 [hop 4/15]: → lib/http.ts (hop 5). (request-paths.md §1, §2)
 import {
   ActionItem as WireActionItem,
   ItemsResponse,

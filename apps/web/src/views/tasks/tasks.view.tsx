@@ -1,10 +1,7 @@
 // Step 3 of the flow: saved tasks grouped by status, with filters and a
-// status dropdown per row. Status changes are optimistic writes (§2) via
-// usePatchItem — see handleStatus below for how "Done" adds a completion
-// animation on top of that.
-// Path §1 [hop 2/15]: app.tsx (hop 1) → [this file] → items.queries
-// (hop 3); renders again at hop 15 when fresh data lands in the cache.
-// (request-paths.md §2 — optimistic write: status → Done)
+// status dropdown per row. Status changes are optimistic (§2) via
+// usePatchItem — handleStatus below adds a "Done" completion animation.
+// Path §1 [hop 2/15]: [this file] → items.queries (request-paths.md §2).
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useItemsQuery, usePatchItem } from "@/domain/items/items.queries";
@@ -44,10 +41,8 @@ export function TasksView() {
   // pop animation before it leaves the list for History.
   const [completingId, setCompletingId] = useState<number | null>(null);
 
-  // Wired to each TaskRow's onStatusChange. Any status other than "Done"
-  // patches immediately (optimistic — see items.queries.ts). "Done" instead
-  // plays the pop/burst animation first and fires the same optimistic PATCH
-  // 500ms later, once the row has visibly "completed".
+  // Wired to TaskRow's onStatusChange: non-"Done" patches immediately
+  // (optimistic); "Done" plays the pop animation, then patches 500ms later.
   const handleStatus = (id: number, value: Status) => {
     if (value === "Done") {
       playPop();

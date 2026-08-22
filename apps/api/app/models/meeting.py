@@ -1,6 +1,5 @@
 """The meetings table — one row per captured meeting; RLS restricts
-every query to the caller's own rows (see postgres/session.py).
-Written/read by postgres/meetings.py, joined by postgres/items.py.
+every query to the caller's rows (see postgres/session.py).
 Path: repositories/postgres/{meetings,items}.py → [this file] →
 Postgres `meetings`.
 """

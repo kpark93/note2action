@@ -1,9 +1,7 @@
-"""The real ItemRepository — backed by the meetings and action_items
-tables. Called by services/items.py; every method opens an rls_session
-(postgres/session.py) so RLS scopes each query to the caller's rows.
-Path §1 [hop 11/15]: services (hop 10) → [this file] → session.py (RLS
-stamp) → Postgres — the turnaround point; rows go to to_wire (hop 12).
-See request-paths.md §1 (read) and §2 (Done write).
+"""The real ItemRepository — backed by meetings and action_items.
+Called by services/items.py.
+Path §1 [hop 11/15]: services (hop 10) → [this file] → session.py →
+Postgres → to_wire (hop 12). See request-paths.md §1, §2.
 """
 
 from datetime import date
@@ -20,9 +18,8 @@ from .session import rls_session
 
 
 class PostgresItemRepository:
-    """Store backed by the real meetings and action_items tables. Two
-    layers enforce isolation — user_id filters here, RLS in Postgres —
-    so either can survive the other's bugs."""
+    """Every method opens an rls_session (session.py) so RLS scopes
+    each query; user_id also filters here — two layers of isolation."""
 
     def list_items(self, user_id: int) -> list[ActionItem]:
         """Every item the given user owns, with its meeting's title."""
@@ -38,8 +35,7 @@ class PostgresItemRepository:
         self, user_id: int, item_id: int, patch: ActionItemPatch
     ) -> ActionItem | None:
         """Applies a partial edit; None if missing or not the caller's.
-        Builds the response before commit() — RLS identity is SET LOCAL
-        and dies with the transaction, so a post-commit read would fail."""
+        Built before commit(): SET LOCAL identity dies at commit."""
         with rls_session(user_id) as session:
             row = session.get(ActionItemRow, item_id)
             # Someone else's row looks exactly like a missing one (→ 404) —

@@ -1,11 +1,7 @@
-// TanStack Query hooks — the app's window onto server state.
-//
-// Reads are cached; writes are OPTIMISTIC (apply the change to the local
-// cache immediately, before the server confirms it), then reconciled with
-// the server's answer — or rolled back with a toast if the server refuses.
-// Path §1 [hop 3/15]: views (hop 2) → [this file] → items.api.ts (hop 4).
-// Return trip: [hop 15] — parsed items land in the cache; views rerender.
-// (request-paths.md §1 read, §2 optimistic write)
+// TanStack Query hooks — the app's window onto server state. Reads are
+// cached; writes are OPTIMISTIC: instant cache update, reconciled with
+// the server, or rolled back + toasted on failure.
+// Path §1 [hop 3/15]: → items.api.ts (hop 4). (request-paths.md §1, §2)
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { QueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -23,10 +19,8 @@ import type { ActionItem } from "./items.types";
 export const itemsKey = ["items"] as const;
 
 /**
- * The full items list, cached by TanStack Query. Fires GET /api/items
- * (items.api.ts fetchItems) on first mount; every other read in the app —
- * sidebar badges, Tasks, Review, History — shares this one cache entry
- * instead of refetching.
+ * Full items list, cached by TanStack Query. Fires GET /api/items via
+ * items.api.ts fetchItems; every other view shares this one cache entry.
  */
 export function useItemsQuery() {
   return useQuery({ queryKey: itemsKey, queryFn: fetchItems });
@@ -48,9 +42,8 @@ async function optimistically(
   return { previous };
 }
 
-/** Restore the snapshot, then refetch — if the write actually landed before
- * the error (e.g. a failure while building the response), the refetch heals
- * the cache back to the database's truth. */
+/** Restore the snapshot, then refetch — if the write already landed before
+ * the error, the refetch heals the cache back to the database's truth. */
 function rollback(
   queryClient: QueryClient,
   snapshot: Snapshot | undefined,
@@ -62,11 +55,8 @@ function rollback(
 }
 
 /**
- * PATCH one item (title, owner, due, priority, status, note). Optimistic:
- * items.cache.ts applyPatch updates the cache immediately; the server's
- * response (items.api.ts patchItem) then overwrites that row so its
- * server-stamped `completed` date wins. Rolls back + toasts on failure.
- * Used by: review-card.tsx, task-row.tsx, tasks.view.tsx, history-row.tsx.
+ * PATCH one item. Optimistic: items.cache.ts updates the cache instantly;
+ * items.api.ts patchItem's response reconciles it, or rolls back + toasts.
  */
 export function usePatchItem() {
   const queryClient = useQueryClient();
@@ -88,10 +78,8 @@ export function usePatchItem() {
 }
 
 /**
- * Delete one item. Optimistic: items.cache.ts removeItem drops it from the
- * cache immediately; a failed DELETE restores it and toasts. On success,
- * also invalidates the meetings cache (its itemCounts changed).
- * Used by: review-card.tsx.
+ * Delete one item. Optimistic: items.cache.ts drops it instantly; a
+ * failed items.api.ts deleteItem call restores it and shows a toast.
  */
 export function useDeleteItem() {
   const queryClient = useQueryClient();
@@ -108,11 +96,8 @@ export function useDeleteItem() {
 }
 
 /**
- * "Save N to Tasks" — batch-marks every pending Review item as saved.
- * Optimistic: the cache flips instantly (items.cache.ts markAllSaved); a
- * reconciling GET /api/items runs once the server settles, whether it
- * succeeded or failed.
- * Used by: review.view.tsx toolbar button.
+ * "Save N to Tasks": optimistic — items.cache.ts flips the cache instantly;
+ * items.api.ts saveAllToTasks settles it via a reconciling GET /api/items.
  */
 export function useSaveToTasks() {
   const queryClient = useQueryClient();

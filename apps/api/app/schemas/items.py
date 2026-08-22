@@ -1,11 +1,7 @@
-"""Pydantic schemas — the wire contract, mirrored in packages/shared (TS).
-
-Built by repositories/mappers.py and the repositories themselves;
-returned by api/routes/items.py as response_model, so FastAPI uses
-these to serialize the JSON the browser receives.
-Path §1 [hop 13/15]: mappers (hop 12) → [this file] → FastAPI serializes
-JSON (hop 8's response_model) → back through the proxy to lib/http.ts
-(hop 14), then the cache and your screen (hop 15).
+"""Pydantic schemas — the wire contract, mirrored in packages/shared.
+Built by repositories/mappers.py; returned by api/routes/items.py.
+Path §1 [hop 13/15]: mappers (hop 12) → [this file] → FastAPI JSON
+(hop 8) → lib/http.ts (hop 14) → cache/screen (hop 15).
 """
 
 from typing import Literal
@@ -17,11 +13,8 @@ Status = Literal["Not started", "In progress", "Blocked", "Done"]
 
 
 class ActionItem(BaseModel):
-    """One persisted action item — the full wire shape, mirrored in packages/shared.
-
-    Every field is required. `due`/`note`/`completed` are nullable (`| None`)
-    but must still be present: "nullable" and "optional" are different promises.
-    """
+    """One persisted action item — full wire shape, mirrored in
+    packages/shared. All fields required; some are nullable (`| None`)."""
 
     id: int
     meetingId: int
@@ -39,11 +32,8 @@ class ActionItem(BaseModel):
 
 
 class ActionItemPatch(BaseModel):
-    """Partial update for PATCH /api/items/{id} — only the fields being changed.
-
-    `completed` is deliberately absent: the server stamps it from `status`
-    (Done ⟺ completed set), so clients can never break that rule.
-    """
+    """Partial update for PATCH /api/items/{id}. `completed` is absent
+    — the server stamps it from `status` (Done ⟺ completed set)."""
 
     title: str | None = None
     owner: str | None = None
