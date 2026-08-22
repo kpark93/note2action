@@ -1,3 +1,7 @@
+// The title + textarea card on the Capture screen, plus its Extract button.
+// Path: capture.view.tsx → [this file] → extraction.store's extractNotes()
+// (domain) → POST /ai-api/extract, then POST /api/meetings.
+// (request-paths.md §3 — Capture → Extract)
 import { useActionItems } from "@/domain/extraction/extraction.store";
 import { OWNERS } from "@/domain/items/items.constants";
 import { todayISO } from "@/lib/dates";

@@ -1,12 +1,8 @@
-// Shared contract between the frontend(s) and the API.
-//
-// Each shape is a Zod *schema* (a runtime value that can validate data) paired
-// with a TypeScript *type* derived from it via `z.infer`. They intentionally
-// share a name: `ActionItem` is the schema in value-space and the type in
-// type-space — TS keeps those separate, so `ActionItem.parse(x)` (value)
-// and `const a: ActionItem` (type) both work from the one declaration.
-//
-// Define the shape once → get runtime validation AND the static type for free.
+// Shared Zod contract: each export is a schema (runtime validation) plus,
+// via z.infer, a same-named type — `ActionItem.parse(x)` is the value,
+// `const a: ActionItem` the type. Imported by apps/web's items.* modules;
+// mirrored by hand in the API. Path: action_items table →
+// api/routes/items.py → [this file] → web's request() → items UI.
 
 import { z } from "zod";
 
@@ -22,7 +18,7 @@ export type Status = z.infer<typeof Status>;
 export const ActionItem = z.object({
   id: z.number(),
   meetingId: z.number(),
-  /** Title of the meeting the item came from — joined in by the API for display. */
+  /** Meeting title, joined in by the API for display. */
   meeting: z.string(),
   title: z.string(),
   owner: z.string(),

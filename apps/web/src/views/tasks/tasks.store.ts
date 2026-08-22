@@ -1,3 +1,7 @@
+// Client-only UI state for the Tasks screen — the three filter dropdowns.
+// The tasks themselves are server state, read separately via useItemsQuery
+// (domain/items/items.queries.ts).
+// Path: tasks.view.tsx → [this file] (leaf zustand store).
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
 

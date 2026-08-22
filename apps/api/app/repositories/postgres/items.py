@@ -1,3 +1,11 @@
+"""The real ItemRepository — backed by the meetings and action_items
+tables. Called by services/items.py; every method opens an rls_session
+(postgres/session.py) so RLS scopes each query to the caller's rows.
+Path §1 [hop 11/15]: services (hop 10) → [this file] → session.py (RLS
+stamp) → Postgres — the turnaround point; rows go to to_wire (hop 12).
+See request-paths.md §1 (read) and §2 (Done write).
+"""
+
 from datetime import date
 
 from sqlalchemy import select
@@ -12,15 +20,12 @@ from .session import rls_session
 
 
 class PostgresItemRepository:
-    """Store backed by the real meetings and action_items tables.
-
-    Two layers enforce per-user isolation: the explicit user_id filters
-    below (application layer) and Postgres RLS policies (database layer).
-    The duplication is the point — defense in depth, either survives the
-    other's bugs.
-    """
+    """Store backed by the real meetings and action_items tables. Two
+    layers enforce isolation — user_id filters here, RLS in Postgres —
+    so either can survive the other's bugs."""
 
     def list_items(self, user_id: int) -> list[ActionItem]:
+        """Every item the given user owns, with its meeting's title."""
         with rls_session(user_id) as session:
             rows = session.execute(
                 select(ActionItemRow, MeetingRow.title)
@@ -32,10 +37,13 @@ class PostgresItemRepository:
     def update_item(
         self, user_id: int, item_id: int, patch: ActionItemPatch
     ) -> ActionItem | None:
+        """Applies a partial edit; None if missing or not the caller's.
+        Builds the response before commit() — RLS identity is SET LOCAL
+        and dies with the transaction, so a post-commit read would fail."""
         with rls_session(user_id) as session:
             row = session.get(ActionItemRow, item_id)
-            # Someone else's row answers exactly like a missing row (→ 404):
-            # admitting "it exists but isn't yours" would leak other users' ids.
+            # Someone else's row looks exactly like a missing one (→ 404) —
+            # admitting otherwise would leak whose it is.
             if row is None or row.user_id != user_id:
                 return None
             changes = patch.model_dump(exclude_unset=True)
@@ -47,14 +55,14 @@ class PostgresItemRepository:
             if "status" in changes:
                 row.completed = date.today() if row.status == "Done" else None
             meeting_title = session.get(MeetingRow, row.meeting_id).title
-            # Build the response BEFORE commit: the RLS identity is SET LOCAL,
-            # so it dies with the transaction — reading row attributes after
-            # commit triggers a re-SELECT with no identity, which RLS rejects.
+            # Before commit(): SET LOCAL identity dies at commit, so a
+            # later read here would re-SELECT under no identity → RLS-denied.
             result = to_wire(row, meeting_title)
             session.commit()
             return result
 
     def delete_item(self, user_id: int, item_id: int) -> bool:
+        """Delete one item; False if missing or not the caller's."""
         with rls_session(user_id) as session:
             row = session.get(ActionItemRow, item_id)
             if row is None or row.user_id != user_id:
@@ -64,6 +72,8 @@ class PostgresItemRepository:
             return True
 
     def save_all_to_tasks(self, user_id: int) -> int:
+        """Mark every not-yet-saved, not-Done item as saved in one bulk
+        UPDATE; returns the row count changed."""
         with rls_session(user_id) as session:
             result = session.execute(
                 sql_update(ActionItemRow)

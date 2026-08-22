@@ -1,4 +1,10 @@
-"""User rules: a verified identity maps onto exactly one users row."""
+"""User rules: a verified identity maps onto exactly one users row.
+
+Called by api/deps.py (current_user_id) on every authenticated request;
+calls the UserRepository protocol (repositories/).
+Path: api/deps.py → [this file] → UserRepository (repositories/) →
+Postgres `users` (no RLS — it's the identity bootstrap table).
+"""
 
 from app.core.security import VerifiedUser
 from app.repositories.protocols import UserRepository

@@ -1,4 +1,11 @@
-"""Auth middleware — the central checkpoint that runs before any endpoint."""
+"""Auth middleware — the central checkpoint that runs before any endpoint.
+
+Registered once in app/main.py (app.middleware("http")(...)); calls
+core/security.py to verify the token, then stores the identity on
+request.state for api/deps.py to read.
+Path §1 [hop 7/15]: Vite proxy (hop 6) → [this file] → core/security.py
+(verify JWT) → routes (hop 8). A rejection here means no route ever runs.
+"""
 
 from fastapi import Request
 from fastapi.responses import JSONResponse
@@ -32,7 +39,9 @@ async def require_verified_user(request: Request, call_next):
     verifier: TokenVerifier | None = request.app.state.token_verifier
     if verifier is None:
         return JSONResponse(
-            {"detail": "Auth is not configured — set CLERK_JWKS_URL in apps/api/.env"},
+            {
+                "detail": "Auth is not configured — set CLERK_JWKS_URL in apps/api/.env"
+            },
             status_code=500,
         )
 

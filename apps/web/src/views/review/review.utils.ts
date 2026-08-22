@@ -1,3 +1,6 @@
+// Pure view-model builders for the Review screen — no network calls, no
+// state. Takes the raw items from useItemsQuery and shapes/styles them.
+// Path: review.view.tsx / review-card.tsx → [this file] → items.utils (domain).
 import type { ActionItem } from "@/domain/items/items.types";
 import { LOW_CONFIDENCE_THRESHOLD } from "@/domain/items/items.constants";
 import { isLow, pendingItems } from "@/domain/items/items.utils";
@@ -24,6 +27,7 @@ export interface ReviewItemVM extends ActionItem {
   delay: string;
 }
 
+/** Extracted-but-unsaved items (the Review queue), tagged with display fields. */
 export function reviewItems(
   items: ActionItem[],
   threshold = LOW_CONFIDENCE_THRESHOLD,
@@ -36,6 +40,7 @@ export function reviewItems(
   }));
 }
 
+/** The header's summary line, e.g. "3 items were low confidence…". */
 export function flagSentence(flagCount: number): string {
   return flagCount
     ? `${flagCount} items were low confidence and are flagged below.`

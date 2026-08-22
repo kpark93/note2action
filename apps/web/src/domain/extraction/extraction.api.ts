@@ -1,3 +1,8 @@
+// Calls the AI app's extraction endpoint — the first network hop of AI
+// capture. Called only by extraction.store.ts (extractNotes).
+// Path: extraction.store.ts → [this file] → lib/http.ts → AI app
+// (/ai-api/extract, rewritten by the Vite proxy to /api/extract).
+// (request-paths.md §3)
 import {
   ExtractResponse,
   type ExtractRequest,

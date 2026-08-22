@@ -1,3 +1,5 @@
+// Public sign-in screen — the one route not behind RequireAuth.
+// Path: app.tsx (public route "/sign-in") → [this file] → Clerk's <SignIn/>.
 import { SignIn } from "@clerk/clerk-react";
 
 /**

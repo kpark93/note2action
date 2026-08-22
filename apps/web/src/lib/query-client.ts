@@ -1,3 +1,5 @@
+// Path: providers.tsx (mounts via QueryClientProvider) and
+// extraction.store.ts (invalidates after a §3 capture) → [this file].
 import { QueryClient } from "@tanstack/react-query";
 
 // One QueryClient for the app's lifetime, created at module load so the query

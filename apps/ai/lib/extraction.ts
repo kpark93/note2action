@@ -1,11 +1,18 @@
+// The extraction prompt + model call — the part of the AI capture path that
+// actually turns notes into structured items.
+// Called only by api/extract/route.ts, which is a thin HTTP adapter over
+// this function.
+// Path: extract/route.ts → [this file] → lib/provider.ts's extractModel().
 import { generateObject } from "ai";
 import { ExtractResponse, type ExtractRequest } from "@note2action/shared";
 import { extractModel } from "@/lib/provider";
 
 /**
  * Run the extraction model over raw notes. `generateObject` constrains the
- * model to the ExtractResponse schema and validates the result, so callers
- * always get well-formed items back.
+ * model to the ExtractResponse schema (packages/shared) and validates the
+ * result, so callers always get well-formed items back. The schema's
+ * `.describe()` strings are sent to the model as part of its instructions —
+ * see extraction.ts in packages/shared, not duplicated here.
  */
 export async function extractItems(
   request: ExtractRequest,

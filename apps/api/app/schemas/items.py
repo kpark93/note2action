@@ -1,10 +1,20 @@
-"""Pydantic schemas — the wire contract, mirrored in packages/shared (TS)."""
+"""Pydantic schemas — the wire contract, mirrored in packages/shared (TS).
+
+Built by repositories/mappers.py and the repositories themselves;
+returned by api/routes/items.py as response_model, so FastAPI uses
+these to serialize the JSON the browser receives.
+Path §1 [hop 13/15]: mappers (hop 12) → [this file] → FastAPI serializes
+JSON (hop 8's response_model) → back through the proxy to lib/http.ts
+(hop 14), then the cache and your screen (hop 15).
+"""
+
+from typing import Literal
 
 from pydantic import BaseModel
-from typing import Literal
 
 Priority = Literal["High", "Medium", "Low"]
 Status = Literal["Not started", "In progress", "Blocked", "Done"]
+
 
 class ActionItem(BaseModel):
     """One persisted action item — the full wire shape, mirrored in packages/shared.
@@ -52,4 +62,6 @@ class SaveToTasksResponse(BaseModel):
 
 
 class ItemsResponse(BaseModel):
+    """GET /api/items — every action item the caller owns."""
+
     items: list[ActionItem]

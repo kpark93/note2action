@@ -2964,3 +2964,322 @@ grep of who actually imports the file, not by what "sounds right."
 The per-task green-suite gates are the refactorer's seat belt: 58
 tests that must pass after every step mean a behavior change can't
 hide inside a file move.
+
+## 2026-08-21 — Ruff set up at the repo root
+
+**WHAT changed:** Running `uv run ruff` from the repository root
+failed with an error that the `project.name` field was not set.
+`uv` is a Python package manager: a program that installs Python
+tools and libraries and runs them in a project. `Ruff` is a linter —
+a checker that reads Python files and reports style and correctness
+problems (unused imports, lines that are too long, and so on). The
+root `pyproject.toml` is a configuration file: a text file that tells
+Python tools how this project is set up. It had a `[project]` table
+(a named section in that file) but no `name` field. A standard called
+PEP 621 says: if you use `[project]`, you must also give the project a
+`name`, written as a quoted string like `name = "note2action"`.
+Unquoted values (`name = note2action`) are invalid TOML (the file
+format `pyproject.toml` uses). The file was completed with `name`, a
+`version` (a version number so tools know which edition this is),
+`package = false` (this root folder is not a library you install; it
+only holds config and tools), and Ruff listed as a **dev dependency**
+(a tool used while developing, not part of the app users run). `uv add
+--dev ruff` then installed Ruff so `uv run ruff check` works from the
+root. The auto-fix flag belongs on the `check` command:
+`uv run ruff check --fix`, not `uv run ruff --fix`.
+
+**WHICH files:** `pyproject.toml` (root: added `name`, `version`, uv
+`package = false`, Ruff as a dev dependency, kept the existing
+`[tool.ruff]` settings). `uv.lock` (updated by uv when Ruff was
+added — a lock file is a snapshot of the exact package versions that
+were installed, so everyone gets the same tools).
+
+**WHY:** Without a valid `name`, uv refuses to parse the file, so it
+cannot start Ruff. Putting Ruff at the repo root means one command
+can lint all Python in the monorepo (a single git repository that
+holds more than one app or package). The 79-character line length from
+Ruff's docs is still in place; it currently reports many findings in
+`apps/api` and `numbers`.
+
+## 2026-08-21 — Ruff: which rules auto-fix, and which we ignore
+
+**WHAT changed:** `ruff check --fix` was reporting errors but changing
+nothing. Ruff is a linter: a program that reads Python files and
+reports problems. `--fix` is the auto-fix flag: it rewrites a file
+only when a rule has a built-in patch. A rule is one named check,
+such as "this line is too long." The findings were all
+**report-only** (Ruff can point at them, but it will not rewrite
+them): E501 (a line longer than the limit, including comments and
+docstrings — a docstring is the `"""..."""` explanation under a
+function), B008 (a function call used as a default argument, which
+in FastAPI is the normal `Depends(...)` pattern — FastAPI is the web
+framework the API uses, and `Depends` means "inject this value when
+the request runs"), and DTZ011 (`date.today()` without a timezone).
+The root config was changed so we only ask Ruff to auto-fix rules
+that actually have a fixer, and we stop treating the others as
+failures. `select` is the list of rule groups Ruff should run
+(prefixes like `I` for import sorting, `UP` for modern Python
+rewrites, `B` for bug-prone patterns). `ignore` turns a rule off:
+E501 is ignored so the **formatter** owns line length. A formatter
+is a tool (`ruff format`) that rewrites spacing and wrapping in
+_code_; it still does not wrap comment or docstring prose. FastAPI's
+`Depends`, `Query`, and `Path` are listed as immutable calls (calls
+that are safe in argument defaults, so B008 ignores them). Alembic's
+`env.py` (Alembic is the tool that applies database schema changes)
+is allowed to import a module after other code (rule E402), because
+that file loads settings after it has the migration config object.
+
+**WHICH files:** `pyproject.toml` at the repository root (the
+configuration file that tells Python tools how this project is set
+up): `[tool.ruff]` now has `target-version = "py310"` (the oldest
+Python version we write for), `[tool.ruff.lint]` with prefix-group
+`select` and `ignore = ["E501"]`, `[tool.ruff.lint.per-file-ignores]`
+for `apps/api/migrations/env.py`, `[tool.ruff.lint.flake8-bugbear]`
+`extend-immutable-calls` for FastAPI, and `[tool.ruff.format]`
+`docstring-code-format = true` (format code examples inside
+docstrings). No application Python files were edited.
+
+**WHY:** Auto-fix cannot wrap comments, rewrite FastAPI dependency
+injection, or pick a timezone for `date.today()` — those need a
+human. Configuring the linter to match that fact means
+`uv run ruff check --fix` and `uv run ruff format` both pass, and
+`--fix` will still rewrite the rules that _do_ have a safe patch
+(unused imports, import order, simple modernizations).
+
+## 2026-08-21 — The restructure is built: 14 tasks, 19 commits, zero behavior change
+
+**WHAT changed:** The whole monorepo now matches the approved design.
+The API was rebuilt in six steps onto the template skeleton: `core/`
+(config, database, security, middleware), per-domain `models/` and
+`schemas/` packages, the repository seam split into three protocols
+with matching in-memory and Postgres implementations, a thin
+`services/` layer (business rules with zero web-framework imports),
+`api/routes/` with one file per resource, and a `main.py` that only
+wires things together. The web app gained its `domain/` layer (items,
+meetings, extraction, health — each owning its API calls, query hooks,
+and state), feature components moved into their views, the shared
+`queryClient` moved to `lib/` (killing the one upward import), and the
+old `store/` folder is gone. The shared zod contract and the AI app's
+extraction prompt each got their own modules. Every task was
+implemented by a fresh subagent, reviewed by another, and gated on the
+full suite: 35 vitest + 23 pytest green after every single step, plus
+typecheck, lint, and a web build at each phase boundary. A final
+whole-branch review (plus one docs-only fix wave) closed clean.
+
+**WHICH files:** ~90 files across `apps/api`, `apps/web`,
+`packages/shared`, `apps/ai`, `README.md`, and the spec — see the 19
+commits from `142d4dd` to `e625249` on `refactor/monorepo-restructure`.
+
+**WHY:** A refactor without gates is a rewrite in disguise; the
+green-after-every-step rule is what makes "zero behavior change" a
+verified fact instead of a hope. Reviews caught real drift the
+implementers missed (a docstring that became false in its new home, a
+comment claiming importers that don't exist), and execution caught a
+planning error (slot-number was never dead — the planning grep's own
+filter had hidden its importer). Lesson: evidence over confidence,
+at every layer of the process.
+
+## 2026-08-21 — Why the pycache folders kept coming back
+
+**WHAT changed:** All `__pycache__` folders under `apps/api` were
+deleted (twice — the first cleanup was immediately undone because the
+verification `pytest` run recreated them, which is exactly how these
+folders work). A new `.vscode/settings.json` was added with a
+`files.exclude` rule so VS Code stops showing `__pycache__`,
+`.pytest_cache`, and `.ruff_cache` in the file tree and search.
+
+**WHICH files:** `.vscode/settings.json` (new, currently uncommitted);
+15 → 0 `__pycache__` directories on disk (they were never in git —
+the root `.gitignore` has always ignored them).
+
+**WHY:** `__pycache__` is Python's bytecode cache: every time Python
+imports a file it saves a compiled copy next to it so the next start
+is faster. One folder appears per package directory, and the
+restructure grew `apps/api` from two package directories to about
+ten — so the same caching suddenly looked like "so many new files."
+They are disposable and always regenerated, so the honest fix isn't
+deleting them (any test run brings them back) but telling the editor
+not to display them. Git was never affected either way.
+
+## 2026-08-21 — The 500-on-Done bug: a response built on the wrong side of commit
+
+**WHAT changed:** One reorder in
+`apps/api/app/repositories/postgres/items.py` (`update_item`): the
+wire response is now built **before** `session.commit()`, then
+returned after. Verified with a throwaway-user reproduction script
+(PATCH status=Done now returns the full item instead of a 500) and
+the full suite (23 pytest green). Committed as `c31c989` and pushed
+to PR #4.
+
+**WHICH files:** `apps/api/app/repositories/postgres/items.py`.
+
+**WHY:** Our RLS identity is set with `SET LOCAL`, which means "this
+setting lives only until the transaction ends" — a safety feature so
+pooled connections can't leak one user's identity into the next
+request. But SQLAlchemy _expires_ loaded objects at commit: touch an
+attribute afterward and it silently re-SELECTs the row in a new
+transaction. New transaction → no identity → the RLS policy can't
+cast an empty setting to an integer → error → 500. The sneaky part:
+the UPDATE had already committed, so the client's refetch showed the
+item as Done — the UI looked "wrong but right" because it showed the
+database's real truth while only the PATCH's response had died.
+Lesson: with transaction-scoped state, everything the response needs
+must be gathered before the commit; `create_meeting` already did
+this, and now `update_item` matches it.
+
+## 2026-08-21 — Optimistic updates: the UI stops waiting for the server
+
+**WHAT changed:** The three item mutations (edit/patch, delete,
+save-to-tasks) are now **optimistic**: the moment you act, the cache
+is transformed locally and every view updates instantly; the server's
+answer then reconciles or reverts it. The transforms live as three
+pure functions in `domain/items/items.cache.ts` (TDD'd — 7 new tests
+written failing-first), each a mirror of a server rule: Done stamps
+`completed` with today, leaving Done clears it, and batch-save only
+touches unsaved non-Done items. `patchItem` now parses the PATCH
+response (it used to throw it away), so a successful edit reconciles
+straight from the server's authoritative copy — **no follow-up GET
+/api/items after edits anymore**. Failures roll the cache back to a
+snapshot AND refetch (healing the "write landed but the response
+died" case we just debugged), with a toast explaining the revert —
+the app's first visible error surface for writes, via a new `sonner`
+Toaster that follows the app theme (placed in `components/app`, not
+`components/ui`, because the ui layer is only allowed to import
+`lib/utils`).
+
+**WHICH files:** `domain/items/items.cache.ts` (+ test, new),
+`items.queries.ts` (optimistic handlers), `items.api.ts` (patch
+returns the server item), `components/app/toaster.tsx` (new),
+`providers.tsx` (mounts Toaster), `package.json`/lockfile (sonner).
+42 vitest + typecheck + lint + build green.
+
+**WHY:** An _optimistic update_ says: apply the predicted result now,
+verify later — the UI feels instant because the common case (server
+agrees) needs no waiting and no refetch. The catch is you must mirror
+the server's rules exactly (hence pure, tested transforms) and own
+the failure path (snapshot rollback + refetch + a toast, because a
+silent snap-back is indistinguishable from a bug).
+
+## 2026-08-21 — Request-path guide: three journeys, hop by hop
+
+**WHAT changed:** Started the approved comprehension pass. First piece
+done: a new guide that traces three real trips through the whole stack,
+naming the exact file and function at every hop — §1 a **read**
+(opening Tasks: cache → hook → http → proxy → JWT middleware → route →
+service → repository → RLS'd SQL → zod parse → render), §2 an
+**optimistic write** (status → Done: cache transformed instantly from a
+snapshot-backed mirror of the server's rules, reconciled from the PATCH
+response, rolled back with a toast on failure), and §3 an **AI capture**
+(notes → the Next.js extract route → Claude constrained to the shared
+schema → one all-or-nothing meetings transaction → cache invalidations).
+Four helper sessions are meanwhile rewriting the in-code comments to
+match, package by package; their work isn't finished yet, so it isn't
+journaled yet.
+
+**WHICH files:** `docs/architecture/request-paths.md` (new). A comment
+style brief lives outside the repo (job scratch), so it isn't listed.
+
+**WHY:** Scattered per-file comments answer "what is this?", but the
+question that was actually hard was "what happens, in order, when I
+click?" A _request path_ is that order: every stop a request makes from
+a click in the browser to a row in the database and back. Writing the
+trips down once, with real file names, gives every in-code comment a
+map to point at — and gives a reader a way to check the comments:
+if code and map disagree, one of them is lying and gets fixed.
+
+## 2026-08-21 — Comprehension comments, first package landed (shared + ai)
+
+**WHAT changed:** The approved comment rewrite is landing package by
+package. First one done: every module in the shared contract and the
+AI app now opens with a plain-language header saying what the file is,
+who calls it, and where it sits on a request's journey, plus short
+notes on each exported schema/function. Verified that only comment
+lines changed (87 added lines, zero code lines) and that the
+`.describe()` strings — the sentences inside the extraction schema
+that are literally sent to the AI model as instructions — are
+byte-identical. Web and API comment passes are still in progress and
+will be journaled when they land.
+
+**WHICH files:** `packages/shared/src/*.ts` (6 files),
+`apps/ai/lib/{provider,extraction}.ts`,
+`apps/ai/app/api/{extract,chat}/route.ts`,
+`apps/ai/app/{layout,page}.tsx`.
+
+**WHY:** Comments are documentation that lives where the code lives —
+but only help if they answer the reader's actual question. Here that
+question is "how does this connect to everything else?", so each
+header now names its callers and its place on the path, and every
+technical term gets a plain-language gloss the first time it appears.
+The byte-identical check on `.describe()` matters because those strings
+aren't documentation at all — they're behavior (the model reads them).
+
+## 2026-08-21 — Comprehension comments: views and chrome landed
+
+**WHAT changed:** Second package of the comment rewrite is in: all 39
+screen files and shared-chrome components now carry the standard header
+(what the file is / who calls it / where it sits on the request path)
+plus short notes on exported components and their props — including how
+the optimistic mutations surface in the UI (task-row's status dropdown,
+review-card's editors, the save-to-tasks button, and the toast outlet).
+Verified comment-only: 172 added lines, zero code lines changed. The
+API and web domain/lib passes are still running.
+
+**WHICH files:** everything under `apps/web/src/views/` (view, store,
+utils, and per-view components files) and
+`apps/web/src/components/app/*.tsx`.
+
+**WHY:** Same goal as the other packages — every file answers the
+"how does this connect?" question where you're already reading. One
+flag worth keeping: `docs/architecture/web.md` still describes the app
+before optimistic updates existed, so that overview doc is now stale —
+noted for a follow-up rather than silently expanded into this pass.
+
+## 2026-08-21 — Comprehension comments: web domain and lib landed
+
+**WHAT changed:** Third package in: the web app's `domain/` modules
+(items, meetings, extraction, health), the `lib/` kernel (http,
+query-client, auth-token, theme, dates, sound, utils), and the root
+files (main, app, providers) now carry the standard headers, per-export
+JSDoc, and path breadcrumbs. Verified comment-only via per-edit review
+and a clean `tsc --noEmit`. Only the API package's pass is still
+running; a final tightening sweep over old verbose method/class
+comments (Kyle's request) comes after it lands.
+
+**WHICH files:** 22 files across `apps/web/src/{domain,lib}` plus
+`main.tsx`, `app.tsx`, `providers.tsx`, `test/fixtures.ts`.
+
+**WHY:** These are the connective-tissue files — the exact layer where
+"how does a click become a database row?" gets decided — so their
+headers now spell out the chain (view → hook → http → API) instead of
+assuming the reader already knows it.
+
+## 2026-08-21 — Comment pass complete: tightened, and the path is numbered
+
+**WHAT changed:** The last two pieces of the comprehension pass. First,
+per Kyle's request, a tightening sweep compressed the over-long
+comments: module headers down to ≤5 lines and method/class notes to
+concise 1–2 liners across the 14 worst files — every constraint fact
+(the RLS commit-ordering rule, 404-not-403, the name laws, the
+Done ⟺ completed stamp) survived, just said shorter. Second, the
+thirteen files on the canonical read journey now carry **numbered hop
+markers**: each header's Path line says `§1 [hop N/15]`, where it came
+from, and where it goes next — from the click (app.tsx, hop 1) through
+the proxy, the JWT middleware, route, service, and repository to
+Postgres (hop 11, the turnaround), then back up through the mappers,
+schemas, and zod validation to the cache and the screen (hop 15). The
+numbers match `docs/architecture/request-paths.md` §1 exactly, so the
+doc is the map and the code is the territory, cross-referenced both
+ways. Full gate green afterward: 42 vitest + 23 pytest + typecheck +
+lint + build.
+
+**WHICH files:** 14 tightened (across `apps/api/app`, `apps/web/src`,
+`packages/shared/src`); 13 hop-marked (`app.tsx`, `tasks.view.tsx`,
+`items.queries.ts`, `items.api.ts`, `http.ts`, `vite.config.ts`,
+`middleware.py`, `routes/items.py`, `deps.py`, `services/items.py`,
+`postgres/items.py`, `mappers.py`, `schemas/items.py`);
+`docs/architecture/request-paths.md` (§1 notes the in-code markers).
+
+**WHY:** A comment that says "who calls me" answers one hop; a numbered
+trail answers the question Kyle actually had — "where exactly is the
+request going next?" Now you can open any file on the route and walk
+forward or backward by number, with the guide as the bird's-eye view.

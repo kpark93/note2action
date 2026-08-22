@@ -1,5 +1,7 @@
 // A short, satisfying "pop" synthesized with the Web Audio API — no audio
 // asset to ship, works offline, and easy to tune. Called on task completion.
+// Path: tasks.view.tsx (Done checkbox) → [this file] (leaf — Web Audio API,
+// no network).
 
 let ctx: AudioContext | null = null;
 

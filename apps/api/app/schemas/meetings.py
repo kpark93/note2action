@@ -1,6 +1,16 @@
+"""Pydantic schemas for meetings — the wire contract, mirrored in
+packages/shared (TS).
+
+Built by repositories/mappers.py and the repositories themselves;
+returned by api/routes/meetings.py as response_model.
+Path: repositories/ → [this file] → api/routes/meetings.py → JSON
+response.
+"""
+
 from pydantic import BaseModel
 
 from .items import ActionItem, Priority
+
 
 class ExtractedItem(BaseModel):
     """One item as the AI extractor produces it — no id yet; '' means 'none'.

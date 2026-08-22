@@ -1,10 +1,8 @@
-// Client-only state for the action-items app.
-//
-// Server data (the items, the recent meetings) lives in TanStack Query — see
-// domain/items/items.queries.ts. What remains here is state that exists only
-// in this browser tab: the capture draft, which transcript modal is open, and
-// the extraction-in-flight flag. That split is the Module 10 rule: server
-// state is cached, client state is owned.
+// Client-only state (draft text, open modal, extraction flag); server
+// data (items, meetings) lives in TanStack Query — see items.queries.ts.
+// Path: capture/notes/recent/meetings views → [this file] →
+// extraction.api.ts + meetings.api.ts → lib/query-client.ts (cache inval.).
+// (request-paths.md §3 AI capture)
 import { create } from "zustand";
 import type { ExtractRequest } from "@note2action/shared";
 import { extractActionItems } from "@/domain/extraction/extraction.api";
@@ -37,13 +35,16 @@ interface ActionItemsState {
   /** Load a recent capture's transcript into the editor (from the modal). */
   loadTranscript: (title: string, text: string) => void;
   /**
-   * Run an AI extraction, then persist the capture through the API. Lives in
-   * the store (not a component) so it keeps running — and lands its result —
-   * even if the user leaves the Capture tab.
+   * Runs an AI extraction, then persists the capture via the API. Lives
+   * in the store (not a component) so it keeps running if the user leaves.
    */
   extractNotes: (payload: ExtractRequest) => void;
 }
 
+/**
+ * The capture-flow client store — draft text/title, open modal, and
+ * extraction status (see field comments above).
+ */
 export const useActionItems = create<ActionItemsState>((set, get) => ({
   sampleIndex: 0,
   modalMeetingId: null,

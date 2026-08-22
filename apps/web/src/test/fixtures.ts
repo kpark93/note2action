@@ -1,4 +1,6 @@
 // Shared test fixtures. Not part of the app bundle — only imported by *.test.ts.
+// Path: items.cache.test.ts, items.utils.test.ts, tasks/review/history
+// .utils.test.ts → [this file] (leaf — test-only, no network).
 import type { ActionItem } from "@/domain/items/items.types";
 
 let nextId = 1000;

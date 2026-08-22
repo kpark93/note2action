@@ -1,5 +1,7 @@
 // Item option lists shared across features. STATUSES/PRIORITIES derive from
 // the zod contract — one source of truth, no drift.
+// Path: notes-editor.tsx, tasks.view.tsx, review-card.tsx, items.utils.ts →
+// [this file] (leaf — static data, no network).
 import { Priority, Status } from "@note2action/shared";
 
 export const OWNERS = [

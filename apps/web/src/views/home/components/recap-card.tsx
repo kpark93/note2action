@@ -1,7 +1,10 @@
+// One of the two clickable tiles on Home ("N to review", "N open tasks").
+// Path: home.view.tsx → [this file] (leaf — no further calls).
 interface RecapCardProps {
   value: number;
   label: string;
   cta: string;
+  /** Navigates to the relevant screen (Review or Tasks); set by the caller. */
   onClick: () => void;
 }
 

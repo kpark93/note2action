@@ -1,3 +1,8 @@
+// Full list of saved captures (unlike the Capture screen's 3-item RECENT
+// strip, this has no limit). No view-local store — filters/toggles aren't
+// needed here.
+// Path: app.tsx (route "/meetings") → [this file] → meetings.queries
+// (domain, read) + extraction.store's openRecent() (opens RecentModal).
 import { useMeetingsQuery } from "@/domain/meetings/meetings.queries";
 import { useActionItems } from "@/domain/extraction/extraction.store";
 import { formatDate, timeAgo } from "@/lib/dates";

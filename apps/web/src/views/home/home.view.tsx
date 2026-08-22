@@ -1,3 +1,8 @@
+// Landing screen: greeting, a one-line summary, and two RecapCard tiles
+// (Review count, open Tasks count). Read-only — items come from the shared
+// TanStack Query cache (§1 read path), same data every other screen sees.
+// Path: app.tsx (route "/") → [this file] → items.queries / items.utils
+// (domain) → RecapCard.
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "@clerk/clerk-react";

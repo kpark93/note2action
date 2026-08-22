@@ -1,3 +1,6 @@
+// TanStack Query wrapper for the API health check.
+// Path: sidebar.tsx (status dot) → [this file] → lib/http.ts →
+// API /api/health.
 import { useQuery } from "@tanstack/react-query";
 import { HealthResponse } from "@note2action/shared";
 import { request } from "@/lib/http";

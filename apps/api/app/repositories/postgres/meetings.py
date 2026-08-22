@@ -1,3 +1,11 @@
+"""The real MeetingRepository — backed by the meetings and action_items
+tables. Called by services/meetings.py; every method opens an
+rls_session (postgres/session.py) so RLS scopes each query to the
+caller's rows.
+Path: services/meetings.py → [this file] → postgres/session.py →
+Postgres. See request-paths.md §3 (an AI capture, end to end).
+"""
+
 from datetime import date, datetime, timezone
 
 from sqlalchemy import func, select
@@ -16,17 +24,15 @@ from .session import rls_session
 
 
 class PostgresMeetingRepository:
-    """Store backed by the real meetings and action_items tables.
-
-    Two layers enforce per-user isolation: the explicit user_id filters
-    below (application layer) and Postgres RLS policies (database layer).
-    The duplication is the point — defense in depth, either survives the
-    other's bugs.
-    """
+    """Store backed by the real meetings and action_items tables. Two
+    layers enforce isolation — user_id filters here, RLS in Postgres —
+    so either can survive the other's bugs."""
 
     def create_meeting(
         self, user_id: int, request: CreateMeetingRequest
     ) -> CreateMeetingResponse:
+        """Insert the meeting and its extracted items in one
+        transaction; nothing is durable until commit() at the end."""
         with rls_session(user_id) as session:
             # user_id arrives from the verified token via the route — never
             # from the request body, and no more "first user in the table".
@@ -75,10 +81,14 @@ class PostgresMeetingRepository:
             return response
 
     def list_meetings(self, user_id: int, limit: int) -> list[Meeting]:
+        """The user's most recent meetings, newest first, with each
+        item count computed by an outer-joined COUNT (no N+1 queries)."""
         with rls_session(user_id) as session:
             rows = session.execute(
                 select(MeetingRow, func.count(ActionItemRow.id))
-                .outerjoin(ActionItemRow, ActionItemRow.meeting_id == MeetingRow.id)
+                .outerjoin(
+                    ActionItemRow, ActionItemRow.meeting_id == MeetingRow.id
+                )
                 .where(MeetingRow.user_id == user_id)
                 .group_by(MeetingRow.id)
                 .order_by(MeetingRow.captured_at.desc())
@@ -94,7 +104,11 @@ class PostgresMeetingRepository:
                 for meeting, count in rows
             ]
 
-    def get_meeting(self, user_id: int, meeting_id: int) -> MeetingDetail | None:
+    def get_meeting(
+        self, user_id: int, meeting_id: int
+    ) -> MeetingDetail | None:
+        """One full meeting, transcript included; None if missing or
+        not the caller's."""
         with rls_session(user_id) as session:
             row = session.get(MeetingRow, meeting_id)
             if row is None or row.user_id != user_id:

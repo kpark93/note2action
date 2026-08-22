@@ -1,3 +1,12 @@
+// Request/response contract for the ai app's POST /api/extract, plus the
+// ExtractedItem shape it produces (later wrapped into a full ActionItem by
+// the API once persisted — see items.ts).
+// Used by apps/ai (lib/extraction.ts, api/extract/route.ts) on the server
+// side, and apps/web (extraction.api.ts, extraction.store.ts) as the client;
+// meetings.ts also reuses ExtractedItem for the not-yet-persisted capture.
+// Path: web's capture form → POST /ai-api/extract (proxy) →
+// apps/ai route → [this file] → generateObject's schema/prompt.
+
 import { z } from "zod";
 
 import { Priority } from "./items";

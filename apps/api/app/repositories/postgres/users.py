@@ -1,3 +1,12 @@
+"""The real UserRepository — backed by the `users` table.
+
+Called by services/users.py (resolve_user_id) on every authenticated
+request. Uses core/db.py's plain SessionLocal directly, not
+postgres/session.py's rls_session: `users` has no RLS policy (it's the
+identity bootstrap table — see the row-level-security migration).
+Path: services/users.py → [this file] → core/db.py → Postgres `users`.
+"""
+
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 
@@ -9,6 +18,12 @@ class PostgresUserRepository:
     """Store backed by the real users table."""
 
     def get_or_create_user(self, clerk_id: str, name: str | None) -> int:
+        """Map a verified Clerk id to our users.id, creating on first
+        visit. Name laws: set on creation (falling back to "New user"),
+        refreshed from Clerk when it changes, and a unique-constraint
+        race on simultaneous first visits is resolved by re-reading the
+        winner's row rather than erroring.
+        """
         with SessionLocal() as session:
             existing = session.execute(
                 select(User).where(User.clerk_id == clerk_id)

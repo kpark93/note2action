@@ -1,6 +1,16 @@
+"""App-wide settings, loaded once from the environment / apps/api/.env.
+
+Read by app/main.py (which repository and verifier to build) and
+core/db.py (the connection string).
+Path: .env / environment → [this file] → app/main.py, core/db.py.
+"""
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+
 class Settings(BaseSettings):
+    """Every runtime knob the API reads, validated once at startup."""
+
     model_config = SettingsConfigDict(env_file=".env")
     # Runtime connection — after Module 13 this must be the low-privilege
     # app role (note2action_app), because superusers/table owners BYPASS RLS.
@@ -12,4 +22,6 @@ class Settings(BaseSettings):
     # Where Clerk publishes this app's public signing keys (JWKS). Unset =
     # auth is unconfigured and every protected endpoint answers 500 loudly.
     clerk_jwks_url: str | None = None
+
+
 settings = Settings()

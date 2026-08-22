@@ -1,3 +1,5 @@
+// Animated percentage display used by CompletionCard's headline figure.
+// Path: completion-card.tsx → [this file] (leaf — pure presentation).
 const DIGITS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
 
 /**

@@ -1,3 +1,6 @@
+// Auth gate wrapping the whole authenticated app. Wraps <AppLayout> in
+// app.tsx so every view behind it requires a signed-in Clerk session.
+// Path: app.tsx (layout route) → [this file] → AppLayout (app-layout.tsx).
 import type { ReactNode } from "react";
 import { Navigate } from "react-router-dom";
 import { ClerkLoading, SignedIn, SignedOut } from "@clerk/clerk-react";

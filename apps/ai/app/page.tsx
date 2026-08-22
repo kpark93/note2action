@@ -1,9 +1,21 @@
 "use client";
 
+// The Module-7 chat demo: a minimal streamed-chat UI, standalone from the
+// note2action capture flow (not linked from apps/web, reached only by
+// visiting the ai app directly).
+// Calls POST api/chat/route.ts via the `useChat` hook (@ai-sdk/react),
+// which streams the assistant's reply token-by-token.
+// Path: [this file] → useChat() → POST /api/chat → lib/provider.ts's
+// chatModel().
 import { useState } from "react";
 import { useChat } from "@ai-sdk/react";
 import { APP_NAME } from "@note2action/shared";
 
+/**
+ * Renders the message list and input form, and drives the conversation.
+ * `useChat` holds the message history and posts each new message to
+ * /api/chat, streaming the reply back into `messages` as it arrives.
+ */
 export default function ChatPage() {
   const [input, setInput] = useState("");
   const { messages, sendMessage, status } = useChat();

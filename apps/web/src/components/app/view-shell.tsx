@@ -1,3 +1,6 @@
+// Outermost wrapper every view's JSX starts with, so entrance animation and
+// column-fill layout aren't repeated per screen.
+// Path: views/*/*.view.tsx → [this file] (leaf — no further calls).
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 

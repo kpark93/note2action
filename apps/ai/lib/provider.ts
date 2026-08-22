@@ -1,3 +1,7 @@
+// The one place that knows which LLM backs each ai-app feature.
+// Called by lib/extraction.ts (extractModel) and api/chat/route.ts
+// (chatModel); nothing else picks a model directly.
+// Path: extract/route.ts or chat/route.ts → [this file] → Anthropic API.
 import { anthropic } from "@ai-sdk/anthropic";
 import type { LanguageModel } from "ai";
 

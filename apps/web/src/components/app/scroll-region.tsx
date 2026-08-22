@@ -1,3 +1,6 @@
+// Generic scroll container used by every view's list/grid area (Review,
+// Tasks, History, Meetings) so the fade-to-scroll mechanics live in one place.
+// Path: views/*/*.view.tsx → [this file] (leaf — no further calls).
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 

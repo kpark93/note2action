@@ -1,7 +1,13 @@
+// Shared context providers: Clerk (auth) and TanStack Query (server-state
+// cache), plus the toast host (sonner). main.tsx wraps <App> in these —
+// everything downstream (lib/http.ts) depends on AuthTokenBridge below
+// having run first, so it can attach a session token to each request.
+// Path: main.tsx → [this file] → app.tsx → views/*.
 import { useEffect, type ReactNode } from "react";
 import { ClerkProvider, useAuth } from "@clerk/clerk-react";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+import { Toaster } from "@/components/app/toaster";
 import { setAuthTokenGetter } from "@/lib/auth-token";
 import { queryClient } from "@/lib/query-client";
 
@@ -47,6 +53,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
       <AuthTokenBridge />
       <QueryClientProvider client={queryClient}>
         {children}
+        <Toaster />
         {/* Renders nothing in production builds. */}
         <ReactQueryDevtools initialIsOpen={false} />
       </QueryClientProvider>

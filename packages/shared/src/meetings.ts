@@ -1,3 +1,9 @@
+// Contract for the API's /api/meetings endpoints — a "capture" is a saved
+// meeting (raw notes + the AI's extracted items, persisted together).
+// Used by apps/web (meetings.api.ts) to call the API and type the RECENT
+// strip / capture detail view; mirrored by hand in app/schemas/meetings.py.
+// Path: web capture flow → POST /api/meetings → [this file] → web UI.
+
 import { z } from "zod";
 
 import { ActionItem } from "./items";

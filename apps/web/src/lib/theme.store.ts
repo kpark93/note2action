@@ -2,6 +2,8 @@
 // Zustand for client state). The initial value comes from the `.dark` class
 // that index.html sets before paint, so there's no flash and no double source
 // of truth.
+// Path: sidebar.tsx, toaster.tsx → [this file] (leaf — localStorage only,
+// no network).
 import { create } from "zustand";
 
 export type Theme = "light" | "dark";

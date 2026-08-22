@@ -1,3 +1,7 @@
+// Sidebar widget showing overall completion progress across all items.
+// Rendered by sidebar.tsx; reads items via useItemsQuery (§1 read path) so it
+// stays in sync with every other screen's cache, no props needed.
+// Path: sidebar.tsx → [this file] → items.queries (domain) → items.utils.
 import { useItemsQuery } from "@/domain/items/items.queries";
 import { summary } from "@/domain/items/items.utils";
 import { SlotNumber } from "./slot-number";
