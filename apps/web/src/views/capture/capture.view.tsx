@@ -1,8 +1,8 @@
 import { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { useActionItems } from "@/store/actionItems.store";
-import { NotesEditor } from "@/components/app/notes-editor";
-import { RecentCaptures } from "@/components/app/recent-captures";
+import { useActionItems } from "@/domain/extraction/extraction.store";
+import { NotesEditor } from "./components/notes-editor";
+import { RecentCaptures } from "./components/recent-captures";
 import { StepLabel } from "@/components/app/step-label";
 import { ViewShell } from "@/components/app/view-shell";
 import { ViewHeader } from "@/components/app/view-header";

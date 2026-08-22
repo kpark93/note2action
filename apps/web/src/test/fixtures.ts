@@ -1,5 +1,5 @@
 // Shared test fixtures. Not part of the app bundle — only imported by *.test.ts.
-import type { ActionItem } from "@/store/actionItems.types";
+import type { ActionItem } from "@/domain/items/items.types";
 
 let nextId = 1000;
 

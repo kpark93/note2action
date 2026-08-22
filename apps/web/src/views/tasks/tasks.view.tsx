@@ -1,13 +1,13 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useItemsQuery, usePatchItem } from "@/lib/items.queries";
+import { useItemsQuery, usePatchItem } from "@/domain/items/items.queries";
 import { useTasksStore } from "./tasks.store";
-import { OWNERS, PRIORITIES, STATUSES } from "@/store/actionItems.constants";
-import { savedTasks } from "@/lib/items";
+import { OWNERS, PRIORITIES, STATUSES } from "@/domain/items/items.constants";
+import { savedTasks } from "@/domain/items/items.utils";
 import { taskRows } from "./tasks.utils";
-import { TaskRow } from "@/components/app/task-row";
+import { TaskRow } from "./components/task-row";
 import { playPop } from "@/lib/sound";
-import type { Status } from "@/store/actionItems.types";
+import type { Status } from "@/domain/items/items.types";
 import { Button } from "@/components/ui/button";
 import { StepLabel } from "@/components/app/step-label";
 import { ViewHeader } from "@/components/app/view-header";

@@ -1,7 +1,9 @@
-import type { ActionItem } from "@/store/actionItems.types";
-import { TODAY } from "@/store/actionItems.constants";
-import { doneItems, openItems } from "@/lib/items";
+import type { ActionItem } from "@/domain/items/items.types";
+import { doneItems, openItems } from "@/domain/items/items.utils";
 import { formatDate, weekOf } from "@/lib/dates";
+
+/** "Today" is pinned so the seeded due/completed dates stay meaningful. */
+const TODAY = "2026-08-11";
 
 export interface HistoryGroupVM {
   key: string;

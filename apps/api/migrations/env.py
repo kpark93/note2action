@@ -10,7 +10,7 @@ from app.models import Base
 # access to the values within the .ini file in use.
 config = context.config
 
-from app.settings import settings
+from app.core.config import settings
 # Migrations run as the admin role (DDL powers); the app runs as the
 # low-privilege RLS-bound role. Two URLs, two jobs.
 config.set_main_option(

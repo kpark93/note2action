@@ -1,7 +1,7 @@
 import { useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { useMeetingQuery } from "@/lib/items.queries";
-import { useActionItems } from "@/store/actionItems.store";
+import { useMeetingQuery } from "@/domain/meetings/meetings.queries";
+import { useActionItems } from "@/domain/extraction/extraction.store";
 import { timeAgo } from "@/lib/dates";
 import {
   Dialog,

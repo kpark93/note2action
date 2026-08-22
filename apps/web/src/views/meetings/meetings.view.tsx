@@ -1,5 +1,5 @@
-import { useMeetingsQuery } from "@/lib/items.queries";
-import { useActionItems } from "@/store/actionItems.store";
+import { useMeetingsQuery } from "@/domain/meetings/meetings.queries";
+import { useActionItems } from "@/domain/extraction/extraction.store";
 import { formatDate, timeAgo } from "@/lib/dates";
 import { ViewShell } from "@/components/app/view-shell";
 import { ViewHeader } from "@/components/app/view-header";
