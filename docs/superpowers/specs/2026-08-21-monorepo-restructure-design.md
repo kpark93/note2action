@@ -161,10 +161,10 @@ apps/web/src/
 │   │                            #   holds pieces only that feature uses
 │   ├── capture/
 │   │   ├── capture.view.tsx
-│   │   └── components/          # notes-editor, recent-captures, recent-modal
+│   │   └── components/          # notes-editor, recent-captures
 │   ├── review/
 │   │   ├── review.view.tsx, review.store.ts, review.utils.ts (+ test)
-│   │   └── components/          # review-card, confidence-pill, slot-number
+│   │   └── components/          # review-card, confidence-pill
 │   ├── tasks/
 │   │   ├── tasks.view.tsx, tasks.store.ts, tasks.utils.ts (+ test)
 │   │   └── components/          # task-row, priority-badge
@@ -173,7 +173,7 @@ apps/web/src/
 │   │   └── components/          # history-row, stat-card
 │   ├── home/
 │   │   ├── home.view.tsx
-│   │   └── components/          # recap-card, completion-card
+│   │   └── components/          # recap-card
 │   ├── meetings/                # meetings.view.tsx
 │   └── auth/                    # sign-in.view.tsx, sign-up.view.tsx
 ├── domain/                      # state & queries shared between views; never imports views/
@@ -374,7 +374,7 @@ invalidates `["items"]` / `["meetings"]` → Tasks and History refetch.
 ## 9. Planning-time resolutions (all §9 items verified 2026-08-21)
 
 - `recent-modal` ← `app-layout.tsx`, `completion-card` ← `sidebar.tsx`: both
-  stay in `components/app/`. `slot-number.tsx`: zero importers → deleted.
+  stay in `components/app/`. `slot-number.tsx`: stays, imported by completion-card via a relative path the planning grep missed.
 - `lib/items.queries.ts` split line: `itemsKey`, `useItemsQuery`,
   `usePatchItem`, `useDeleteItem`, `useSaveToTasks` → items;
   `meetingsKey`, `useMeetingsQuery`, `useMeetingQuery` → meetings

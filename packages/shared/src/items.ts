@@ -2,9 +2,9 @@
 //
 // Each shape is a Zod *schema* (a runtime value that can validate data) paired
 // with a TypeScript *type* derived from it via `z.infer`. They intentionally
-// share a name: `HealthResponse` is the schema in value-space and the type in
-// type-space — TS keeps those separate, so `HealthResponse.parse(x)` (value)
-// and `const h: HealthResponse` (type) both work from the one declaration.
+// share a name: `ActionItem` is the schema in value-space and the type in
+// type-space — TS keeps those separate, so `ActionItem.parse(x)` (value)
+// and `const a: ActionItem` (type) both work from the one declaration.
 //
 // Define the shape once → get runtime validation AND the static type for free.
 

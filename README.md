@@ -115,7 +115,7 @@ Interactive docs at <http://localhost:8001/docs>.
 
 Defense in depth — each layer holds even if the one above it fails:
 
-1. **Middleware** (`apps/api/app/main.py`) verifies the Clerk JWT signature
+1. **Middleware** (`apps/api/app/core/middleware.py`) verifies the Clerk JWT signature
    against the JWKS public keys and rejects anything else with 401. Identity
    comes only from the verified token, never from the request body.
 2. **Queries** filter by `user_id` in the repository; rows you don't own
@@ -133,7 +133,7 @@ role Alembic needs for DDL.
 
 ## Database & migrations
 
-Schema lives in `apps/api/app/models.py` (SQLAlchemy); Alembic migrations in
+Schema lives in `apps/api/app/models/` (SQLAlchemy); Alembic migrations in
 `apps/api/migrations/versions/` (initial schema → user identity → RLS
 policies). After changing models:
 

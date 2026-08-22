@@ -6,7 +6,7 @@ from app.models import User
 
 
 class PostgresUserRepository:
-    """Store backed by the real users, meetings, and action_items tables."""
+    """Store backed by the real users table."""
 
     def get_or_create_user(self, clerk_id: str, name: str | None) -> int:
         with SessionLocal() as session:

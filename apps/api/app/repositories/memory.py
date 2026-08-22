@@ -31,7 +31,11 @@ class _MeetingRecord:
 class MemoryState:
     """All the fake's data in one place, shared by the three repositories —
     mirroring how the Postgres impls share one database. Seeded with one
-    user, one meeting, two items (ids 1-2 / meeting id 1 are claimed)."""
+    user, one meeting, two items (ids 1-2 / meeting id 1 are claimed).
+
+    Item ownership is derived from the item's meeting (the fake's single
+    source of truth); Postgres denormalizes user_id onto items instead. Same
+    observable behavior, different storage — exactly what the seam allows."""
 
     def __init__(self) -> None:
         self.users: dict[str, int] = {SEED_CLERK_ID: 1}
