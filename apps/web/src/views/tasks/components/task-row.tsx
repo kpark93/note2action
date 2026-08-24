@@ -27,10 +27,17 @@ interface TaskRowProps {
   isCompleting: boolean;
   /** Called from the status Select; tasks.view.tsx owns the actual PATCH. */
   onStatusChange: (id: number, value: Status) => void;
+  /** Fires when the taskComplete animation ends; tasks.view.tsx then patches "Done". */
+  onCompleted: (id: number) => void;
 }
 
 /** One task in the Tasks list: owner initials, title, due, priority pill, status select, send-back. */
-export function TaskRow({ row, isCompleting, onStatusChange }: TaskRowProps) {
+export function TaskRow({
+  row,
+  isCompleting,
+  onStatusChange,
+  onCompleted,
+}: TaskRowProps) {
   const patchItem = usePatchItem();
   const sc = STATUS_STYLE[row.status];
 
@@ -40,6 +47,12 @@ export function TaskRow({ row, isCompleting, onStatusChange }: TaskRowProps) {
         isCompleting ? "task-complete" : "n2a-row"
       }`}
       style={isCompleting ? undefined : { animationDelay: row.delay }}
+      // animationend bubbles (the task-burst child fires one too) — the name
+      // guard makes sure only the row's own animation triggers the patch.
+      onAnimationEnd={(e) => {
+        if (isCompleting && e.animationName === "taskComplete")
+          onCompleted(row.id);
+      }}
     >
       {isCompleting && (
         <span className="task-burst" aria-hidden="true">

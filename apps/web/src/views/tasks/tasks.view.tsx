@@ -42,18 +42,21 @@ export function TasksView() {
   const [completingId, setCompletingId] = useState<number | null>(null);
 
   // Wired to TaskRow's onStatusChange: non-"Done" patches immediately
-  // (optimistic); "Done" plays the pop animation, then patches 500ms later.
+  // (optimistic); "Done" starts the pop animation and defers to handleCompleted.
   const handleStatus = (id: number, value: Status) => {
     if (value === "Done") {
       playPop();
       setCompletingId(id);
-      window.setTimeout(() => {
-        patchItem.mutate({ id, patch: { status: "Done" } });
-        setCompletingId((cur) => (cur === id ? null : cur));
-      }, 500);
     } else {
       patchItem.mutate({ id, patch: { status: value } });
     }
+  };
+
+  // Fired by TaskRow when its taskComplete animation ends — the patch waits
+  // for the animation itself, not a timer, so CSS owns the duration.
+  const handleCompleted = (id: number) => {
+    patchItem.mutate({ id, patch: { status: "Done" } });
+    setCompletingId((cur) => (cur === id ? null : cur));
   };
 
   const rows = taskRows(items, filterOwner, filterStatus, filterPriority);
@@ -138,6 +141,7 @@ export function TasksView() {
                       row={row}
                       isCompleting={completingId === row.id}
                       onStatusChange={handleStatus}
+                      onCompleted={handleCompleted}
                     />
                   ))}
                 </div>
