@@ -5,7 +5,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { QueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { meetingsKey } from "@/domain/meetings/meetings.queries";
+import { itemsKey, meetingsKey } from "@/lib/query-keys";
 import {
   deleteItem,
   fetchItems,
@@ -15,8 +15,6 @@ import {
 } from "./items.api";
 import { applyPatch, markAllSaved, removeItem } from "./items.cache";
 import type { ActionItem } from "./items.types";
-
-export const itemsKey = ["items"] as const;
 
 /**
  * Full items list, cached by TanStack Query. Fires GET /api/items via
@@ -89,7 +87,7 @@ export function useDeleteItem() {
       optimistically(queryClient, (items) => removeItem(items, id)),
     // A delete changes the meetings' itemCounts too.
     onSuccess: () =>
-      void queryClient.invalidateQueries({ queryKey: meetingsKey }),
+      void queryClient.invalidateQueries({ queryKey: meetingsKey.all }),
     onError: (_error, _id, snapshot) =>
       rollback(queryClient, snapshot, "Couldn't delete the item — restored."),
   });

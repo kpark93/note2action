@@ -40,12 +40,9 @@ export const MeetingsResponse = z.object({
 });
 export type MeetingsResponse = z.infer<typeof MeetingsResponse>;
 
-/** GET /api/meetings/{id} — one full capture, transcript included. */
-export const MeetingDetail = z.object({
-  id: z.number(),
-  title: z.string(),
+/** GET /api/meetings/{id} — a Meeting plus its transcript, said as the
+ * relationship (extend), not a restated shape. */
+export const MeetingDetail = Meeting.extend({
   rawNotes: z.string(),
-  capturedAt: z.string(),
-  itemCount: z.number(),
 });
 export type MeetingDetail = z.infer<typeof MeetingDetail>;

@@ -4,15 +4,18 @@
 // Path: tasks.view.tsx → [this file] (leaf zustand store).
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
+import type { Owner } from "@/domain/items/items.constants";
+import type { Priority, Status } from "@/domain/items/items.types";
 
-/** View-local UI state for the Tasks screen (owner/status/priority filters). */
+/** View-local UI state for the Tasks screen (owner/status/priority filters).
+ * Unions, not bare strings: the type itself documents the legal values. */
 interface TasksState {
-  filterOwner: string;
-  filterStatus: string;
-  filterPriority: string;
-  setFilterOwner: (owner: string) => void;
-  setFilterStatus: (status: string) => void;
-  setFilterPriority: (priority: string) => void;
+  filterOwner: Owner | "All";
+  filterStatus: Status | "All";
+  filterPriority: Priority | "All";
+  setFilterOwner: (owner: Owner | "All") => void;
+  setFilterStatus: (status: Status | "All") => void;
+  setFilterPriority: (priority: Priority | "All") => void;
   clearFilters: () => void;
 }
 

@@ -11,6 +11,7 @@ export const OWNERS = [
   "Priya Shah",
   "Unassigned",
 ] as const;
+export type Owner = (typeof OWNERS)[number];
 
 export const STATUSES: Status[] = [...Status.options];
 export const PRIORITIES: Priority[] = [...Priority.options];

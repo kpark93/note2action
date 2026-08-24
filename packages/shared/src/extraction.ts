@@ -28,10 +28,16 @@ export const ExtractedItem = z.object({
     .describe(
       "Due date as YYYY-MM-DD, inferred relative to today; '' if none was implied.",
     ),
+  // int(1-100) rides into the model's JSON-schema constraints, so fractional
+  // output (0.9) is rejected at generation time — no client normalization.
   confidence: z
     .number()
+    .int()
+    .min(1)
+    .max(100)
     .describe(
-      "0-100: confidence in this extraction (owner, date, and intent).",
+      "Whole number from 1 to 100 (never a 0-1 fraction): confidence in " +
+        "this extraction (owner, date, and intent).",
     ),
   note: z
     .string()
