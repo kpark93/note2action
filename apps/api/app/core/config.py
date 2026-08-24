@@ -5,6 +5,8 @@ core/db.py (the connection string).
 Path: .env / environment → [this file] → app/main.py, core/db.py.
 """
 
+from typing import Literal
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -18,7 +20,9 @@ class Settings(BaseSettings):
     # Migrations need DDL powers the app role deliberately lacks — they run
     # as the admin role. Unset = fall back to database_url (pre-RLS setups).
     migrations_database_url: str | None = None
-    repository: str = "memory"
+    # No default and no free-form strings: a typo'd REPOSITORY crashes at
+    # startup instead of silently running on RAM and losing every write.
+    repository: Literal["postgres", "memory"]
     # Where Clerk publishes this app's public signing keys (JWKS). Unset =
     # auth is unconfigured and every protected endpoint answers 500 loudly.
     clerk_jwks_url: str | None = None

@@ -1,6 +1,6 @@
 """Item use-cases. Thin today; business rules land here, not routes.
 Services never import FastAPI — routes translate None/False → 404s.
-Path §1 [hop 10/15]: route (hops 8–9) → [this file] → ItemRepository
+Path §1 [hop 10/15]: route (hops 8-9) → [this file] → ItemRepository
 (repositories/postgres/items.py, hop 11).
 """
 

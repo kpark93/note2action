@@ -3328,3 +3328,164 @@ and `apps/ai` (plus `views/meetings/meetings.view.tsx` by hand).
 exceptions isn't a cap. The rescan-to-zero is the proof, the same way
 the test suite is proof for behavior: don't trust that the sweep
 worked, measure it.
+
+## 2026-08-23 — The Done animation now ends itself: setTimeout removed
+
+**WHAT changed:** The only `setTimeout` in the codebase is gone. When a
+task is set to "Done", the row plays a half-second celebration
+animation before the PATCH fires and the row leaves for History.
+Before, a timer hard-coded that wait as `500` in JavaScript —
+duplicating a duration that already lives in CSS (`taskComplete` is
+`0.5s` in `global.css`). Now the animation itself reports when it's
+finished: the row listens for the browser's `animationend` event
+(React's `onAnimationEnd` prop) and only then tells the view to send
+the PATCH. A guard checks `e.animationName === "taskComplete"` because
+`animationend` _bubbles_ — the ✓ burst child plays its own animation,
+and without the guard its ending would fire the patch too. CSS is now
+the single owner of the duration: retune the animation and the code
+needs no edit.
+
+**WHICH files:** `apps/web/src/views/tasks/tasks.view.tsx` (timer
+removed; new `handleCompleted` sends the patch),
+`apps/web/src/views/tasks/components/task-row.tsx` (new `onCompleted`
+prop + `onAnimationEnd` listener).
+
+**WHY:** A timer next to an animation is the same number written twice
+— they drift apart the first time someone retunes the CSS, and then
+the row unmounts mid-animation or lingers after it. Event-driven
+sequencing ("the effect tells you when it's done") has one source of
+truth. Gates after the change: 0 type errors, 42/42 vitest, lint
+clean.
+
+## 2026-08-23 — Integration tests: a real throwaway Postgres now checks what the fake can't
+
+**WHAT changed:** The API grew a second test suite. The existing 23
+unit tests use in-memory fakes — fast, but blind to database physics
+(RLS, commit ordering). The new integration suite (11 tests, marked
+`@pytest.mark.integration`) runs against a REAL throwaway database:
+each run drops and recreates `note2action_test`, runs the actual
+alembic migrations (so the RLS policies match production law exactly),
+points the app's `SessionLocal` at it, and truncates tables between
+tests. Plain `pytest` still runs only the fast suite; `pytest -m
+integration` opts into the real one. Highlights: a regression test for
+the 500-on-Done bug (response must be built before `commit()`), and a
+discovery — after a committed transaction, a `SET LOCAL` GUC degrades
+to `''` on that connection, so the RLS policy's `::int` cast ERRORS
+rather than returning NULL/zero rows. Both paths are now pinned by
+tests: fresh connection → 0 rows; dead identity → loud error. Either
+way, no data leaks — "fails closed" has two faces.
+
+**WHICH files:** `apps/api/tests/integration/{__init__,conftest,
+test_postgres_repositories,test_api_postgres}.py` (new),
+`apps/api/pyproject.toml` (marker + default deselect).
+
+**WHY:** The fake proves the app's logic; only real Postgres proves
+the app's _agreements with Postgres_. The 500 bug lived exactly in
+that gap for weeks. Now `pytest -m integration` walks the gap on
+demand — endpoint to database and back — in under a second.
+
+## 2026-08-23 — Structural audit: seven findings fixed, repo hardened for review
+
+**WHAT changed:** A full audit of the monorepo (import-boundary greps,
+config, deployment, docs) surfaced seven findings; all fixed. (1) The
+`docker compose` api service could never boot — it received no
+environment, and `DATABASE_URL` is required. It now gets in-network
+URLs (`postgres:5432`, not `localhost`) plus `depends_on`, and loads
+`CLERK_JWKS_URL` from the gitignored `.env`. (2) `REPOSITORY` is now a
+strict `Literal["postgres", "memory"]` with **no default** — a typo'd
+value crashes at startup with a clear pydantic error instead of
+silently running on RAM and losing every write (proven by test:
+`REPOSITORY=postgress` → literal_error). (3) CI now exists:
+`.github/workflows/ci.yml` runs eslint+ruff, typecheck, both vitest
+suites, pytest unit, and pytest integration against a real Postgres
+service container, on every push/PR. (4) All TanStack cache keys moved
+to `lib/query-keys.ts` — keys are addresses, not behavior, so
+cross-domain invalidation no longer imports another domain's hook
+module (the tightest coupling the audit found). (5)
+`docs/architecture/web.md` was rewritten — it still described the
+pre-restructure layout (`store/actionItems.store`) and pre-optimistic
+behavior. (6) `ruff` (a Python linter) joined `apps/api`'s dev deps
+and the root `lint` script; it found and fixed 4 real issues. (7) The
+AI app got its first tests (5, with the model call mocked) and its
+extract route now returns **400** on malformed bodies instead of
+crashing to a 500 — plus this journal moved from repo root to
+`docs/learning-journal.md`, with the Stop hook repointed.
+
+**WHICH files:** `docker-compose.yml`, `apps/api/app/core/config.py`,
+`.github/workflows/ci.yml` (new), `apps/web/src/lib/query-keys.ts`
+(new) + 4 domain files rewired, `docs/architecture/web.md`,
+`apps/api/pyproject.toml`, `package.json`,
+`apps/ai/{vitest.config.ts,lib/extraction.test.ts,app/api/extract/route.test.ts}`
+(new) + `route.ts`, `.claude/settings.json`, `memory.md` →
+`docs/learning-journal.md`.
+
+**WHY:** Polish is mostly about failure modes: a dev command that
+crashes on first run, a config that fails silently, tests nothing
+runs, and docs that lie all signal carelessness to a reviewer. Every
+gate is green after the pass: eslint+ruff clean, 0 type errors, 42+5
+vitest, 23 unit + 11 integration pytest.
+
+## 2026-08-24 — Review fixes: query-key collision (P0), derived zod schemas, typed filters
+
+**WHAT changed:** A code review found one real bug and a set of
+polish items; all fixed. The bug: both meeting queries keyed off the
+same tuple — a list with limit 3 and the detail for meeting id 3 both
+cached as `["meetings", 3]`, one slot holding two different shapes
+(an array vs an object), crashing `.map` when they collided. A query
+key is an _identity_, not a label — `meetingsKey` is now a factory
+namespacing by kind: `meetingsKey.list(limit)` /
+`meetingsKey.detail(id)` / `meetingsKey.all` (for invalidation, which
+prefix-matches both). Zod schemas now encode _relationships_ instead
+of restating shapes: `ActionItemPatch` is derived
+(`ActionItem.pick(...).partial()`), `MeetingDetail` extends `Meeting`,
+and persisted `confidence` is `int().min(0).max(100)` — while raw AI
+confidence stays deliberately loose (it's pre-normalization; different
+role, different constraint). Filter store fields went from bare
+`string` to unions (`Status | "All"` etc.) with `FilterSelect` made
+generic, so a typo'd filter value is now a compile error. The
+confidence-clamping logic moved out of the store's `.map` into a
+named, unit-tested `normalizeConfidence` (3 new tests). All five
+zustand stores now consistently wrap `devtools` with named actions.
+Three review items were already fixed by the earlier restructure
+(extraction.api.ts rename, dead Screen type, stray logs/).
+
+**WHICH files:** `apps/web/src/lib/query-keys.ts`,
+`domain/meetings/meetings.queries.ts`, `domain/items/items.queries.ts`,
+`domain/extraction/{extraction.store.ts,extraction.utils.ts(+test)}`,
+`views/tasks/tasks.store.ts`, `views/history/history.store.ts`,
+`components/app/filter-select.tsx`, `domain/items/items.constants.ts`,
+`lib/theme.store.ts`, `packages/shared/src/{items.ts,meetings.ts}`.
+
+**WHY:** The collision was a latent production TypeError waiting for
+id 3 to meet limit 3. The rest is about making illegal states
+unrepresentable: derived schemas can't drift from their source, union
+types can't hold a typo, and a named pure function can be tested
+without mounting a store. Gates: eslint clean, 0 type errors, 45+5
+vitest, 23 pytest.
+
+## 2026-08-24 — Confidence constrained at the source: the model itself returns 1-100
+
+**WHAT changed:** Yesterday's fix normalized AI confidence client-side
+(0.9 or 90 both accepted, clamped after). Today the constraint moved
+to the source: the shared `ExtractedItem.confidence` schema is now
+`z.number().int().min(1).max(100)` with a describe() saying "whole
+number, never a 0-1 fraction." Because `generateObject` compiles the
+zod schema into the model's JSON-schema output constraints, a
+fractional confidence is now rejected at _generation time_ — the model
+is steered to comply, and non-compliance fails loudly instead of
+being silently patched up. That made `normalizeConfidence` not just
+redundant but dangerous — its "value <= 1 means ratio" guess would
+turn a legitimate confidence of 1 (one percent) into 100 — so the
+helper, its tests, and the store's .map were deleted. The contract is
+now enforced three times on one journey: model generation, the ai
+route's response, and the web's zod parse in extraction.api.ts.
+
+**WHICH files:** `packages/shared/src/extraction.ts`,
+`apps/web/src/domain/extraction/extraction.store.ts`,
+`extraction.utils.ts` + test (deleted).
+
+**WHY:** "Put a constraint where the invariant actually holds" has a
+sequel: _move_ the invariant upstream when you can. Once the source
+guarantees whole 1-100, downstream normalization stops documenting a
+loose contract and starts hiding a strict one — deleting it keeps the
+code honest. Gates: 0 type errors, 42+5 vitest, eslint clean.

@@ -6,6 +6,20 @@ services:
       # Container listens on 8000 internally; host port is 8001 (8000 belongs
       # to other local projects).
       - "8001:8000"
+    environment:
+      # In-network hostnames — .env's localhost URLs don't resolve inside a
+      # container, so these override the env_file values below.
+      - DATABASE_URL=postgresql+psycopg://note2action_app:note2action_app_dev@postgres:5432/note2action
+      - MIGRATIONS_DATABASE_URL=postgresql+psycopg://postgres:postgres@postgres:5432/note2action
+      - REPOSITORY=postgres
+    # CLERK_JWKS_URL comes from the local gitignored .env. First boot of a
+    # fresh database still needs migrations:
+    #   docker compose exec api uv run alembic upgrade head
+    env_file:
+      - path: apps/api/.env
+        required: false
+    depends_on:
+      - postgres
 
   web:
     build:

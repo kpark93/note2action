@@ -1,0 +1,59 @@
+# Every gate the repo has, on every push and PR: eslint + ruff, typecheck,
+# vitest (web + ai), pytest unit, and pytest integration against a real
+# Postgres service container.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  web:
+    name: Web + AI (lint, typecheck, vitest)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec eslint .
+      - run: pnpm run typecheck
+      - run: pnpm -r --if-present test
+
+  api:
+    name: API (ruff, pytest unit + integration)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/api
+    # The integration suite's conftest expects postgres:postgres on
+    # localhost:5432 — same shape as the local docker-compose service.
+    services:
+      postgres:
+        image: postgres:17.1-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      # Settings validate at import; unit tests swap in fakes and never
+      # connect, integration tests build their own URLs in conftest.
+      DATABASE_URL: postgresql+psycopg://unused:unused@localhost:5432/unused
+      REPOSITORY: memory
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - run: uv sync
+      - run: uv run ruff check .
+      - run: uv run pytest -q
+      - run: uv run pytest -m integration -q
