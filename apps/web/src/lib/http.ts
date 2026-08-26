@@ -1,12 +1,7 @@
 // Thin, typed wrapper over fetch, shared by the feature `api.ts` modules.
-//
-// - method defaults to GET (or POST when a body is present)
-// - a JSON body is encoded and its Content-Type set automatically
-// - a non-2xx response throws HttpError (carrying the status code)
-// - an optional parser (any Zod schema) validates and types the JSON response
-//
-// Paths stay relative (`/api/…`, `/ai-api/…`) so the Vite dev proxy keeps
-// working; add a base URL here if the app is ever deployed on split origins.
+// Keeps paths relative (`/api/…`) so the Vite dev proxy keeps working.
+// Path §1 [hop 5/15]: domain/*.api.ts → [this file] → fetch() → Vite
+// proxy → API (return trip hop 14, parsed here). (request-paths.md §1-3)
 
 import { getAuthToken } from "./auth-token";
 
@@ -28,22 +23,25 @@ interface Parser<T> {
 
 interface RequestOptions<T> {
   method?: string;
-  /** JSON-encoded into the request body; also flips the default method to POST. */
+  /** JSON-encoded as the body; also flips the default method to POST. */
   body?: unknown;
   /** Validates + types the JSON response (e.g. a shared Zod schema). */
   schema?: Parser<T>;
   signal?: AbortSignal;
 }
 
+/**
+ * Fetch wrapper used by every domain `*.api.ts` module: attaches the Clerk
+ * token, throws HttpError on non-2xx, validates/types via `opts.schema`.
+ */
 export async function request<T = unknown>(
   path: string,
   opts: RequestOptions<T> = {},
 ): Promise<T> {
   const method = opts.method ?? (opts.body !== undefined ? "POST" : "GET");
 
-  // Who's calling: attach the Clerk session token so the API can verify the
-  // user. Null (signed out / tests) simply omits the header — the API answers
-  // 401 if the endpoint requires identity.
+  // Null (signed out / tests) omits the header — the API 401s if the
+  // endpoint requires identity.
   const token = await getAuthToken();
 
   const headers: Record<string, string> = {};

@@ -2,6 +2,8 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import path from "path";
+// Path §1 [hop 6/15]: lib/http.ts fetch("/api/…") → [this proxy] →
+// FastAPI on :8001; the response retraces the same route back.
 // Where /api/* is forwarded in dev. Locally that's the FastAPI service on
 // localhost:8001 (8000 belongs to other local projects); in Docker Compose
 // it's the `api` service. Override via env.

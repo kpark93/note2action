@@ -1,8 +1,9 @@
-// Light/dark theme, kept in a tiny Zustand store (matching the app's use of
-// Zustand for client state). The initial value comes from the `.dark` class
-// that index.html sets before paint, so there's no flash and no double source
-// of truth.
+// Light/dark theme, kept in a tiny Zustand store. Initial value comes
+// from the `.dark` class index.html sets before paint — no flash, no
+// double source of truth.
+// Path: sidebar.tsx, toaster.tsx → [this file] (leaf, localStorage only).
 import { create } from "zustand";
+import { devtools } from "zustand/middleware";
 
 export type Theme = "light" | "dark";
 
@@ -21,15 +22,22 @@ interface ThemeState {
   toggle: () => void;
 }
 
-export const useTheme = create<ThemeState>((set, get) => ({
-  theme: document.documentElement.classList.contains("dark") ? "dark" : "light",
-  setTheme: (theme) => {
-    apply(theme);
-    set({ theme });
-  },
-  toggle: () => {
-    const next: Theme = get().theme === "dark" ? "light" : "dark";
-    apply(next);
-    set({ theme: next });
-  },
-}));
+export const useTheme = create<ThemeState>()(
+  devtools(
+    (set, get) => ({
+      theme: document.documentElement.classList.contains("dark")
+        ? "dark"
+        : "light",
+      setTheme: (theme) => {
+        apply(theme);
+        set({ theme }, false, "theme/setTheme");
+      },
+      toggle: () => {
+        const next: Theme = get().theme === "dark" ? "light" : "dark";
+        apply(next);
+        set({ theme: next }, false, "theme/toggle");
+      },
+    }),
+    { name: "ThemeStore" },
+  ),
+);

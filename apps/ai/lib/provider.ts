@@ -1,13 +1,13 @@
+// The one place that knows which LLM backs each ai-app feature.
+// Called by lib/extraction.ts (extractModel) and api/chat/route.ts
+// (chatModel); nothing else picks a model directly.
+// Path: extract/route.ts or chat/route.ts → [this file] → Anthropic API.
 import { anthropic } from "@ai-sdk/anthropic";
 import type { LanguageModel } from "ai";
 
 /**
- * The chat model used by /api/chat.
- *
- * Provider is swappable: change the default model id via the CHAT_MODEL env var,
- * or replace this module with a different `@ai-sdk/*` provider (e.g. openai).
- * The Anthropic provider reads ANTHROPIC_API_KEY from the environment — see
- * .env.example.
+ * Chat model for /api/chat. Swap via CHAT_MODEL env var, or a different
+ * `@ai-sdk/*` provider; reads ANTHROPIC_API_KEY (see .env.example).
  */
 export function chatModel(): LanguageModel {
   const modelId = process.env.CHAT_MODEL ?? "claude-sonnet-5";
@@ -15,12 +15,8 @@ export function chatModel(): LanguageModel {
 }
 
 /**
- * The model used by /api/extract.
- *
- * Extraction is a mechanical structured-output task, so it defaults to Haiku —
- * the fastest, cheapest tier — rather than the chat model. Haiku also skips the
- * pre-answer "thinking" that Sonnet 5 does by default, which cuts latency.
- * Override with EXTRACT_MODEL to trade speed for quality.
+ * Model for /api/extract — defaults to Haiku (cheapest/fastest, skips
+ * Sonnet's pre-answer "thinking"). Override via EXTRACT_MODEL.
  */
 export function extractModel(): LanguageModel {
   const modelId = process.env.EXTRACT_MODEL ?? "claude-haiku-4-5";

@@ -1,3 +1,7 @@
+// History screen: completed items grouped by week, plus summary stats.
+// Read-only — items/meetings come from the TanStack Query cache (§1 read
+// path); the owner filter is view-local state (history.store.ts).
+// Path: [this file] → items.queries / meetings.queries → history.utils.
 import { useMeetingsQuery } from "@/domain/meetings/meetings.queries";
 import { useItemsQuery } from "@/domain/items/items.queries";
 import { useHistoryStore } from "./history.store";

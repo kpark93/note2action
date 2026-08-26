@@ -1,3 +1,5 @@
+// Small labeled divider used above grouped rows (Tasks status sections,
+// History week groups). Path: tasks.view.tsx / history.view.tsx → [this file].
 interface SectionHeadingProps {
   label: string;
   /** Row count shown at the hairline's right end — a bare number (Tasks) or preformatted text like "3 items" (History). */

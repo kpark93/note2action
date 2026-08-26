@@ -1,3 +1,8 @@
+// Contract for the API's /api/meetings endpoints — a "capture" is a saved
+// meeting (raw notes + AI-extracted items, persisted together). Used by
+// apps/web (meetings.api.ts); mirrored by hand in app/schemas/meetings.py.
+// Path: web capture flow → POST /api/meetings → [this file] → web UI.
+
 import { z } from "zod";
 
 import { ActionItem } from "./items";
@@ -35,12 +40,9 @@ export const MeetingsResponse = z.object({
 });
 export type MeetingsResponse = z.infer<typeof MeetingsResponse>;
 
-/** GET /api/meetings/{id} — one full capture, transcript included. */
-export const MeetingDetail = z.object({
-  id: z.number(),
-  title: z.string(),
+/** GET /api/meetings/{id} — a Meeting plus its transcript, said as the
+ * relationship (extend), not a restated shape. */
+export const MeetingDetail = Meeting.extend({
   rawNotes: z.string(),
-  capturedAt: z.string(),
-  itemCount: z.number(),
 });
 export type MeetingDetail = z.infer<typeof MeetingDetail>;

@@ -1,7 +1,11 @@
+// Pure view-model builders for the Tasks screen — no network calls, no
+// state. Takes the raw items from useItemsQuery and shapes/styles them.
+// Path: tasks.view.tsx / task-row.tsx → [this file] → items.utils (domain).
 import type { ActionItem, Status } from "@/domain/items/items.types";
 import { initials, savedTasks } from "@/domain/items/items.utils";
 import { compareDueAsc, formatDate } from "@/lib/dates";
 
+/** Colors for each status pill, keyed to match the Select trigger's chrome. */
 export const STATUS_STYLE: Record<
   Status,
   { bg: string; fg: string; border: string }
@@ -36,6 +40,7 @@ export interface TaskRowVM extends ActionItem {
   delay: string;
 }
 
+/** Saved tasks, filtered by owner/status/priority and sorted by due date. */
 export function taskRows(
   items: ActionItem[],
   filterOwner: string,

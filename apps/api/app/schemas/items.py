@@ -1,17 +1,17 @@
-"""Pydantic schemas — the wire contract, mirrored in packages/shared (TS)."""
+"""Pydantic schemas for items — the wire contract, mirrored in packages/shared.
+Path §1 [hop 13/15]: mappers → here → FastAPI JSON → lib/http.ts."""
+
+from typing import Literal
 
 from pydantic import BaseModel
-from typing import Literal
 
 Priority = Literal["High", "Medium", "Low"]
 Status = Literal["Not started", "In progress", "Blocked", "Done"]
 
-class ActionItem(BaseModel):
-    """One persisted action item — the full wire shape, mirrored in packages/shared.
 
-    Every field is required. `due`/`note`/`completed` are nullable (`| None`)
-    but must still be present: "nullable" and "optional" are different promises.
-    """
+class ActionItem(BaseModel):
+    """One persisted action item — full wire shape, mirrored in
+    packages/shared. All fields required; some are nullable (`| None`)."""
 
     id: int
     meetingId: int
@@ -29,11 +29,8 @@ class ActionItem(BaseModel):
 
 
 class ActionItemPatch(BaseModel):
-    """Partial update for PATCH /api/items/{id} — only the fields being changed.
-
-    `completed` is deliberately absent: the server stamps it from `status`
-    (Done ⟺ completed set), so clients can never break that rule.
-    """
+    """Partial update for PATCH /api/items/{id}. `completed` is absent
+    — the server stamps it from `status` (Done ⟺ completed set)."""
 
     title: str | None = None
     owner: str | None = None
@@ -52,4 +49,6 @@ class SaveToTasksResponse(BaseModel):
 
 
 class ItemsResponse(BaseModel):
+    """GET /api/items — every action item the caller owns."""
+
     items: list[ActionItem]

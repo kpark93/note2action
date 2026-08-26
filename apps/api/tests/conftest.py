@@ -1,11 +1,10 @@
 """Shared test setup — pytest loads this file automatically for every test."""
 
-import pytest
-from jwt.exceptions import InvalidTokenError
-
 import app.main as main_module
+import pytest
 from app.core.security import VerifiedUser
-from app.repositories.memory import build_memory_repositories, SEED_CLERK_ID
+from app.repositories.memory import SEED_CLERK_ID, build_memory_repositories
+from jwt.exceptions import InvalidTokenError
 
 # What test clients send to authenticate as the seeded user. With the fake
 # verifier below, the bearer token simply IS the Clerk user id — legible in
@@ -14,13 +13,8 @@ AUTH = {"Authorization": f"Bearer {SEED_CLERK_ID}"}
 
 
 class FakeVerifier:
-    """Test twin of ClerkJWKSVerifier — same interface, no keys, no network.
-
-    Any token that looks like a Clerk user id ("user_…") verifies as that
-    user; everything else is rejected, exactly like a forged JWT. An optional
-    display name rides after a pipe — "user_x|Jane Doe" — standing in for the
-    real token's custom `name` session claim.
-    """
+    """Test twin of ClerkJWKSVerifier — no keys, no network. "user_…" tokens
+    verify as that user (optional name after a pipe); anything else rejects."""
 
     def verify(self, token: str) -> VerifiedUser:
         if not token.startswith("user_"):
@@ -31,12 +25,7 @@ class FakeVerifier:
 
 @pytest.fixture(autouse=True)
 def fresh_repository() -> None:
-    """Give every test its own in-memory repository, regardless of .env.
-
-    autouse: runs before each test without being asked for by name. A fresh
-    fake per test means no test can poison another's data (e.g. a delete
-    test shrinking the list a later test counts). The fake verifier is set
-    here too, so tests never depend on CLERK_JWKS_URL.
-    """
+    """Fresh in-memory repos + fake verifier before every test (autouse), so no
+    test can poison another's data and none depends on CLERK_JWKS_URL."""
     main_module.app.state.repositories = build_memory_repositories()
     main_module.app.state.token_verifier = FakeVerifier()

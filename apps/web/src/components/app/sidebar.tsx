@@ -1,3 +1,7 @@
+// Left-hand app chrome: logo, nav links, completion widget, theme switch,
+// signed-in account. Rendered once by app-layout.tsx — the only place
+// these cross-screen bits live.
+// Path: app-layout.tsx → [this file] → SidebarNav, health/theme stores.
 import { UserButton, useUser } from "@clerk/clerk-react";
 import { useHealth } from "@/domain/health/health.queries";
 import { useTheme } from "@/lib/theme.store";
@@ -5,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { SidebarNav } from "./sidebar-nav";
 import { CompletionCard } from "./completion-card";
 
+/** Fixed sidebar: logo, nav, completion widget, theme toggle, account row. */
 export function Sidebar() {
   const theme = useTheme((s) => s.theme);
   const setTheme = useTheme((s) => s.setTheme);

@@ -1,16 +1,13 @@
-"""Auth middleware + per-user data isolation.
+"""Auth middleware + per-user data isolation. The bearer token in tests IS the
+Clerk user id (conftest.FakeVerifier), so another user = another header."""
 
-The bearer token in tests IS the Clerk user id (see conftest.FakeVerifier),
-so "sign in as someone else" is just a different Authorization header.
-"""
-
+import app.main as main_module
 import pytest
+from app.core.security import VerifiedUser, identity_from_claims
+from app.main import app
 from fastapi.testclient import TestClient
 from jwt.exceptions import InvalidTokenError
 
-import app.main as main_module
-from app.core.security import VerifiedUser, identity_from_claims
-from app.main import app
 from tests.conftest import AUTH
 
 client = TestClient(app, headers=AUTH)
@@ -53,7 +50,9 @@ def test_missing_token_is_401() -> None:
 
 
 def test_garbage_token_is_401() -> None:
-    response = client.get("/api/items", headers={"Authorization": "Bearer nonsense"})
+    response = client.get(
+        "/api/items", headers={"Authorization": "Bearer nonsense"}
+    )
     assert response.status_code == 401
 
 
@@ -65,7 +64,9 @@ def test_users_only_see_their_own_items() -> None:
 
 def test_strangers_cannot_touch_someone_elses_item() -> None:
     # Same status as a nonexistent row — existence itself is private.
-    patch = client.patch("/api/items/1", json={"status": "Done"}, headers=STRANGER)
+    patch = client.patch(
+        "/api/items/1", json={"status": "Done"}, headers=STRANGER
+    )
     assert patch.status_code == 404
     assert client.delete("/api/items/1", headers=STRANGER).status_code == 404
 
@@ -80,7 +81,9 @@ def test_strangers_cannot_touch_someone_elses_item() -> None:
 
 
 def test_meetings_are_scoped_per_user() -> None:
-    assert client.get("/api/meetings", headers=STRANGER).json()["meetings"] == []
+    assert (
+        client.get("/api/meetings", headers=STRANGER).json()["meetings"] == []
+    )
     assert client.get("/api/meetings/1", headers=STRANGER).status_code == 404
 
 
@@ -111,5 +114,8 @@ def test_created_data_belongs_to_its_creator() -> None:
     assert [item["title"] for item in stranger_items] == ["Stranger's task"]
     assert len(client.get("/api/items").json()["items"]) == 2
     assert [
-        m["title"] for m in client.get("/api/meetings", headers=STRANGER).json()["meetings"]
+        m["title"]
+        for m in client.get("/api/meetings", headers=STRANGER).json()[
+            "meetings"
+        ]
     ] == ["Stranger's sync"]

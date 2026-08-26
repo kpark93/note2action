@@ -1,10 +1,12 @@
+// Generic scroll container used by every view's list/grid area (Review,
+// Tasks, History, Meetings) so the fade-to-scroll mechanics live in one place.
+// Path: views/*/*.view.tsx → [this file] (leaf — no further calls).
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 /**
- * Scrollable fill area with the scrollbar inset off the content edge
- * (-mr-1/pr-1). Owns only the scroll mechanics — display/layout classes
- * (flex column, card grid, gaps) come from the caller.
+ * Scrollable fill area with the scrollbar inset off the content edge.
+ * Owns only scroll mechanics — layout classes come from the caller.
  */
 export function ScrollRegion({
   className,

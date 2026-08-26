@@ -1,9 +1,15 @@
 "use client";
 
+// Module-7 chat demo, standalone from the capture flow. Path: [this file]
+// → useChat() → POST /api/chat → lib/provider.ts's chatModel().
 import { useState } from "react";
 import { useChat } from "@ai-sdk/react";
 import { APP_NAME } from "@note2action/shared";
 
+/**
+ * Renders the message list and input form. `useChat` holds history and
+ * posts each message to /api/chat, streaming the reply into `messages`.
+ */
 export default function ChatPage() {
   const [input, setInput] = useState("");
   const { messages, sendMessage, status } = useChat();

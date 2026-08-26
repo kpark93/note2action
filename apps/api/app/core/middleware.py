@@ -1,4 +1,5 @@
-"""Auth middleware — the central checkpoint that runs before any endpoint."""
+"""Auth middleware — the checkpoint before any endpoint runs; stores the verified
+identity on request.state. Path §1 [hop 7/15]: → security.py → routes."""
 
 from fastapi import Request
 from fastapi.responses import JSONResponse
@@ -11,12 +12,8 @@ PUBLIC_PATHS = {"/api/health", "/docs", "/openapi.json"}
 
 
 async def require_verified_user(request: Request, call_next):
-    """Verify the caller on every request, before any endpoint runs.
-
-    Middleware is auth's classic home: one central checkpoint instead of a
-    check (that someone will eventually forget) in every handler. On success
-    the verified Clerk user id rides along on request.state for handlers.
-    """
+    """Verify the caller before any endpoint runs; the verified identity
+    rides on request.state for handlers."""
     if request.url.path in PUBLIC_PATHS:
         return await call_next(request)
 
@@ -32,7 +29,9 @@ async def require_verified_user(request: Request, call_next):
     verifier: TokenVerifier | None = request.app.state.token_verifier
     if verifier is None:
         return JSONResponse(
-            {"detail": "Auth is not configured — set CLERK_JWKS_URL in apps/api/.env"},
+            {
+                "detail": "Auth is not configured — set CLERK_JWKS_URL in apps/api/.env"
+            },
             status_code=500,
         )
 

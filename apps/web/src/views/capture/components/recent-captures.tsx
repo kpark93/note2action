@@ -1,3 +1,7 @@
+// Row of recent-capture chips below the editor on the Capture screen.
+// Clicking one opens the shared RecentModal (app-layout.tsx) via
+// modalMeetingId in the extraction store — same mechanism MeetingsView uses.
+// Path: [this file] → meetings.queries / extraction.store's openRecent().
 import { useMeetingsQuery } from "@/domain/meetings/meetings.queries";
 import { useActionItems } from "@/domain/extraction/extraction.store";
 import { timeAgo } from "@/lib/dates";

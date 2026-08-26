@@ -1,3 +1,6 @@
+// One completed-item row on the History screen, with its "Reopen" action.
+// Path: history.view.tsx → [this file] → usePatchItem (domain, optimistic
+// write — same mechanism as Tasks' status dropdown, request-paths.md §2).
 import { usePatchItem } from "@/domain/items/items.queries";
 import type { ActionItem } from "@/domain/items/items.types";
 import { Button } from "@/components/ui/button";
@@ -6,6 +9,7 @@ import { Button } from "@/components/ui/button";
 const ROW_COLS = "grid-cols-[minmax(0,2fr)_minmax(0,1fr)_88px_88px]";
 
 interface HistoryRowProps {
+  /** completedLabel is the pre-formatted date added by history.utils.ts. */
   item: ActionItem & { completedLabel: string };
 }
 

@@ -1,11 +1,14 @@
+// App shell: the chrome wrapped around every authenticated screen.
+// Rendered by app.tsx as the layout route, inside <RequireAuth>; renders
+// Sidebar and the active view through <Outlet/>.
+// Path: app.tsx (layout route) → [this file] → Sidebar, <Outlet/> (views/*).
 import { Outlet } from "react-router-dom";
 import { Sidebar } from "./sidebar";
 import { RecentModal } from "./recent-modal";
 
 /**
- * App shell: fixed sidebar + the routed view in <Outlet/>. Rendered as the
- * layout route in App.tsx. The transcript dialog lives here so it can open from
- * any route (its open state is in the shared store).
+ * Fixed sidebar + the routed view in <Outlet/>. RecentModal lives here
+ * (not in a view) so it can open from any route via the extraction store.
  */
 export function AppLayout() {
   return (

@@ -1,4 +1,5 @@
-"""Route dependencies — how handlers reach state the middleware verified."""
+"""Route dependencies — how handlers reach state the middleware verified.
+Path §1 [hop 9/15]: route Depends() → here → services/users.py → route."""
 
 from fastapi import Request
 
@@ -7,14 +8,15 @@ from app.services import users as users_service
 
 
 def get_repositories(request: Request) -> Repositories:
+    """The active Repositories bundle (Postgres or in-memory), chosen once
+    at startup in app/main.py and stashed on app.state."""
     return request.app.state.repositories
 
 
 def current_user_id(request: Request) -> int:
-    """The verified caller's users.id (created on first visit).
-
-    The identity comes from request.state — stamped by the middleware from a
-    *verified* token — never from anything the client typed into a body.
-    """
+    """Calls services/users.py resolve_user_id with the verified
+    identity — never anything the client typed into a body."""
     identity = request.state.identity
-    return users_service.resolve_user_id(get_repositories(request).users, identity)
+    return users_service.resolve_user_id(
+        get_repositories(request).users, identity
+    )

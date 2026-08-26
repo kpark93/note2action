@@ -1,3 +1,7 @@
+// Step 3 of the flow: saved tasks grouped by status, with filters and a
+// status dropdown per row. Status changes are optimistic (§2) via
+// usePatchItem — handleStatus below adds a "Done" completion animation.
+// Path §1 [hop 2/15]: [this file] → items.queries (request-paths.md §2).
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useItemsQuery, usePatchItem } from "@/domain/items/items.queries";
@@ -37,17 +41,22 @@ export function TasksView() {
   // pop animation before it leaves the list for History.
   const [completingId, setCompletingId] = useState<number | null>(null);
 
+  // Wired to TaskRow's onStatusChange: non-"Done" patches immediately
+  // (optimistic); "Done" starts the pop animation and defers to handleCompleted.
   const handleStatus = (id: number, value: Status) => {
     if (value === "Done") {
       playPop();
       setCompletingId(id);
-      window.setTimeout(() => {
-        patchItem.mutate({ id, patch: { status: "Done" } });
-        setCompletingId((cur) => (cur === id ? null : cur));
-      }, 500);
     } else {
       patchItem.mutate({ id, patch: { status: value } });
     }
+  };
+
+  // Fired by TaskRow when its taskComplete animation ends — the patch waits
+  // for the animation itself, not a timer, so CSS owns the duration.
+  const handleCompleted = (id: number) => {
+    patchItem.mutate({ id, patch: { status: "Done" } });
+    setCompletingId((cur) => (cur === id ? null : cur));
   };
 
   const rows = taskRows(items, filterOwner, filterStatus, filterPriority);
@@ -132,6 +141,7 @@ export function TasksView() {
                       row={row}
                       isCompleting={completingId === row.id}
                       onStatusChange={handleStatus}
+                      onCompleted={handleCompleted}
                     />
                   ))}
                 </div>

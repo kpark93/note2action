@@ -1,3 +1,6 @@
+// Colored priority pill, shared by TaskRow (Tasks) — small enough it has no
+// further calls of its own.
+// Path: task-row.tsx → [this file] (leaf).
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import type { Priority } from "@/domain/items/items.types";

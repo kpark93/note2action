@@ -1,3 +1,5 @@
+// Small badge on each ReviewCard showing the AI's extraction confidence.
+// Path: review-card.tsx → [this file] (leaf — no further calls).
 import { Badge } from "@/components/ui/badge";
 
 interface ConfidencePillProps {

@@ -1,4 +1,5 @@
-"""FastAPI application factory — wiring only: state, middleware, routers."""
+"""FastAPI application factory — wiring only: builds the repositories and token
+verifier, wires auth middleware, mounts routes. Next hop: api/main.py."""
 
 from fastapi import FastAPI
 
@@ -21,7 +22,9 @@ app.state.repositories = (
 # The verifier lives on app.state (not a global) so tests can swap in a fake,
 # mirroring the repository seam. None = CLERK_JWKS_URL missing → loud 500s.
 app.state.token_verifier = (
-    ClerkJWKSVerifier(settings.clerk_jwks_url) if settings.clerk_jwks_url else None
+    ClerkJWKSVerifier(settings.clerk_jwks_url)
+    if settings.clerk_jwks_url
+    else None
 )
 app.middleware("http")(require_verified_user)
 app.include_router(api_router)

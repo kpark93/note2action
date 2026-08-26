@@ -1,12 +1,7 @@
-// Shared contract between the frontend(s) and the API.
-//
-// Each shape is a Zod *schema* (a runtime value that can validate data) paired
-// with a TypeScript *type* derived from it via `z.infer`. They intentionally
-// share a name: `ActionItem` is the schema in value-space and the type in
-// type-space — TS keeps those separate, so `ActionItem.parse(x)` (value)
-// and `const a: ActionItem` (type) both work from the one declaration.
-//
-// Define the shape once → get runtime validation AND the static type for free.
+// Shared Zod contract: each export is a schema + same-named type via
+// z.infer (`ActionItem.parse(x)` is the value, `ActionItem` the type).
+// Mirrored by hand in the API's schemas.
+// Path: action_items table → api/routes/items.py → [this file] → web UI.
 
 import { z } from "zod";
 
@@ -22,13 +17,14 @@ export type Status = z.infer<typeof Status>;
 export const ActionItem = z.object({
   id: z.number(),
   meetingId: z.number(),
-  /** Title of the meeting the item came from — joined in by the API for display. */
+  /** Meeting title, joined in by the API for display. */
   meeting: z.string(),
   title: z.string(),
   owner: z.string(),
   due: z.string().nullable(),
   priority: Priority,
-  confidence: z.number(),
+  /** Persisted form only — already normalized; raw AI output stays loose. */
+  confidence: z.number().int().min(0).max(100),
   saved: z.boolean(),
   note: z.string().nullable(),
   status: Status,
@@ -43,19 +39,20 @@ export const ItemsResponse = z.object({
 export type ItemsResponse = z.infer<typeof ItemsResponse>;
 
 /**
- * PATCH /api/items/{id} body — only the fields being changed. `completed` is
- * deliberately absent: the server stamps it from `status` (Done ⟺ set).
+ * PATCH /api/items/{id} body — derived from ActionItem, never restated:
+ * the editable fields, all optional. `completed` is deliberately absent
+ * (server stamps it from `status`), as are the server-owned id fields.
  */
-export const ActionItemPatch = z.object({
-  title: z.string().optional(),
-  owner: z.string().optional(),
-  due: z.string().nullable().optional(),
-  priority: Priority.optional(),
-  confidence: z.number().optional(),
-  status: Status.optional(),
-  saved: z.boolean().optional(),
-  note: z.string().nullable().optional(),
-});
+export const ActionItemPatch = ActionItem.pick({
+  title: true,
+  owner: true,
+  due: true,
+  priority: true,
+  confidence: true,
+  status: true,
+  saved: true,
+  note: true,
+}).partial();
 export type ActionItemPatch = z.infer<typeof ActionItemPatch>;
 
 /** POST /api/items/save-to-tasks — batch-save every pending Review item. */

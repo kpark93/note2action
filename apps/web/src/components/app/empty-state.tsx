@@ -1,3 +1,6 @@
+// Reusable "nothing here" placeholder used by every view with a list
+// (Review, Tasks, History, Meetings) when that list is empty or loading.
+// Path: views/*/*.view.tsx → [this file] (leaf — renders only markup).
 import type { ReactNode } from "react";
 
 interface EmptyStateProps {

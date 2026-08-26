@@ -1,3 +1,7 @@
+// One task row: owner, title, due, priority, status dropdown, and a
+// "send back to Review" icon button.
+// Path: tasks.view.tsx → [this file] → usePatchItem (optimistic write)
+// for send-back; status changes call onStatusChange (request-paths.md §2).
 import { usePatchItem } from "@/domain/items/items.queries";
 import { STATUSES } from "@/domain/items/items.constants";
 import { STATUS_STYLE } from "@/views/tasks/tasks.utils";
@@ -21,11 +25,19 @@ interface TaskRowProps {
   row: TaskRowVM;
   /** True while this row plays its completion animation before leaving for History. */
   isCompleting: boolean;
+  /** Called from the status Select; tasks.view.tsx owns the actual PATCH. */
   onStatusChange: (id: number, value: Status) => void;
+  /** Fires when the taskComplete animation ends; tasks.view.tsx then patches "Done". */
+  onCompleted: (id: number) => void;
 }
 
 /** One task in the Tasks list: owner initials, title, due, priority pill, status select, send-back. */
-export function TaskRow({ row, isCompleting, onStatusChange }: TaskRowProps) {
+export function TaskRow({
+  row,
+  isCompleting,
+  onStatusChange,
+  onCompleted,
+}: TaskRowProps) {
   const patchItem = usePatchItem();
   const sc = STATUS_STYLE[row.status];
 
@@ -35,6 +47,12 @@ export function TaskRow({ row, isCompleting, onStatusChange }: TaskRowProps) {
         isCompleting ? "task-complete" : "n2a-row"
       }`}
       style={isCompleting ? undefined : { animationDelay: row.delay }}
+      // animationend bubbles (the task-burst child fires one too) — the name
+      // guard makes sure only the row's own animation triggers the patch.
+      onAnimationEnd={(e) => {
+        if (isCompleting && e.animationName === "taskComplete")
+          onCompleted(row.id);
+      }}
     >
       {isCompleting && (
         <span className="task-burst" aria-hidden="true">

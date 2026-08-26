@@ -1,3 +1,7 @@
+// One item's editable card in the Review grid — title, owner, due, priority,
+// confirm/discard. Every edit here is an optimistic write (see below).
+// Path: review.view.tsx → [this file] → usePatchItem / useDeleteItem
+// (domain, optimistic writes) → ConfidencePill.
 import type { CSSProperties } from "react";
 import { useDeleteItem, usePatchItem } from "@/domain/items/items.queries";
 import { OWNERS } from "@/domain/items/items.constants";
@@ -18,6 +22,8 @@ import {
 
 /** One editable card in the Review grid: confidence pill, title, owner/due/priority fields, confirm/discard. */
 export function ReviewCard({ item }: { item: ReviewItemVM }) {
+  // Both mutations are OPTIMISTIC: edits show immediately, then PATCH/
+  // DELETE confirms — rollback + toast on failure. (request-paths.md §2)
   const patchItem = usePatchItem();
   const deleteItem = useDeleteItem();
   const st = reviewStyle(item.low);

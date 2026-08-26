@@ -1,50 +1,66 @@
 # web — internal architecture
 
-The rule the whole app follows: **views never touch the network.** A view
-reads state from a store; store actions call the api layer; only `http.ts`
-actually fetches. Every arrow below points one direction — data requests
-flow left to right, and results flow back through the same layers.
+Four layers, arrows point one direction: **views → domain → lib**, with
+components rendering whatever views hand them. Views never touch the
+network; domain modules never import views; `lib/` imports nothing above
+itself. Only `lib/http.ts` actually fetches.
 
 ```mermaid
 flowchart LR
     subgraph Views["views/ — one folder per screen"]
-        V["home · capture · review · tasks · history"]
+        V["home · capture · review · tasks · history · meetings · auth<br/>(view + per-view store + utils + components/)"]
     end
 
-    subgraph State["client state — zustand"]
-        Items["store/actionItems.store<br/>(items, drafts, extraction)"]
-        PerView["per-view stores<br/>(filters, toggles)"]
-        Theme["store/theme.store<br/>(persists to localStorage)"]
+    subgraph Domain["domain/ — one folder per data concept"]
+        ItemsQ["items/items.queries.ts<br/>TanStack hooks, optimistic writes"]
+        ItemsC["items/items.cache.ts<br/>pure optimistic transforms"]
+        MeetQ["meetings/meetings.queries.ts"]
+        Extract["extraction/extraction.store.ts<br/>zustand orchestrator"]
+        Api["*/**.api.ts — typed calls"]
     end
 
-    subgraph ApiLayer["lib/ — the api layer"]
-        ItemsApi["actionItems.api.ts"]
-        Health["health.ts"]
-        Http["http.ts — fetch + zod validation<br/>(schemas from packages/shared)"]
+    subgraph Lib["lib/ — leaf utilities"]
+        Keys["query-keys.ts — every cache key"]
+        Http["http.ts — fetch + Clerk token + zod<br/>(schemas from packages/shared)"]
+        QC["query-client.ts · auth-token.ts · dates.ts"]
     end
 
-    V --> Items
-    V --> PerView
-    V --> Theme
-    Items --> ItemsApi
-    ItemsApi --> Http
-    Health --> Http
+    V --> ItemsQ
+    V --> MeetQ
+    V --> Extract
+    ItemsQ --> ItemsC
+    ItemsQ --> Api
+    MeetQ --> Api
+    Extract --> Api
+    ItemsQ --> Keys
+    MeetQ --> Keys
+    Extract --> Keys
+    Api --> Http
     Http -->|"/api/*"| API["FastAPI :8001"]
     Http -->|"/ai-api/*"| AI["AI app :3000"]
 ```
 
 Notes:
 
-- **Components** (`components/app`, `components/ui`) render what views hand
-  them; the shared ones read the same stores. They add no new arrows.
-- **`actionItems.store` owns the extraction flow** — it calls
-  `extractActionItems()` itself so an in-flight extraction survives
-  navigating away from Capture. That's why the arrow to the api layer
-  leaves the store, not a view.
-- **`http.ts` validates every response** against the shared zod schema
-  before returning it — a drifting backend fails loudly at this boundary
-  instead of deep inside a component.
-- **Server state vs client state:** the health dot flows through TanStack
-  Query (`health.ts`); everything else is zustand today. Module 10 moves
-  item persistence onto TanStack Query mutations and shrinks the store to
-  true client-only state.
+- **Server state lives in TanStack Query, client state in zustand.** Items
+  and meetings are server state — cached under keys from
+  `lib/query-keys.ts`, fetched through the domain `*.api.ts` modules.
+  Zustand holds only what the server doesn't know: draft text, open
+  modals, filters, theme.
+- **Writes are optimistic** (request-paths.md §2): `items.queries.ts`
+  mutations snapshot the cache, apply the matching pure transform from
+  `items.cache.ts` instantly, then reconcile from the server's response —
+  or roll back and toast (`components/app/toaster.tsx`) on failure.
+- **Cache keys live in `lib/query-keys.ts`, below the domains** — so
+  cross-domain invalidation (deleting an item refreshes meeting counts)
+  never imports another domain's hook module.
+- **`extraction.store.ts` is the one orchestrator**: it calls the AI
+  extraction, then persists via `meetings.api.ts` and invalidates both
+  caches. It's a store, not a component, so an in-flight extraction
+  survives navigating away from Capture.
+- **`http.ts` guards the border**: attaches the Clerk session token
+  (via `lib/auth-token.ts`) and validates every response against the
+  shared zod schema — a drifting backend fails loudly here, not deep
+  inside a component.
+- **Components add no new arrows.** `components/app` may read domain
+  hooks; `components/ui` (shadcn) imports only `lib/utils`.

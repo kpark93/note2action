@@ -1,5 +1,7 @@
 // Fixed options and sample notes. The v2 mock's seed items and fake "recent
 // captures" used to live here too — real data comes from the API now.
+// Path: extraction.store.ts → [this file] (leaf — static sample data, no
+// network).
 const SAMPLE = `Weekly sync — Aug 10
 
 Rachel: pricing page needs to be live before the board deck goes out. She'll own the copy, aiming for Friday.

@@ -1,6 +1,9 @@
-from .base import Base
-from .user import User
-from .meeting import Meeting
-from .action_item import ActionItem
+"""Re-exports every SQLAlchemy model so `from app.models import X` works from
+one place; also used by migrations/env.py (Alembic)."""
 
-__all__ = ["Base", "User", "Meeting", "ActionItem"]
+from .action_item import ActionItem
+from .base import Base
+from .meeting import Meeting
+from .user import User
+
+__all__ = ["ActionItem", "Base", "Meeting", "User"]

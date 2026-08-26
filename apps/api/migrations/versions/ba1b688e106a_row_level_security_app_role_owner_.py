@@ -5,35 +5,23 @@ Revises: 3337459970d8
 Create Date: 2026-08-19 20:14:38.180506
 
 """
-from typing import Sequence, Union
+
+from collections.abc import Sequence
 
 from alembic import op
-import sqlalchemy as sa
-
 
 # revision identifiers, used by Alembic.
-revision: str = 'ba1b688e106a'
-down_revision: Union[str, Sequence[str], None] = '3337459970d8'
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+revision: str = "ba1b688e106a"
+down_revision: str | Sequence[str] | None = "3337459970d8"
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
-    """Row-Level Security: the database itself enforces per-user visibility.
-
-    Three pieces:
-    1. A low-privilege role the app connects as. RLS does NOT apply to
-       superusers or table owners — connecting as `postgres` would silently
-       bypass every policy (the classic gotcha).
-    2. RLS enabled on the user-owned tables.
-    3. Policies comparing each row's user_id to `app.user_id`, a per-
-       transaction variable the API sets from the verified identity.
-       current_setting(..., true) returns NULL when it's unset, and NULL
-       compares false — so "forgot to set the user" fails CLOSED (zero rows).
-    """
+    """Row-Level Security: the database itself enforces per-user visibility. RLS
+    skips superusers/table owners, and an unset app.user_id fails CLOSED."""
     # 1. The app's role. Dev-only password, committed knowingly for the local
-    #    course setup — in production, roles/credentials are managed outside
-    #    migrations (secret manager), never in git.
+    #    course setup — production credentials live in a secret manager, not git.
     op.execute(
         """
         DO $$
@@ -55,11 +43,8 @@ def upgrade() -> None:
         "GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO note2action_app"
     )
 
-    # 2 + 3. Enable RLS and attach owner-only policies. USING = which rows are
-    # visible/touchable; WITH CHECK = which rows may be written (blocks
-    # INSERTing/UPDATEing a row onto someone else's user_id).
-    # `users` deliberately has NO policy: identity lookup runs before the
-    # caller's user id can exist — it's the bootstrap table.
+    # 2 + 3. Enable RLS + owner-only policies: USING gates reads, WITH CHECK
+    # gates writes. `users` has no policy — identity lookup runs pre-user_id.
     for table in ("meetings", "action_items"):
         op.execute(f"ALTER TABLE {table} ENABLE ROW LEVEL SECURITY")
         op.execute(
