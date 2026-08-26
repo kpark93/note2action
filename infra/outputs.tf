@@ -29,3 +29,11 @@ output "web_bucket" {
 output "cloudfront_distribution_id" {
   value = aws_cloudfront_distribution.main.id
 }
+
+output "public_subnet_ids" {
+  value = aws_subnet.public[*].id
+}
+
+output "task_sg_id" {
+  value = aws_security_group.task.id
+}
