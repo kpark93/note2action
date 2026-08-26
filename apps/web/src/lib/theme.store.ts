@@ -1,12 +1,11 @@
-// Light/dark theme, kept in a tiny Zustand store. Initial value comes
-// from the `.dark` class index.html sets before paint — no flash, no
-// double source of truth.
-// Path: sidebar.tsx, toaster.tsx → [this file] (leaf, localStorage only).
+/** Light/dark theme in a tiny Zustand store; the initial value reads the `.dark`
+ * class index.html sets before paint — no flash, no double source of truth. */
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
 
 export type Theme = "light" | "dark";
 
+/** Flips the `.dark` class on <html> and persists the choice to localStorage. */
 function apply(theme: Theme) {
   document.documentElement.classList.toggle("dark", theme === "dark");
   try {

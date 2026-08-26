@@ -5,8 +5,8 @@ import reactHooks from "eslint-plugin-react-hooks";
 import reactRefresh from "eslint-plugin-react-refresh";
 import globals from "globals";
 
-// One flat config for every TS workspace (web, ai, shared). The Python API
-// has its own tooling and is ignored here.
+/** One flat config for every TS workspace (web, ai, shared) — the Python API
+ * has its own tooling and is ignored here. */
 export default tseslint.config(
   {
     ignores: [

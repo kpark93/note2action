@@ -1,7 +1,5 @@
-// Shared Zod contract: each export is a schema + same-named type via
-// z.infer (`ActionItem.parse(x)` is the value, `ActionItem` the type).
-// Mirrored by hand in the API's schemas.
-// Path: action_items table → api/routes/items.py → [this file] → web UI.
+/** Shared Zod contract: each export is a schema + same-named type via z.infer.
+ * Mirrored by hand in the API's schemas (app/schemas/items.py). */
 
 import { z } from "zod";
 
@@ -38,11 +36,8 @@ export const ItemsResponse = z.object({
 });
 export type ItemsResponse = z.infer<typeof ItemsResponse>;
 
-/**
- * PATCH /api/items/{id} body — derived from ActionItem, never restated:
- * the editable fields, all optional. `completed` is deliberately absent
- * (server stamps it from `status`), as are the server-owned id fields.
- */
+/** PATCH /api/items/{id} body — ActionItem's editable fields, all optional.
+ * `completed` is deliberately absent: the server stamps it from `status`. */
 export const ActionItemPatch = ActionItem.pick({
   title: true,
   owner: true,

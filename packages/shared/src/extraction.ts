@@ -1,16 +1,12 @@
-// Request/response contract for the ai app's POST /api/extract, plus the
-// ExtractedItem shape (later wrapped into an ActionItem once persisted).
-// Used by apps/ai (extraction.ts) and apps/web (extraction.api/.store.ts).
-// Path: capture → POST /ai-api/extract → [this file] → generateObject.
+/** Contract for the ai app's POST /api/extract, plus the ExtractedItem shape —
+ * used by apps/ai and apps/web; `.describe()` strings reach the model. */
 
 import { z } from "zod";
 
 import { Priority } from "./items";
 
-/**
- * One extracted action item. `.describe()` calls below are sent to the
- * model as instructions — keep them accurate.
- */
+/** One extracted action item. The `.describe()` calls below are sent to the
+ * model as instructions — keep them accurate. */
 export const ExtractedItem = z.object({
   title: z
     .string()
@@ -28,8 +24,8 @@ export const ExtractedItem = z.object({
     .describe(
       "Due date as YYYY-MM-DD, inferred relative to today; '' if none was implied.",
     ),
-  // int(1-100) rides into the model's JSON-schema constraints, so fractional
-  // output (0.9) is rejected at generation time — no client normalization.
+  /** int(1-100) rides into the model's JSON-schema constraints, so fractional
+   * output (0.9) is rejected at generation time — no client normalization. */
   confidence: z
     .number()
     .int()

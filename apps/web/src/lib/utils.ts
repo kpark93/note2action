@@ -1,6 +1,4 @@
-// Tailwind class-merging helper, shared by nearly every component in
-// components/ui and components/app.
-// Path: components/ui/*, components/app/* → [this file] (leaf, no network).
+/** Tailwind class-merging helper shared by components/ui and components/app. */
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 

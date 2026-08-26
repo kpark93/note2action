@@ -1,6 +1,5 @@
-// Small "STEP N OF 3" marker used in the header of the three-step flow:
-// Capture (step 1), Review (step 2), Tasks (step 3).
-// Path: capture/review/tasks .view.tsx → ViewHeader eyebrow → [this file].
+/** "STEP N OF 3" marker for the three-step flow: Capture, Review, Tasks. */
+
 /** Eyebrow label above a view heading, e.g. "STEP 1 OF 3 — CAPTURE". */
 export function StepLabel({
   step,

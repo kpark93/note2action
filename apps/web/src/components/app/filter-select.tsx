@@ -1,6 +1,5 @@
-// Generic "All X / one of these" filter dropdown, used by Tasks (owner,
-// status, priority) and History (owner). Wraps components/ui/select.
-// Path: views/*/*.view.tsx → [this file] → components/ui/select.
+/** Generic "All X / one of these" filter dropdown used by Tasks and History —
+ * wraps components/ui/select. */
 import { cn } from "@/lib/utils";
 import {
   Select,

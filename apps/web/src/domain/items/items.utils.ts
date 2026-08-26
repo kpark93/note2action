@@ -1,7 +1,5 @@
-// Shared, cross-view item selectors and helpers. View-specific
-// derivations (review cards, task rows, history groups) live in each
-// view's own *.utils.ts instead.
-// Path: view *.utils.ts, sidebar-nav.tsx → [this file] (leaf, no network).
+/** Shared cross-view item selectors; view-specific derivations live in each
+ * view's own *.utils.ts. Leaf — no network. */
 import type { ActionItem } from "@/domain/items/items.types";
 import { LOW_CONFIDENCE_THRESHOLD } from "@/domain/items/items.constants";
 

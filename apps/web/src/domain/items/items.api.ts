@@ -1,7 +1,5 @@
-// Typed API calls for action items, via the `/api` dev proxy to FastAPI.
-// Wire↔view border: API says `null` for "none", UI inputs say "" — both
-// translations live here, nowhere else.
-// Path §1 [hop 4/15]: → lib/http.ts (hop 5). (request-paths.md §1, §2)
+/** Typed API calls for action items — the wire↔view border: API `null` ⇄ UI ""
+ * translations live here only. Path §1 [hop 4/15]: → lib/http.ts (hop 5). */
 import {
   ActionItem as WireActionItem,
   ItemsResponse,
@@ -11,6 +9,7 @@ import {
 import { request } from "@/lib/http";
 import type { ActionItem } from "@/domain/items/items.types";
 
+/** Wire → view-model: `null` becomes "" (due) / undefined (note). */
 function fromWire(item: WireActionItem): ActionItem {
   return { ...item, due: item.due ?? "", note: item.note ?? undefined };
 }
@@ -18,6 +17,7 @@ function fromWire(item: WireActionItem): ActionItem {
 /** View-model patch: `due: ""` means "clear the date" (wire: `null`). */
 export type ItemPatch = Omit<ActionItemPatch, "due"> & { due?: string };
 
+/** View-model patch → wire: `due: ""` goes out as `null`. */
 function toWirePatch(patch: ItemPatch): ActionItemPatch {
   const { due, ...rest } = patch;
   return due === undefined ? rest : { ...rest, due: due || null };

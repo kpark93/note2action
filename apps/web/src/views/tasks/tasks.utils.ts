@@ -1,6 +1,5 @@
-// Pure view-model builders for the Tasks screen — no network calls, no
-// state. Takes the raw items from useItemsQuery and shapes/styles them.
-// Path: tasks.view.tsx / task-row.tsx → [this file] → items.utils (domain).
+/** Pure view-model builders for the Tasks screen — no network, no state;
+ * shapes and styles raw items from useItemsQuery. */
 import type { ActionItem, Status } from "@/domain/items/items.types";
 import { initials, savedTasks } from "@/domain/items/items.utils";
 import { compareDueAsc, formatDate } from "@/lib/dates";

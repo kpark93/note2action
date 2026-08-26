@@ -1,11 +1,9 @@
-// Animated percentage display used by CompletionCard's headline figure.
-// Path: completion-card.tsx → [this file] (leaf — pure presentation).
+/** Animated percentage display for CompletionCard's headline figure — leaf,
+ * pure presentation. */
 const DIGITS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
 
-/**
- * Slot-machine percentage: each digit is a 0-9 reel that transitions to
- * the new value — rolling up when the number grows, down when it shrinks.
- */
+/** Slot-machine percentage: each digit is a 0-9 reel that rolls up when the
+ * number grows, down when it shrinks. */
 export function SlotNumber({ value }: { value: number }) {
   const clamped = Math.max(0, Math.min(100, Math.round(value)));
   const digits = String(clamped).split("");
@@ -29,6 +27,7 @@ export function SlotNumber({ value }: { value: number }) {
   );
 }
 
+/** One 0-9 reel; the transform slides it to the current digit. */
 function SlotDigit({ digit }: { digit: number }) {
   return (
     <span

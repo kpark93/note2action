@@ -1,7 +1,5 @@
-// Landing screen: greeting, a one-line summary, two RecapCard tiles
-// (Review/Tasks counts). Read-only — items come from the shared TanStack
-// Query cache (§1 read path), same data every other screen sees.
-// Path: app.tsx ("/") → [this file] → items.queries/utils → RecapCard.
+/** Landing screen: greeting, one-line summary, two RecapCard tiles. Read-only —
+ * items come from the shared TanStack cache, same data every screen sees. */
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "@clerk/clerk-react";
@@ -11,8 +9,8 @@ import { Button } from "@/components/ui/button";
 import { ViewShell } from "@/components/app/view-shell";
 import { RecapCard } from "./components/recap-card";
 
-// A few welcome messages; one is chosen at random each time Home mounts.
-// Templates, not strings: the name comes from the signed-in Clerk user.
+/** Welcome messages, one picked at random per mount — templates, not strings:
+ * the name comes from the signed-in Clerk user. */
 const GREETINGS = [
   (name: string) => `Hello ${name}, welcome back!`,
   (name: string) => `Good to see you again, ${name}`,

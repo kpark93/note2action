@@ -1,7 +1,5 @@
-// Step 3 of the flow: saved tasks grouped by status, with filters and a
-// status dropdown per row. Status changes are optimistic (§2) via
-// usePatchItem — handleStatus below adds a "Done" completion animation.
-// Path §1 [hop 2/15]: [this file] → items.queries (request-paths.md §2).
+/** Step 3 of the flow: saved tasks grouped by status, filters, a status
+ * dropdown per row (optimistic writes). Path §1 [hop 2/15]: → items.queries. */
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useItemsQuery, usePatchItem } from "@/domain/items/items.queries";
@@ -22,7 +20,7 @@ import { Toolbar } from "@/components/app/toolbar";
 import { FilterSelect } from "@/components/app/filter-select";
 
 const OPEN_STATUSES = STATUSES.slice(0, 3);
-// Tasks are grouped into these sections, most-active first.
+/** Tasks are grouped into these sections, most-active first. */
 const STATUS_SECTIONS: Status[] = ["In progress", "Blocked", "Not started"];
 
 export function TasksView() {

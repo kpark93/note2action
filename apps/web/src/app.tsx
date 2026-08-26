@@ -1,7 +1,5 @@
-// Declares every URL path in the app and which view renders there. main.tsx
-// mounts <App> inside <AppProviders>; App owns routing only — it fetches
-// nothing and renders no providers of its own.
-// Path §1 [hop 1/15]: main.tsx → providers.tsx → [this file] → views/*
+/** Declares every URL path and which view renders there — routing only, no
+ * fetching, no providers. Path §1 [hop 1/15]: providers.tsx → here → views/*. */
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AppLayout } from "@/components/app/app-layout";
 import { RequireAuth } from "@/components/app/require-auth";
@@ -14,10 +12,8 @@ import { TasksView } from "@/views/tasks/tasks.view";
 import { HistoryView } from "@/views/history/history.view";
 import { MeetingsView } from "@/views/meetings/meetings.view";
 
-/**
- * /sign-in and /sign-up are public; everything else needs a signed-in
- * Clerk session first (RequireAuth in components/app/require-auth.tsx).
- */
+/** /sign-in and /sign-up are public; everything else needs a signed-in Clerk
+ * session first (RequireAuth). */
 export function App() {
   return (
     <BrowserRouter>

@@ -1,9 +1,7 @@
-// Path: providers.tsx (mounts via QueryClientProvider) and
-// extraction.store.ts (invalidates after a §3 capture) → [this file].
+/** The app-wide QueryClient, created once at module load — providers.tsx mounts
+ * it; extraction.store.ts (non-component code) invalidates it after a capture. */
 import { QueryClient } from "@tanstack/react-query";
 
-// One QueryClient for the app's lifetime, created at module load. Exported
-// so non-component code (the store's extraction flow) can invalidate it.
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {

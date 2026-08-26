@@ -1,7 +1,5 @@
-// Calls the AI app's extraction endpoint — the first network hop of AI
-// capture. Called only by extraction.store.ts (extractNotes).
-// Path: [this file] → lib/http.ts → AI app (/ai-api/extract → proxy →
-// /api/extract). (request-paths.md §3)
+/** Calls the AI app's extraction endpoint — the first network hop of AI capture.
+ * Next hop: lib/http.ts → /ai-api/extract (proxy) → /api/extract. */
 import {
   ExtractResponse,
   type ExtractRequest,
@@ -9,10 +7,8 @@ import {
 } from "@note2action/shared";
 import { request } from "@/lib/http";
 
-/**
- * Sends notes to the AI app via lib/http.ts → /ai-api/extract; the shared
- * `ExtractResponse` schema validates the reply so drift surfaces here.
- */
+/** Sends notes to the AI app; the shared ExtractResponse schema validates the
+ * reply so contract drift surfaces here. */
 export async function extractActionItems(
   payload: ExtractRequest,
 ): Promise<ExtractedItem[]> {

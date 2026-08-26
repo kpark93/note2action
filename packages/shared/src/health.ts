@@ -1,7 +1,5 @@
+/** Zod schema + type for the health check, parsed by apps/web's health.queries.ts. */
 import { z } from "zod";
-
-// Zod schema + type for the health check. Parsed by apps/web
-// (health.queries.ts). Path: GET /api/health → [this file] → request().
 
 /** Shape of the API's health-check response. */
 export const HealthResponse = z.object({

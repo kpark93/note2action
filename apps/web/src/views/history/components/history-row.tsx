@@ -1,6 +1,5 @@
-// One completed-item row on the History screen, with its "Reopen" action.
-// Path: history.view.tsx → [this file] → usePatchItem (domain, optimistic
-// write — same mechanism as Tasks' status dropdown, request-paths.md §2).
+/** One completed-item row on History, with its "Reopen" action. Next hop:
+ * usePatchItem — the same optimistic write Tasks' status dropdown uses. */
 import { usePatchItem } from "@/domain/items/items.queries";
 import type { ActionItem } from "@/domain/items/items.types";
 import { Button } from "@/components/ui/button";
@@ -13,7 +12,7 @@ interface HistoryRowProps {
   item: ActionItem & { completedLabel: string };
 }
 
-/** One completed item: check mark, struck-through title, owner, completion date, Reopen. */
+/** Check mark, struck-through title, owner, completion date, Reopen button. */
 export function HistoryRow({ item }: HistoryRowProps) {
   const patchItem = usePatchItem();
 

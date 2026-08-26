@@ -1,7 +1,5 @@
-// Date formatting and comparison helpers. Used across the items domain
-// (items.cache.ts) and most view *.utils.ts / *.view.tsx files that render
-// or sort dates.
-// Path: items.cache.ts, view files → [this file] (leaf — no network).
+/** Date formatting and comparison helpers, used by items.cache.ts and the view
+ * *.utils.ts files — leaf, no network. */
 
 /** "Aug 14", or "—" for an empty date. */
 export function formatDate(d: string): string {

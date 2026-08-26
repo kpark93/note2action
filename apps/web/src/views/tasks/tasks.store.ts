@@ -1,14 +1,11 @@
-// Client-only UI state for the Tasks screen — the three filter dropdowns.
-// The tasks themselves are server state, read separately via useItemsQuery
-// (domain/items/items.queries.ts).
-// Path: tasks.view.tsx → [this file] (leaf zustand store).
+/** Client-only UI state for Tasks — the three filter dropdowns. The tasks
+ * themselves are server state, read via useItemsQuery. */
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
 import type { Owner } from "@/domain/items/items.constants";
 import type { Priority, Status } from "@/domain/items/items.types";
 
-/** View-local UI state for the Tasks screen (owner/status/priority filters).
- * Unions, not bare strings: the type itself documents the legal values. */
+/** Unions, not bare strings: the type itself documents the legal values. */
 interface TasksState {
   filterOwner: Owner | "All";
   filterStatus: Status | "All";

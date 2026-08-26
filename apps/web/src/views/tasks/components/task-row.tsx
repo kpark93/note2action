@@ -1,7 +1,5 @@
-// One task row: owner, title, due, priority, status dropdown, and a
-// "send back to Review" icon button.
-// Path: tasks.view.tsx → [this file] → usePatchItem (optimistic write)
-// for send-back; status changes call onStatusChange (request-paths.md §2).
+/** One task row: owner, title, due, priority, status dropdown, send-back icon.
+ * Next hop: usePatchItem for send-back; status changes call onStatusChange. */
 import { usePatchItem } from "@/domain/items/items.queries";
 import { STATUSES } from "@/domain/items/items.constants";
 import { STATUS_STYLE } from "@/views/tasks/tasks.utils";
@@ -31,7 +29,7 @@ interface TaskRowProps {
   onCompleted: (id: number) => void;
 }
 
-/** One task in the Tasks list: owner initials, title, due, priority pill, status select, send-back. */
+/** Owner initials, title, due, priority pill, status select, send-back. */
 export function TaskRow({
   row,
   isCompleting,

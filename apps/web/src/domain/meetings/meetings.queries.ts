@@ -1,14 +1,10 @@
-// TanStack Query hooks for meetings (captures) — server state, cached.
-// Path: home/capture/meetings/history views, recent-modal.tsx → [this file]
-// → meetings.api.ts → lib/http.ts.
+/** TanStack Query hooks for meetings (captures) — cached server state.
+ * Next hop: meetings.api.ts → lib/http.ts. */
 import { useQuery } from "@tanstack/react-query";
 import { fetchMeeting, fetchMeetings } from "@/domain/meetings/meetings.api";
 import { meetingsKey } from "@/lib/query-keys";
 
-/**
- * Recent captures, newest first (capped at `limit`). Fires GET
- * /api/meetings via meetings.api.ts fetchMeetings; used app-wide.
- */
+/** Recent captures, newest first (capped at `limit`) — GET /api/meetings. */
 export function useMeetingsQuery(limit = 3) {
   return useQuery({
     queryKey: meetingsKey.list(limit),
