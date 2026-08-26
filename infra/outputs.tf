@@ -13,3 +13,7 @@ output "ecr_api_url" {
 output "ecr_ai_url" {
   value = aws_ecr_repository.ai.repository_url
 }
+
+output "alb_dns" {
+  value = aws_lb.main.dns_name
+}
