@@ -1,12 +1,14 @@
-// Unit tests for prompt assembly — generateObject is mocked, so no API
-// key and no network. What's pinned: the request's fields all reach the
-// prompt, and the model's object comes back unchanged.
+/** Tests prompt assembly with `generateText` mocked (no key, no network):
+ * every request field reaches the prompt; the model's output returns unchanged. */
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("ai", () => ({ generateObject: vi.fn() }));
+vi.mock("ai", () => ({
+  generateText: vi.fn(),
+  Output: { object: (spec: unknown) => spec },
+}));
 vi.mock("@/lib/provider", () => ({ extractModel: () => "mock-model" }));
 
-import { generateObject } from "ai";
+import { generateText } from "ai";
 import { extractItems } from "./extraction";
 
 const REQUEST = {
@@ -16,11 +18,11 @@ const REQUEST = {
   owners: ["Kyle", "Priya"],
 };
 
-const mocked = vi.mocked(generateObject);
+const mocked = vi.mocked(generateText);
 
 beforeEach(() => {
   mocked.mockReset();
-  mocked.mockResolvedValue({ object: { items: [] } } as never);
+  mocked.mockResolvedValue({ output: { items: [] } } as never);
 });
 
 describe("extractItems", () => {
@@ -34,9 +36,9 @@ describe("extractItems", () => {
     expect(call.prompt).toContain(REQUEST.notes);
   });
 
-  it("returns the model's object untouched", async () => {
+  it("returns the model's output untouched", async () => {
     const items = [{ title: "Ship the API" }];
-    mocked.mockResolvedValue({ object: { items } } as never);
+    mocked.mockResolvedValue({ output: { items } } as never);
 
     await expect(extractItems(REQUEST)).resolves.toEqual({ items });
   });
