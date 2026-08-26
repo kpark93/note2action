@@ -1,0 +1,5 @@
+db_master_password = "change-me-strong"
+app_db_password    = "change-me-strong-too"
+anthropic_api_key  = "sk-ant-..."
+clerk_jwks_url     = "https://your-instance.clerk.accounts.dev/.well-known/jwks.json"
+budget_email       = "kpstarry@gmail.com"
