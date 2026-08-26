@@ -27,6 +27,7 @@ variable "budget_email" {
 }
 
 variable "github_repo" {
-  type    = string
-  default = "kpark93/note2action"
+  type = string
+  # GitHub's OIDC sub claim is ID-stamped (owner@id/repo@id) — rename-proof.
+  default = "kpark93@306295185/note2action@1330408301"
 }
