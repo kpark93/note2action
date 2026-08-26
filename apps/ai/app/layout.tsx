@@ -1,7 +1,5 @@
-// Next.js root layout for the ai app — wraps every page/route under app/.
-// Only page.tsx (the chat demo) renders through this; the API routes
-// (api/extract, api/chat) don't use React layouts.
-// Path: apps/ai app router → [this file] → app/page.tsx.
+/** Next.js root layout for the ai app — only page.tsx renders through it; the
+ * API routes don't use React layouts. */
 import type { ReactNode } from "react";
 
 export const metadata = {

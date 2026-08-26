@@ -1,5 +1,5 @@
-// Layout-only row for filters/actions, used below ViewHeader on Review and
-// Tasks. Path: review.view.tsx / tasks.view.tsx → [this file] (leaf).
+/** Layout-only row for filters/actions, used below ViewHeader on Review and
+ * Tasks. Leaf — no further calls. */
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 

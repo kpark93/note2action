@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { historyGroups, historyStats } from "./history.utils";
 import { makeItem } from "@/test/fixtures";
 
-// TODAY is pinned to 2026-08-11 (a Tuesday), so "this week" starts 2026-08-10.
+/** TODAY is pinned to 2026-08-11 (a Tuesday), so "this week" starts 2026-08-10. */
 const thisWeek = makeItem({ status: "Done", completed: "2026-08-10" });
 const lastWeek = makeItem({
   status: "Done",

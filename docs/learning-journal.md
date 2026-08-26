@@ -3489,3 +3489,39 @@ sequel: _move_ the invariant upstream when you can. Once the source
 guarantees whole 1-100, downstream normalization stops documenting a
 loose contract and starts hiding a strict one — deleting it keeps the
 code honest. Gates: 0 type errors, 42+5 vitest, eslint clean.
+
+## 2026-08-25 — Comment sweep: every header at 2 lines, one `/** */` voice everywhere
+
+**WHAT changed:** A repo-wide comment restyle, no behavior touched. Every
+file's topline comment (the note at the very top saying what the file is
+for) was compressed from 3-4 lines down to a hard cap of 2, and every
+function/component/module comment now uses the same shape: a JSDoc block —
+the `/** … */` form editors read to show hover-help — kept to one or two
+lines, e.g. `/** PATCH one item; returns the server's copy — `completed`
+is stamped there. */`. The old `// line comments` above declarations were
+converted to that form; comments _inside_ function bodies stay as `//` but
+were trimmed to the same cap. Python files got the equivalent treatment
+with docstrings (the `"""…"""` text Python attaches to a module or
+function): multi-paragraph module headers and function docs squeezed to
+1-2 lines. The long-form "Path: a → b → c" breadcrumbs were folded into
+the 2-line budget as a short "Next hop:" or "Path §1 [hop N/15]" tail, so
+the request-journey markers survive. Alembic's stock template chatter in
+`migrations/env.py` ("this line sets up loggers basically") was replaced
+with one-liners; the generated revision-header docstrings in the
+migration files were left alone since Alembic wrote those. Load-bearing
+constraint facts (RLS skips superusers, unset `app.user_id` fails CLOSED,
+Done ⟺ completed, 404-never-403) were compressed, never dropped.
+
+**WHICH files:** ~90 source files across all four workspaces:
+`apps/web/src/**` (lib, domain, views, components/app, configs),
+`apps/ai/{app,lib}/**`, `packages/shared/src/*`, `apps/api/app/**`
+(routes, core, models, repositories, schemas, services),
+`apps/api/migrations/env.py` + version files (comments only),
+`apps/api/tests/**`, `eslint.config.mjs`. Untouched: `components/ui/*`
+(generated shadcn code carries no comments) and `next-env.d.ts`.
+
+**WHY:** A comment style is a contract with the reader: when every file
+answers "what am I, and where does the request go next" in the same two
+lines, scanning the codebase gets faster and long headers stop rotting
+into prose nobody updates. Gates after the sweep: eslint + ruff clean,
+prettier clean, 0 type errors, 42+5 vitest, 23 pytest.

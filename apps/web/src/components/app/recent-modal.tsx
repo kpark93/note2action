@@ -1,7 +1,5 @@
-// Shared transcript-preview dialog, mounted once in app-layout.tsx.
-// Opened by setting `modalMeetingId` in the extraction store —
-// RecentCaptures and MeetingsView both call openRecent() to do this.
-// Path: [this file] → useMeetingQuery (domain/meetings) for the transcript.
+/** Shared transcript-preview dialog, mounted once in app-layout.tsx — opened by
+ * setting `modalMeetingId` in the extraction store (openRecent). */
 import { useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useMeetingQuery } from "@/domain/meetings/meetings.queries";

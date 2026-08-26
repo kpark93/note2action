@@ -1,7 +1,5 @@
-// Bridge between Clerk (React context) and plain modules like http.ts,
-// which can't call hooks. Providers register a token getter at startup;
-// http.ts asks for one before each request (no getter → no header).
-// Path: providers.tsx (registers) → [this file] ← lib/http.ts (reads it).
+/** Bridge between Clerk (React context) and plain modules like http.ts that
+ * can't call hooks — providers.tsx registers a token getter, http.ts reads it. */
 
 type TokenGetter = () => Promise<string | null>;
 

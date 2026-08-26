@@ -1,7 +1,5 @@
-// Client-only state (draft text, open modal, extraction flag); server
-// data (items, meetings) lives in TanStack Query — see items.queries.ts.
-// Path: [this file] → extraction.api.ts (/ai-api extract), then
-// meetings.api.ts createMeeting → lib/query-client.ts (request-paths.md §3).
+/** Client-only capture state (draft text, open modal, extraction flag); server
+ * data lives in TanStack Query. Next hop: extraction.api.ts → meetings.api.ts. */
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
 import type { ExtractRequest } from "@note2action/shared";
@@ -33,17 +31,12 @@ interface ActionItemsState {
   closeModal: () => void;
   /** Load a recent capture's transcript into the editor (from the modal). */
   loadTranscript: (title: string, text: string) => void;
-  /**
-   * Runs an AI extraction, then persists the capture via the API. Lives
-   * in the store (not a component) so it keeps running if the user leaves.
-   */
+  /** Runs an AI extraction, then persists the capture via the API — lives in
+   * the store (not a component) so it keeps running if the user leaves. */
   extractNotes: (payload: ExtractRequest) => void;
 }
 
-/**
- * The capture-flow client store — draft text/title, open modal, and
- * extraction status (see field comments above).
- */
+/** The capture-flow client store — draft text/title, open modal, extraction status. */
 export const useActionItems = create<ActionItemsState>()(
   devtools(
     (set, get) => ({
@@ -92,10 +85,8 @@ export const useActionItems = create<ActionItemsState>()(
         );
         try {
           const extracted = await extractActionItems(payload);
-          // Persist at extraction (the Module 8 decision): the capture becomes
-          // database rows NOW, so the Review queue survives any refresh.
-          // Confidence needs no normalization: the shared schema constrains
-          // the model to whole numbers 1-100 at generation time.
+          // Persist at extraction (Module 8): the capture becomes database rows
+          // NOW, so the Review queue survives refresh. Schema caps confidence 1-100.
           await createMeeting({
             title: get().meetingTitle,
             rawNotes: payload.notes,

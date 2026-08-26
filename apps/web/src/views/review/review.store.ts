@@ -1,7 +1,5 @@
-// Client-only UI state for the Review screen — just the "only low
-// confidence" toggle. The items themselves are server state, read
-// separately via useItemsQuery (domain/items/items.queries.ts).
-// Path: review.view.tsx → [this file] (leaf zustand store).
+/** Client-only UI state for Review — just the "only low confidence" toggle.
+ * The items themselves are server state, read via useItemsQuery. */
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
 

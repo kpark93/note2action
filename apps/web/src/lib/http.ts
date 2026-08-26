@@ -1,7 +1,5 @@
-// Thin, typed wrapper over fetch, shared by the feature `api.ts` modules.
-// Keeps paths relative (`/api/…`) so the Vite dev proxy keeps working.
-// Path §1 [hop 5/15]: domain/*.api.ts → [this file] → fetch() → Vite
-// proxy → API (return trip hop 14, parsed here). (request-paths.md §1-3)
+/** Thin, typed fetch wrapper shared by the domain `*.api.ts` modules; relative
+ * paths keep the Vite proxy working. Path §1 [hop 5/15]: → fetch → proxy → API. */
 
 import { getAuthToken } from "./auth-token";
 
@@ -30,10 +28,8 @@ interface RequestOptions<T> {
   signal?: AbortSignal;
 }
 
-/**
- * Fetch wrapper used by every domain `*.api.ts` module: attaches the Clerk
- * token, throws HttpError on non-2xx, validates/types via `opts.schema`.
- */
+/** Sends one request: attaches the Clerk token, throws HttpError on non-2xx,
+ * validates and types the JSON reply via `opts.schema`. */
 export async function request<T = unknown>(
   path: string,
   opts: RequestOptions<T> = {},

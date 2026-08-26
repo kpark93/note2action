@@ -1,7 +1,5 @@
-// Left-hand app chrome: logo, nav links, completion widget, theme switch,
-// signed-in account. Rendered once by app-layout.tsx — the only place
-// these cross-screen bits live.
-// Path: app-layout.tsx → [this file] → SidebarNav, health/theme stores.
+/** Left-hand app chrome: logo, nav, completion widget, theme switch, account.
+ * Rendered once by app-layout.tsx — the only home for these cross-screen bits. */
 import { UserButton, useUser } from "@clerk/clerk-react";
 import { useHealth } from "@/domain/health/health.queries";
 import { useTheme } from "@/lib/theme.store";

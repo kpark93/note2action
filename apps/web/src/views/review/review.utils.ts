@@ -1,6 +1,5 @@
-// Pure view-model builders for the Review screen — no network calls, no
-// state. Takes the raw items from useItemsQuery and shapes/styles them.
-// Path: review.view.tsx / review-card.tsx → [this file] → items.utils (domain).
+/** Pure view-model builders for the Review screen — no network, no state;
+ * shapes and styles raw items from useItemsQuery. */
 import type { ActionItem } from "@/domain/items/items.types";
 import { LOW_CONFIDENCE_THRESHOLD } from "@/domain/items/items.constants";
 import { isLow, pendingItems } from "@/domain/items/items.utils";

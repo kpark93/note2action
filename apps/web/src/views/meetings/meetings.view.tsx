@@ -1,7 +1,5 @@
-// Full list of saved captures (Capture screen's RECENT strip caps at 3;
-// this has no limit). No view-local store — no filters/toggles needed.
-// Path: [this file] → meetings.queries (read) + extraction.store's
-// openRecent() (opens RecentModal).
+/** Full list of saved captures (the Capture screen's RECENT strip caps at 3;
+ * this has no limit). Next hop: meetings.queries + openRecent() → RecentModal. */
 import { useMeetingsQuery } from "@/domain/meetings/meetings.queries";
 import { useActionItems } from "@/domain/extraction/extraction.store";
 import { formatDate, timeAgo } from "@/lib/dates";
@@ -10,10 +8,8 @@ import { ViewHeader } from "@/components/app/view-header";
 import { ScrollRegion } from "@/components/app/scroll-region";
 import { EmptyState } from "@/components/app/empty-state";
 
-/**
- * All saved captures, newest first, as full-width cards. Clicking one
- * opens the shared RecentModal via the same store action RECENT uses.
- */
+/** All saved captures, newest first, as full-width cards — clicking one opens
+ * the shared RecentModal via the same store action RECENT uses. */
 export function MeetingsView() {
   // All meetings, not the RECENT strip's three (limit=1000 stands in for
   // "no limit" until the API needs real paging).

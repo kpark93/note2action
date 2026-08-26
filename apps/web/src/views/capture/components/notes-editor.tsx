@@ -1,7 +1,5 @@
-// The title + textarea card on the Capture screen, plus its Extract button.
-// Path: capture.view.tsx → [this file] → extraction.store's extractNotes()
-// (domain) → POST /ai-api/extract, then POST /api/meetings.
-// (request-paths.md §3 — Capture → Extract)
+/** The title + textarea card on Capture, plus its Extract button. Next hop:
+ * extraction.store's extractNotes() → POST /ai-api/extract, then /api/meetings. */
 import { useActionItems } from "@/domain/extraction/extraction.store";
 import { OWNERS } from "@/domain/items/items.constants";
 import { todayISO } from "@/lib/dates";
@@ -9,10 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 
-/**
- * The Capture editor card: title input, notes textarea, and the footer
- * (sample loader, status, Extract button). Reads/writes the store directly.
- */
+/** Editor card: title input, notes textarea, and the footer (sample loader,
+ * status, Extract button). Reads/writes the store directly. */
 export function NotesEditor() {
   const raw = useActionItems((s) => s.raw);
   const meetingTitle = useActionItems((s) => s.meetingTitle);

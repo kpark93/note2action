@@ -40,6 +40,8 @@ services:
     build:
       context: .
       dockerfile: apps/ai/Dockerfile
+      # The image's final stage is prod; local compose wants the dev server.
+      target: dev
     ports:
       - "3000:3000"
     # Loads ANTHROPIC_API_KEY (and optional CHAT_MODEL). Optional so the stack

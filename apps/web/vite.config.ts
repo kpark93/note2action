@@ -1,15 +1,16 @@
+/** Vite config: dev server + the /api and /ai-api proxies. Path §1 [hop 6/15]:
+ * lib/http.ts fetch("/api/…") → this proxy → FastAPI on :8001. */
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import path from "path";
-// Path §1 [hop 6/15]: lib/http.ts fetch("/api/…") → [this proxy] →
-// FastAPI on :8001; the response retraces the same route back.
-// Where /api/* is forwarded in dev. Locally that's the FastAPI service on
-// localhost:8001 (8000 belongs to other local projects); in Docker Compose
-// it's the `api` service. Override via env.
+
+/** Where /api/* forwards in dev: FastAPI on localhost:8001 (8000 is taken
+ * locally); the `api` service in Docker Compose. Override via env. */
 const apiTarget = process.env.VITE_API_PROXY_TARGET ?? "http://localhost:8001";
-// Where /ai-api/* is forwarded — the Next.js AI app (its routes live under
-// /api, so we strip the /ai-api prefix). localhost:3000 locally, `ai` in Compose.
+
+/** Where /ai-api/* forwards — the Next.js AI app, with the /ai-api prefix
+ * stripped (its routes live under /api). localhost:3000, `ai` in Compose. */
 const aiTarget = process.env.VITE_AI_PROXY_TARGET ?? "http://localhost:3000";
 
 export default defineConfig({

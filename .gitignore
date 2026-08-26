@@ -35,3 +35,10 @@ logs/
 
 # SDD scratch workspaces (ledgers, briefs, review packages)
 .superpowers/
+infra/.terraform/
+infra/*.tfstate*
+infra/terraform.tfvars
+
+# claude code memory
+.claude/
+.cursor/

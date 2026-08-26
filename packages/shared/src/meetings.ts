@@ -1,7 +1,5 @@
-// Contract for the API's /api/meetings endpoints — a "capture" is a saved
-// meeting (raw notes + AI-extracted items, persisted together). Used by
-// apps/web (meetings.api.ts); mirrored by hand in app/schemas/meetings.py.
-// Path: web capture flow → POST /api/meetings → [this file] → web UI.
+/** Contract for /api/meetings — a "capture" is a saved meeting (raw notes +
+ * extracted items). Mirrored by hand in app/schemas/meetings.py. */
 
 import { z } from "zod";
 

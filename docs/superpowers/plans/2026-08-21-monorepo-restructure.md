@@ -301,7 +301,9 @@ def current_user_id(request: Request) -> int:
     *verified* token — never from anything the client typed into a body.
     """
     identity = request.state.identity
-    return users_service.resolve_user_id(get_repositories(request).users, identity)
+    return users_service.resolve_user_id(
+        get_repositories(request).users, identity
+    )
 ```
 
 - [ ] **Step 3: Route modules** — each starts `router = APIRouter()`; endpoint functions move verbatim from main.py with `@app.` → `@router.`, plus a `repos: Repositories = Depends(get_repositories)` parameter, calling the services exactly as main.py does after Task 4. `health.py`: the health endpoint (96–102; no deps). `items.py`: list/update/delete (105–123) + save-to-tasks (150–152). `meetings.py`: create/list/get (126–147). Imports per file: `from fastapi import APIRouter, Depends, HTTPException`, `from app.api.deps import current_user_id, get_repositories`, `from app.repositories.protocols import Repositories`, the service module, and the schemas each route names. `api/main.py`:
@@ -337,7 +339,9 @@ app.state.repositories = (
     else build_memory_repositories()
 )
 app.state.token_verifier = (
-    ClerkJWKSVerifier(settings.clerk_jwks_url) if settings.clerk_jwks_url else None
+    ClerkJWKSVerifier(settings.clerk_jwks_url)
+    if settings.clerk_jwks_url
+    else None
 )
 app.middleware("http")(require_verified_user)
 app.include_router(api_router)

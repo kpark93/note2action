@@ -8,6 +8,12 @@ on:
     branches: [main]
   pull_request:
 
+# id-token lets the deploy job mint a GitHub OIDC token that AWS verifies
+# against the note2action-github-deploy role's trust policy.
+permissions:
+  id-token: write
+  contents: read
+
 jobs:
   web:
     name: Web + AI (lint, typecheck, vitest)
@@ -57,3 +63,71 @@ jobs:
       - run: uv run ruff check .
       - run: uv run pytest -q
       - run: uv run pytest -m integration -q
+
+  deploy:
+    name: Deploy to AWS
+    needs: [web, api]
+    if: github.ref == 'refs/heads/main'
+    concurrency: deploy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+      - uses: aws-actions/amazon-ecr-login@v2
+        id: ecr
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Build and push api image
+        run: |
+          docker buildx build --platform linux/arm64 \
+            -t ${{ steps.ecr.outputs.registry }}/note2action/api:latest \
+            --push apps/api
+
+      - name: Build and push ai image
+        run: |
+          docker buildx build --platform linux/arm64 --target prod \
+            -f apps/ai/Dockerfile \
+            -t ${{ steps.ecr.outputs.registry }}/note2action/ai:latest \
+            --push .
+
+      - name: Run migrations
+        run: |
+          SUBNETS=$(aws ec2 describe-subnets \
+            --filters Name=tag:Name,Values='note2action-public-*' \
+            --query 'Subnets[].SubnetId' --output text | tr '\t' ',')
+          SG=$(aws ec2 describe-security-groups \
+            --filters Name=group-name,Values=note2action-task \
+            --query 'SecurityGroups[0].GroupId' --output text)
+          ARN=$(aws ecs run-task --cluster note2action \
+            --task-definition note2action-api --launch-type FARGATE \
+            --network-configuration "awsvpcConfiguration={subnets=[$SUBNETS],securityGroups=[$SG],assignPublicIp=ENABLED}" \
+            --overrides '{"containerOverrides":[{"name":"api","command":["uv","run","--no-dev","alembic","upgrade","head"]}]}' \
+            --query 'tasks[0].taskArn' --output text)
+          aws ecs wait tasks-stopped --cluster note2action --tasks "$ARN"
+          CODE=$(aws ecs describe-tasks --cluster note2action --tasks "$ARN" \
+            --query 'tasks[0].containers[0].exitCode' --output text)
+          test "$CODE" = "0"
+
+      - name: Roll services
+        run: |
+          aws ecs update-service --cluster note2action --service api --force-new-deployment
+          aws ecs update-service --cluster note2action --service ai --force-new-deployment
+
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - name: Build and publish SPA
+        env:
+          VITE_CLERK_PUBLISHABLE_KEY: ${{ vars.VITE_CLERK_PUBLISHABLE_KEY }}
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm --filter @note2action/web build
+          aws s3 sync apps/web/dist "s3://${{ vars.WEB_BUCKET }}" --delete
+          aws cloudfront create-invalidation \
+            --distribution-id ${{ vars.CLOUDFRONT_DISTRIBUTION_ID }} --paths "/index.html"

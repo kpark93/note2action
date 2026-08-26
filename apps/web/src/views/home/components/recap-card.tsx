@@ -1,5 +1,5 @@
-// One of the two clickable tiles on Home ("N to review", "N open tasks").
-// Path: home.view.tsx → [this file] (leaf — no further calls).
+/** One of the two clickable tiles on Home ("N to review", "N open tasks").
+ * Leaf — no further calls. */
 interface RecapCardProps {
   value: number;
   label: string;
@@ -8,7 +8,7 @@ interface RecapCardProps {
   onClick: () => void;
 }
 
-/** Clickable summary tile on Home: big count, label, and a "Go to …" call to action. */
+/** Clickable summary tile: big count, label, and a "Go to …" call to action. */
 export function RecapCard({ value, label, cta, onClick }: RecapCardProps) {
   return (
     <button

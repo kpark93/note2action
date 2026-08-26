@@ -1,5 +1,4 @@
-// Vitest config for the AI app's unit tests (route + prompt assembly).
-// The "@" alias mirrors tsconfig.json's "@/*" → "./*".
+/** Vitest config for the ai app's unit tests; "@" mirrors tsconfig's "@/*" → "./*". */
 import path from "path";
 import { defineConfig } from "vitest/config";
 

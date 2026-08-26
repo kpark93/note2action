@@ -1,7 +1,5 @@
-// Step 1 of the capture flow: paste notes, then AI-extract action items.
-// The editor/extraction call live in the extraction store (useActionItems)
-// — this view just watches `extracting` to move on to Review.
-// Path: [this file] → NotesEditor → extraction.store (request-paths.md §3)
+/** Step 1 of the capture flow: paste notes, AI-extract action items. The
+ * extraction itself lives in the store — this view just watches `extracting`. */
 import { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useActionItems } from "@/domain/extraction/extraction.store";
@@ -11,10 +9,8 @@ import { StepLabel } from "@/components/app/step-label";
 import { ViewShell } from "@/components/app/view-shell";
 import { ViewHeader } from "@/components/app/view-header";
 
-/**
- * Capture screen: title + notes editor, recent captures strip. Redirects to
- * /review once an in-flight extraction finishes successfully.
- */
+/** Title + notes editor + recent captures strip; redirects to /review once an
+ * in-flight extraction finishes successfully. */
 export function CaptureView() {
   const navigate = useNavigate();
   const busy = useActionItems((s) => s.extracting);

@@ -1,7 +1,5 @@
-// Step 2 of the flow: the queue of extracted-but-unsaved items, editable
-// inline, with a batch "Save to Tasks" action.
-// Path: [this file] → items.queries (read + useSaveToTasks optimistic
-// write) → ReviewCard (request-paths.md §2).
+/** Step 2 of the flow: the queue of extracted-but-unsaved items, editable
+ * inline, with a batch "Save to Tasks". Next hop: items.queries → ReviewCard. */
 import { useNavigate } from "react-router-dom";
 import { useItemsQuery, useSaveToTasks } from "@/domain/items/items.queries";
 import { useReviewStore } from "./review.store";

@@ -1,6 +1,5 @@
-// Pure view-model builders for the History screen — no network calls, no
-// state. Takes the raw items from useItemsQuery and shapes them for display.
-// Path: history.view.tsx → [this file] → items.utils (domain, doneItems etc).
+/** Pure view-model builders for the History screen — no network, no state;
+ * shapes raw items from useItemsQuery for display. */
 import type { ActionItem } from "@/domain/items/items.types";
 import { doneItems, openItems } from "@/domain/items/items.utils";
 import { formatDate, weekOf } from "@/lib/dates";
@@ -15,10 +14,8 @@ export interface HistoryGroupVM {
   items: (ActionItem & { completedLabel: string })[];
 }
 
-/**
- * Completed items, filtered by owner and grouped into week buckets
- * (newest first); each item carries a pre-formatted completedLabel.
- */
+/** Completed items filtered by owner, grouped into week buckets newest first;
+ * each item carries a pre-formatted completedLabel. */
 export function historyGroups(
   items: ActionItem[],
   historyOwner: string,

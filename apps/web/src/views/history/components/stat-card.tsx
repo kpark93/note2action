@@ -1,7 +1,5 @@
-// One of the three metric tiles at the top of the History screen (completed
-// all-time, on-time rate, still open). Pure presentation — all numbers come
-// pre-computed from history.utils.ts's historyStats().
-// Path: history.view.tsx → [this file] (leaf — no further calls).
+/** One of the three metric tiles atop History — pure presentation; all numbers
+ * come pre-computed from historyStats(). */
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 

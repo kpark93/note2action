@@ -1,5 +1,5 @@
-// Unit tests for the /api/extract HTTP border: valid bodies reach
-// extractItems (mocked), malformed ones get a 400 — never a 500.
+/** Tests the /api/extract HTTP border: valid bodies reach extractItems (mocked),
+ * malformed ones get a 400 — never a 500. */
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("@/lib/extraction", () => ({

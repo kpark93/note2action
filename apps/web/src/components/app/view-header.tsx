@@ -1,5 +1,4 @@
-// Standard page-title block used at the top of every view.
-// Path: views/*/*.view.tsx → [this file] (leaf — no further calls).
+/** Standard page-title block at the top of every view. Leaf — no further calls. */
 import type { ReactNode } from "react";
 
 interface ViewHeaderProps {

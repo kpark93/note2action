@@ -1,17 +1,12 @@
-// Streaming chat route for the standalone Module-7 chat demo (page.tsx).
-// Not part of the main capture flow — the web app never calls this; it's
-// reached only by visiting the ai app directly, driven by `useChat`.
-// Path: page.tsx's useChat() → [this file] → lib/provider.ts's chatModel().
+/** Streaming chat route for the standalone Module-7 chat demo — only page.tsx's
+ * `useChat` calls this. Next hop: lib/provider.ts `chatModel()`. */
 import { convertToModelMessages, streamText, type UIMessage } from "ai";
 import { chatModel } from "@/lib/provider";
 
-// Allow streamed responses up to 30 seconds.
+/** Allow streamed responses up to 30 seconds. */
 export const maxDuration = 30;
 
-/**
- * Streams the assistant's reply back as a UI message stream, which
- * `useChat` on the client consumes incrementally.
- */
+/** Streams the reply as a UI message stream that `useChat` consumes incrementally. */
 export async function POST(req: Request) {
   const { messages }: { messages: UIMessage[] } = await req.json();
 

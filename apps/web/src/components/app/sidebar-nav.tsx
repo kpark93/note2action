@@ -1,7 +1,5 @@
-// The five/six workspace nav links rendered inside the sidebar. Reads
-// useItemsQuery (§1 read path) itself so the Review badge count updates
-// live from the same cache every other screen shares — no props from Sidebar.
-// Path: sidebar.tsx → [this file] → items.queries (domain) → items.utils.
+/** The workspace nav links inside the sidebar — reads useItemsQuery itself so
+ * the Review badge updates from the shared cache, no props from Sidebar. */
 import { NavLink } from "react-router-dom";
 import { useItemsQuery } from "@/domain/items/items.queries";
 import { summary } from "@/domain/items/items.utils";
