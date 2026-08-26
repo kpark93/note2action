@@ -1,8 +1,5 @@
 """Pydantic schemas for meetings — the wire contract, mirrored in
-packages/shared (TS).
-Path: repositories/ → [this file] → api/routes/meetings.py → JSON
-response.
-"""
+packages/shared (TS). Next hop: api/routes/meetings.py → JSON response."""
 
 from pydantic import BaseModel
 

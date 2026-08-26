@@ -1,9 +1,5 @@
-"""The real UserRepository — backed by the `users` table.
-
-Uses core/db.py's plain SessionLocal, not rls_session: `users` has
-no RLS (it's the identity bootstrap table).
-Path: services/users.py → [this file] → core/db.py → Postgres `users`.
-"""
+"""The real UserRepository — backed by the `users` table via plain SessionLocal,
+not rls_session: `users` has no RLS (it's the identity bootstrap table)."""
 
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError

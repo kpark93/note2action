@@ -1,8 +1,5 @@
-"""Re-exports every pydantic schema so `from app.schemas import X`
-works from one place.
-Path: routes/repositories → [this file] → schemas/{health,items,
-meetings}.py.
-"""
+"""Re-exports every pydantic schema so `from app.schemas import X` works from
+one place."""
 
 from .health import HealthResponse
 from .items import (

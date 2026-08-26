@@ -1,7 +1,5 @@
 """Endpoint tests against real Postgres — the whole server-side path:
-middleware → route → service → repository → RLS → back out as JSON.
-Path: [this file] → TestClient → app/main.py → postgres/* → test DB.
-"""
+middleware → route → service → repository → RLS → back out as JSON."""
 
 import pytest
 from app.main import app

@@ -1,8 +1,5 @@
-"""The wire shape for GET /api/health.
-
-Built and returned by api/routes/health.py.
-Path: api/routes/health.py → [this file] → JSON response.
-"""
+"""The wire shape for GET /api/health, built and returned by
+api/routes/health.py."""
 
 from pydantic import BaseModel
 

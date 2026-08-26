@@ -1,9 +1,5 @@
-"""The SQLAlchemy engine and session factory for every Postgres repo.
-
-Built once from settings.database_url (core/config.py).
-Path: core/config.py → [this file] → Postgres (DATABASE_URL); used
-directly by postgres/users.py, via session.py by the rest.
-"""
+"""The SQLAlchemy engine and session factory for every Postgres repo, built once
+from settings.database_url. Next hop: Postgres (DATABASE_URL)."""
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker

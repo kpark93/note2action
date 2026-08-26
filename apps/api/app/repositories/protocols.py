@@ -1,8 +1,5 @@
-"""Persistence behind a small interface: Postgres (production) or
-in-memory (tests/dev) — app/main.py picks one, nothing else knows.
-Implemented by memory.py, postgres/*.py; used by services/*.py.
-Path: app/main.py → [this file] (the shape) → {memory,postgres}/*.py.
-"""
+"""Persistence behind a small interface: Postgres (production) or in-memory
+(tests/dev) — app/main.py picks one, nothing else knows which."""
 
 from dataclasses import dataclass
 from typing import Protocol

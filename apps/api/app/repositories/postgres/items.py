@@ -1,8 +1,5 @@
-"""The real ItemRepository — backed by meetings and action_items.
-Called by services/items.py.
-Path §1 [hop 11/15]: services (hop 10) → [this file] → session.py →
-Postgres → to_wire (hop 12). See request-paths.md §1, §2.
-"""
+"""The real ItemRepository — backed by meetings and action_items. Path §1
+[hop 11/15]: services/items.py → here → session.py → Postgres → to_wire."""
 
 from datetime import date
 

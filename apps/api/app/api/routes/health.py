@@ -1,7 +1,5 @@
-"""Health check route — the one endpoint that skips auth entirely.
-Listed in core/middleware.py's PUBLIC_PATHS; no token required.
-Path: client → [this file] — no service, no repository to check.
-"""
+"""Health check route — the one endpoint that skips auth (PUBLIC_PATHS in
+core/middleware.py). No service, no repository."""
 
 from datetime import datetime, timezone
 

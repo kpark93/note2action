@@ -1,8 +1,5 @@
-"""Meeting routes — capture a meeting with AI-extracted items, and
-browse past captures; delegates to services/meetings.py.
-Path: browser → [this file] → services/meetings.py → repositories/.
-See request-paths.md §3.
-"""
+"""Meeting routes — capture a meeting with AI-extracted items, browse past
+captures. Next hop: services/meetings.py → repositories/."""
 
 from fastapi import APIRouter, Depends, HTTPException
 

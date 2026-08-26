@@ -1,9 +1,5 @@
-"""App-wide settings, loaded once from the environment / apps/api/.env.
-
-Read by app/main.py (which repository and verifier to build) and
-core/db.py (the connection string).
-Path: .env / environment → [this file] → app/main.py, core/db.py.
-"""
+"""App-wide settings, loaded once from the environment / apps/api/.env — read by
+app/main.py (repository + verifier choice) and core/db.py (connection string)."""
 
 from typing import Literal
 

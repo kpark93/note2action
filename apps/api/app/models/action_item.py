@@ -1,8 +1,5 @@
-"""The action_items table — one row per extracted or edited task.
-RLS restricts every query to rows whose user_id matches the caller
-(see postgres/session.py).
-Path: repositories/postgres/{items,meetings}.py → [this file] → Postgres.
-"""
+"""The action_items table — one row per extracted or edited task; RLS restricts
+every query to rows whose user_id matches the caller (postgres/session.py)."""
 
 from datetime import date
 

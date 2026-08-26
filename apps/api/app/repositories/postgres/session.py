@@ -1,8 +1,5 @@
-"""Opens a DB session stamped with the caller's identity so Postgres
-RLS can enforce ownership even if app code has a bug.
-Not used by users.py — no RLS there (see app/models/user.py).
-Path: postgres/{items,meetings}.py → [this file] → core/db.py → Postgres.
-"""
+"""Opens a DB session stamped with the caller's identity so Postgres RLS
+enforces ownership even if app code has a bug. Next hop: core/db.py → Postgres."""
 
 from collections.abc import Iterator
 from contextlib import contextmanager

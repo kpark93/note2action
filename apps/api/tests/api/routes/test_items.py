@@ -1,6 +1,6 @@
+from app.main import app
 from fastapi.testclient import TestClient
 
-from app.main import app
 from tests.conftest import AUTH
 
 # A fresh in-memory repository per test comes from conftest.py (autouse).
@@ -14,7 +14,24 @@ def test_list_items_returns_full_action_items() -> None:
     items = response.json()["items"]
     assert len(items) == 2
     assert {item["id"] for item in items} == {1, 2}
-    assert all({"id", "meetingId", "meeting", "title", "owner", "due", "priority", "confidence", "saved", "note", "status", "completed"} <= item.keys() for item in items)
+    assert all(
+        {
+            "id",
+            "meetingId",
+            "meeting",
+            "title",
+            "owner",
+            "due",
+            "priority",
+            "confidence",
+            "saved",
+            "note",
+            "status",
+            "completed",
+        }
+        <= item.keys()
+        for item in items
+    )
 
 
 def test_patch_done_stamps_completed_server_side() -> None:

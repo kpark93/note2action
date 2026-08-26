@@ -1,8 +1,5 @@
 """Route dependencies — how handlers reach state the middleware verified.
-
-Path §1 [hop 9/15]: route Depends() (hop 8) → [this file] →
-services/users.py (identity → users.id) → back to route (hop 10).
-"""
+Path §1 [hop 9/15]: route Depends() → here → services/users.py → route."""
 
 from fastapi import Request
 

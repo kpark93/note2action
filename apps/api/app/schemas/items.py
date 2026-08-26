@@ -1,8 +1,5 @@
-"""Pydantic schemas — the wire contract, mirrored in packages/shared.
-Built by repositories/mappers.py; returned by api/routes/items.py.
-Path §1 [hop 13/15]: mappers (hop 12) → [this file] → FastAPI JSON
-(hop 8) → lib/http.ts (hop 14) → cache/screen (hop 15).
-"""
+"""Pydantic schemas for items — the wire contract, mirrored in packages/shared.
+Path §1 [hop 13/15]: mappers → here → FastAPI JSON → lib/http.ts."""
 
 from typing import Literal
 

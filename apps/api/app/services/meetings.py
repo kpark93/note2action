@@ -1,8 +1,5 @@
-"""Meeting use-cases. The atomic meeting+items write lives behind create.
-Calls the MeetingRepository protocol (app/repositories/).
-Path: routes/meetings.py → [this file] → MeetingRepository
-(repositories/postgres/meetings.py).
-"""
+"""Meeting use-cases — the atomic meeting+items write lives behind create.
+Next hop: the MeetingRepository protocol (repositories/)."""
 
 from app.repositories.protocols import MeetingRepository
 from app.schemas.meetings import (

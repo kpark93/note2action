@@ -1,9 +1,5 @@
-"""The common ancestor every table model inherits from.
-
-SQLAlchemy needs one shared base class to collect every table's metadata
-(used by Alembic to autogenerate migrations).
-Path: models/{user,meeting,action_item}.py → [this file].
-"""
+"""The common ancestor every table model inherits from — one shared base collects
+all table metadata, which Alembic uses to autogenerate migrations."""
 
 from sqlalchemy.orm import DeclarativeBase
 

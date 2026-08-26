@@ -1,8 +1,5 @@
 """The real MeetingRepository — backed by meetings and action_items.
-Called by services/meetings.py.
-Path: services/meetings.py → [this file] → session.py → Postgres.
-See request-paths.md §3.
-"""
+Next hop: services/meetings.py → here → session.py → Postgres."""
 
 from datetime import date, datetime, timezone
 

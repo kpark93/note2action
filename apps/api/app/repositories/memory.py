@@ -1,8 +1,5 @@
-"""In-memory repository implementation — a Python list standing in for
-Postgres; used by tests and local dev without Docker.
-Implements the same protocols (protocols.py) as postgres/*.py.
-Path: app/main.py → [this file] (one of the two implementations).
-"""
+"""In-memory repository implementation — Python lists standing in for Postgres;
+used by tests and Docker-free dev. Implements the same protocols.py shapes."""
 
 from dataclasses import dataclass
 from datetime import date, datetime, timezone

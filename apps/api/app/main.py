@@ -1,9 +1,5 @@
-"""FastAPI application factory — wiring only: state, middleware, routers.
-
-Runs once at startup: builds the repository and verifier, wires auth
-middleware, then mounts routes.
-Path: uvicorn → [this file] → middleware → api/main.py → services/ → repos.
-"""
+"""FastAPI application factory — wiring only: builds the repositories and token
+verifier, wires auth middleware, mounts routes. Next hop: api/main.py."""
 
 from fastapi import FastAPI
 

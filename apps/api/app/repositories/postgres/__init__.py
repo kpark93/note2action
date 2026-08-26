@@ -1,9 +1,5 @@
-"""Assembles the three Postgres-backed repositories.
-
-Called by app/main.py when REPOSITORY == "postgres" (core/config.py).
-Path: app/main.py → [this file] → postgres/{users,items,meetings}.py
-→ Postgres (with row-level security, via postgres/session.py).
-"""
+"""Assembles the three Postgres-backed repositories — called by app/main.py when
+REPOSITORY == "postgres". Next hop: postgres/{users,items,meetings}.py."""
 
 from app.repositories.protocols import Repositories
 

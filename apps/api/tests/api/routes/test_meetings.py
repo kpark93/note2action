@@ -1,6 +1,6 @@
+from app.main import app
 from fastapi.testclient import TestClient
 
-from app.main import app
 from tests.conftest import AUTH
 
 # A fresh in-memory repository per test comes from conftest.py (autouse).
@@ -50,7 +50,9 @@ def test_create_meeting_persists_meeting_and_items() -> None:
     assert second["due"] is None
     assert second["note"] is None
     # Every created item belongs to the created meeting.
-    assert {item["meetingId"] for item in body["items"]} == {body["meeting"]["id"]}
+    assert {item["meetingId"] for item in body["items"]} == {
+        body["meeting"]["id"]
+    }
 
     # The new items join the one list every screen slices.
     items = client.get("/api/items").json()["items"]
@@ -58,7 +60,9 @@ def test_create_meeting_persists_meeting_and_items() -> None:
 
 
 def test_create_meeting_invalid_body_returns_422() -> None:
-    response = client.post("/api/meetings", json={"title": "no rawNotes or items"})
+    response = client.post(
+        "/api/meetings", json={"title": "no rawNotes or items"}
+    )
     assert response.status_code == 422
 
 
@@ -98,7 +102,10 @@ def test_list_meetings_newest_first_with_limit() -> None:
     assert all(m["itemCount"] == 1 for m in meetings)
 
     response = client.get("/api/meetings?limit=2")
-    assert [m["title"] for m in response.json()["meetings"]] == ["Third", "Second"]
+    assert [m["title"] for m in response.json()["meetings"]] == [
+        "Third",
+        "Second",
+    ]
 
 
 def test_get_meeting_returns_transcript() -> None:

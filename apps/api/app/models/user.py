@@ -1,8 +1,5 @@
-"""The users table — one row per person, keyed to Clerk identity.
-Deliberately has NO RLS: identity lookup must run before a user_id
-exists, so it can't be gated by that same id.
-Path: repositories/postgres/users.py → [this file] → Postgres `users`.
-"""
+"""The users table — one row per person, keyed to Clerk identity. Deliberately
+NO RLS: identity lookup runs before a user_id exists, so it can't gate on one."""
 
 from sqlalchemy.orm import Mapped, mapped_column
 

@@ -1,9 +1,5 @@
-"""Auth middleware — the central checkpoint before any endpoint runs.
-
-Stores the verified identity on request.state for api/deps.py to read.
-Path §1 [hop 7/15]: proxy (hop 6) → [this file] → security.py (verify)
-→ routes (hop 8); rejection here means no route runs.
-"""
+"""Auth middleware — the checkpoint before any endpoint runs; stores the verified
+identity on request.state. Path §1 [hop 7/15]: → security.py → routes."""
 
 from fastapi import Request
 from fastapi.responses import JSONResponse

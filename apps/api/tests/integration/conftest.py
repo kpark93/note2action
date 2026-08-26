@@ -1,8 +1,5 @@
-"""Integration setup — a throwaway real database (note2action_test),
-rebuilt fresh each run: create DB → alembic migrations (real RLS) →
-swap the app's SessionLocal onto it → truncate between tests.
-Path: [this file] → repositories/postgres/* → Postgres note2action_test.
-"""
+"""Integration setup — a throwaway real database (note2action_test), rebuilt
+each run: create → migrate (real RLS) → swap SessionLocal → truncate per test."""
 
 import os
 import subprocess

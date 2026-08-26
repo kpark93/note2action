@@ -1,8 +1,5 @@
-"""The meetings table — one row per captured meeting; RLS restricts
-every query to the caller's rows (see postgres/session.py).
-Path: repositories/postgres/{meetings,items}.py → [this file] →
-Postgres `meetings`.
-"""
+"""The meetings table — one row per captured meeting; RLS restricts every query
+to the caller's rows (see postgres/session.py)."""
 
 from datetime import datetime
 

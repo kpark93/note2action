@@ -1,7 +1,5 @@
-"""Real-Postgres repository tests — the in-memory fake's blind spots:
-RLS enforcement, commit ordering, SQL truth. Needs Postgres running.
-Path: [this file] → repositories/postgres/* → note2action_test DB.
-"""
+"""Real-Postgres repository tests — the in-memory fake's blind spots: RLS
+enforcement, commit ordering, SQL truth. Needs Postgres running."""
 
 from datetime import date
 
@@ -126,9 +124,8 @@ def test_rls_fails_closed_on_fresh_connection(repos):
 
 
 def test_dead_identity_errors_instead_of_leaking(repos):
-    """After commit, SET LOCAL's value degrades to '' on that connection —
-    the policy's ::int cast then ERRORS (the 500-on-Done bug's mechanism).
-    Loud failure, zero leaked rows: still fails closed."""
+    """After commit, SET LOCAL's value degrades to '' and the policy's ::int
+    cast ERRORS (the 500-on-Done mechanism) — loud, zero rows, fails closed."""
     seed(repos)
 
     with pg_session.SessionLocal() as session:

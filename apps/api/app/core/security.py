@@ -1,8 +1,5 @@
-"""Verifies Clerk session JWTs locally against Clerk's JWKS keys — no
-network call per request, no shared secret to leak.
-Called by core/middleware.py on every request, before any route runs.
-Path: browser token → core/middleware.py → [this file] → Clerk's JWKS.
-"""
+"""Verifies Clerk session JWTs locally against Clerk's JWKS keys — no network
+call per request, no shared secret. Called by core/middleware.py every request."""
 
 from __future__ import annotations
 

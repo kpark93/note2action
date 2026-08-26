@@ -1,8 +1,5 @@
-"""Action item routes — list, edit, delete, and bulk-save items.
-Each handler resolves the user (api/deps.py), delegates to services/items.py.
-Path §1 [hop 8/15]: middleware (hop 7) → [this file] → deps (hop 9) →
-services/items.py (hop 10). See request-paths.md §1, §2.
-"""
+"""Action item routes — list, edit, delete, bulk-save. Each handler resolves the
+user (api/deps.py), then delegates. Path §1 [hop 8/15]: → services/items.py."""
 
 from fastapi import APIRouter, Depends, HTTPException
 
