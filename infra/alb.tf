@@ -43,6 +43,9 @@ resource "aws_lb_listener" "http" {
   }
 }
 
+# The x-service header (stamped by CloudFront's origins) is ROUTING, not auth:
+# access is gated by security-groups.tf — the ALB only accepts traffic from
+# CloudFront's origin-facing prefix list, and the ai/api routes verify Clerk JWTs.
 resource "aws_lb_listener_rule" "api" {
   listener_arn = aws_lb_listener.http.arn
   priority     = 10

@@ -64,6 +64,7 @@ resource "aws_ecs_task_definition" "ai" {
     portMappings = [{ containerPort = 3000 }]
     secrets = [
       { name = "ANTHROPIC_API_KEY", valueFrom = aws_ssm_parameter.anthropic_api_key.arn },
+      { name = "CLERK_JWKS_URL", valueFrom = aws_ssm_parameter.clerk_jwks_url.arn },
     ]
     logConfiguration = {
       logDriver = "awslogs"
