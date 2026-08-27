@@ -43,7 +43,8 @@ export type ExtractedItem = z.infer<typeof ExtractedItem>;
 
 /** POST /api/extract (AI app) request body. */
 export const ExtractRequest = z.object({
-  notes: z.string(),
+  /** Capped: unbounded notes would be an open token-spend vector. */
+  notes: z.string().max(20_000),
   meetingTitle: z.string(),
   /** Caller's current date (YYYY-MM-DD) so relative dates resolve correctly. */
   today: z.string(),
