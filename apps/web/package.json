@@ -9,7 +9,8 @@
     "preview": "vite preview --host --port 5173",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "TZ=UTC vitest run"
+    "test": "TZ=UTC vitest run",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@clerk/clerk-react": "^5.61.3",
@@ -36,6 +37,7 @@
     "@types/react": "^19.0.2",
     "@types/react-dom": "^19.0.2",
     "@vitejs/plugin-react": "^4.3.4",
+    "@vitest/coverage-v8": "^4.1.11",
     "typescript": "^5.7.2",
     "vite": "^6.0.7",
     "vitest": "^4.1.10"
