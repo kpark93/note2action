@@ -1,0 +1,9 @@
+{
+  // Python bytecode/tool caches — regenerated on every run; hide them from
+  // the file tree and search so they stop looking like new files.
+  "files.exclude": {
+    "**/__pycache__": true,
+    "**/.pytest_cache": true,
+    "**/.ruff_cache": true
+  }
+}
