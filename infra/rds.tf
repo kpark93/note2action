@@ -3,6 +3,9 @@ resource "aws_db_subnet_group" "main" {
   subnet_ids = aws_subnet.private[*].id
 }
 
+# Demo posture, deliberately: no final snapshot, no deletion protection, 1-day
+# backups, auto-minor engine "16" — this stack is teardown-bound (~4mo credit
+# runway). Production would flip the first three and pin the engine version.
 resource "aws_db_instance" "main" {
   identifier              = local.name
   engine                  = "postgres"
