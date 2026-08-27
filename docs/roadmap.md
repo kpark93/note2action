@@ -131,18 +131,18 @@ unreadable parent) and when not to ("lots of JSX" alone is not a reason).
 
 ## Phase B — Backend depth (make the data real)
 
-### Module 8 — Design docs before code ◻ ← **NEXT**
+### Module 8 — Design docs before code ✅ _(done 2026-08-19)_
 
 **Build (docs only, in `docs/`):**
 
-1. `docs/architecture/overview.md` 🔶 — the overall mermaid diagram exists;
+1. `docs/architecture/overview.md` ✅ — the overall mermaid diagram exists;
    extend it, and add **one mermaid diagram per service** showing how that
    service works inside (web: view → store → api layer; api: router →
    repository → db; ai: route → provider → model).
-2. `docs/api-design.md` ◻ — every endpoint the product needs: method, path,
+2. `docs/api-design.md` ✅ — every endpoint the product needs: method, path,
    request/response shape (reference the zod/pydantic schemas), error cases.
    Design the _contract_ before writing handlers.
-3. `docs/database-schema.md` ◻ — the tables as a mermaid **ER diagram**
+3. `docs/database-schema.md` ✅ — the tables as a mermaid **ER diagram**
    (entity-relationship: boxes for tables, lines for foreign keys). Start
    small: `users`, `meetings`, `action_items` (+ status/priority as
    constrained text). Note which columns exist because of the UI (confidence,
@@ -154,7 +154,7 @@ diagram is free; changing a migrated table is not.
 **Prove it:** you can trace every UI field to a column and every UI action to
 an endpoint.
 
-### Module 9 — Postgres + migrations + settings ◻
+### Module 9 — Postgres + migrations + settings ✅ _(done 2026-08-19)_
 
 **Build:**
 
@@ -174,7 +174,7 @@ an endpoint.
 **Prove it:** `alembic upgrade head` creates the tables; API tests still pass
 (run against a test database or keep the in-memory repo for unit tests).
 
-### Module 10 — Wire the frontend to real persistence ◻
+### Module 10 — Wire the frontend to real persistence ✅ _(done 2026-08-19)_
 
 **Build:** replace "items live in browser memory" (they currently vanish on
 refresh — only the theme persists) with API calls:
@@ -185,7 +185,7 @@ refresh — only the theme persists) with API calls:
 
 **Prove it:** refresh the page — your tasks are still there.
 
-### Module 11 — Database & API tooling literacy ◻
+### Module 11 — Database & API tooling literacy ✅ _(folded into Modules 9–10)_
 
 **Build (skills, not code):**
 
@@ -197,7 +197,7 @@ refresh — only the theme persists) with API calls:
 **Prove it:** you can answer "is this bug in the UI or the API?" by hitting
 the endpoint in Postman and checking the row in DBeaver.
 
-### Module 12 — Authentication ◻
+### Module 12 — Authentication ✅ _(done 2026-08-20)_
 
 **Build:**
 
@@ -212,7 +212,7 @@ the frontend.
 
 **Prove it:** the same Postman call succeeds with a token and fails without.
 
-### Module 13 — Postgres Row-Level Security ◻
+### Module 13 — Postgres Row-Level Security ✅ _(done 2026-08-20)_
 
 **Build:** RLS _policies_ — rules the database itself enforces about which
 rows a user may see/change (e.g. `user_id = current_user`), so even a buggy
@@ -226,29 +226,24 @@ DBeaver and Postman, not just the UI.
 
 ## Phase C — Polish & follow-ups (explicitly out of the starter's scope)
 
-- ◻ Deployment story (was deliberately excluded: no CI, no Terraform — a
-  follow-up project, not part of the starter)
-- ◻ Broader test coverage as the API grows real logic
+- ✅ Deployment story _(done 2026-08-26)_ — Terraform in `infra/` (CloudFront +
+  ECS Fargate + RDS), GitHub Actions CI/CD with OIDC, live on AWS
+- 🔶 Broader test coverage — 57 vitest + 27 pytest, coverage wired
+  (`test:coverage`, `pytest --cov`); eval harness for extraction still open
 - 🔶 Keep `memory.md` and the docs current as modules land (hook-enforced)
 
 ---
 
-## Where we are (2026-08-14)
+## Where we are (2026-08-26)
 
-**Done:** Modules 1–7 — the entire Phase A. The scaffold, all three services
-proving themselves, shared zod contracts, the full five-screen product UI on
-shadcn with a token-driven theme, and a deep hygiene pass (structure rules,
-naming, journaling hooks). The branch `refactor/web-restructure` (PR #1)
-carries the Phase-A finish line.
+**Done:** Modules 1–13 — all of Phases A and B — plus the Phase C deploy story.
+Real Postgres persistence behind a repository seam, Clerk auth verified in
+middleware, Row-Level Security enforced by the database, and the whole stack
+live on AWS: CloudFront → S3 (SPA) + ALB → two Fargate services → RDS, defined
+in Terraform (`infra/`), deployed automatically on every merge to `main` by the
+CI `deploy` job (GitHub OIDC, no stored keys). The AI app now verifies Clerk
+JWTs too, and the API emits request-id-tagged access logs.
 
-**Partially done:** the overall architecture mermaid diagram exists
-(`docs/architecture/overview.md`); per-service diagrams don't yet.
-
-**Not started:** everything database-and-auth: design docs (M8), Postgres +
-SQLAlchemy/Alembic/pydantic-settings (M9), real persistence in the UI (M10),
-DBeaver/Postman literacy (M11), Clerk + middleware (M12), RLS (M13).
-
-**Recommended next step:** Module 8 — write the API design and database
-schema docs. It's all diagrams and prose, it forces the decisions Modules
-9–13 depend on, and it's the cheapest module to revise when you change your
-mind.
+**Still open (Phase C):** an extraction eval harness, rate limiting on the AI
+routes (documented gap), and AI feature work (meeting intelligence,
+task-grounded chat) — tracked in the audit notes, gated on approval.

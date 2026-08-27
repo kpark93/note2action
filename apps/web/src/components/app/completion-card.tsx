@@ -2,9 +2,8 @@
  * it shares every other screen's cache, no props needed. */
 import { useItemsQuery } from "@/domain/items/items.queries";
 import { summary } from "@/domain/items/items.utils";
-import { SlotNumber } from "./slot-number";
 
-/** "Completion this month" widget: animated percent, progress bar, closed/open counts. */
+/** "Completion this month" widget: percent, progress bar, closed/open counts. */
 export function CompletionCard() {
   const items = useItemsQuery().data ?? [];
   const { donePct, doneCount, openCount } = summary(items);
@@ -16,7 +15,10 @@ export function CompletionCard() {
         Completion this month
       </div>
       <div className="mt-[7px] text-[24px] font-bold tracking-[-0.03em] tabular-nums">
-        <SlotNumber value={pct} />
+        {/* key remounts the span when the value changes, replaying the fade. */}
+        <span key={pct} className="n2a-pct">
+          {pct}%
+        </span>
       </div>
       <div className="mt-3 h-[5px] overflow-hidden rounded-full bg-muted">
         <div

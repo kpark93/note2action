@@ -265,6 +265,11 @@ article:hover {
   transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
   animation: n2aBar 0.7s cubic-bezier(0.4, 0, 0.2, 1) both;
 }
+/* Completion percentage: fades in whenever the value changes (keyed remount). */
+.n2a-pct {
+  display: inline-block;
+  animation: n2aFade 0.3s ease both;
+}
 
 /* Data-dependent hover treatments (values passed in via CSS variables). */
 .review-card:hover {
