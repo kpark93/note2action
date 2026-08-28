@@ -1,6 +1,6 @@
 # note2action
 
-[![CI](https://github.com/kpark93/note2action/actions/workflows/ci.yml/badge.svg)](https://github.com/kpark93/note2action/actions/workflows/ci.yml)
+[![CI/CD](https://github.com/kpark93/note2action/actions/workflows/ci.yml/badge.svg)](https://github.com/kpark93/note2action/actions/workflows/ci.yml)
 
 Paste meeting notes, extract action items with AI, review and edit them, save
 them to a task list — with real accounts, a real database, and per-user data
