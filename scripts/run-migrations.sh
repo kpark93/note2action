@@ -6,7 +6,7 @@ cd "$(dirname "$0")/.."
 
 PROFILE=note2action
 CLUSTER=note2action
-SUBNETS=$(terraform -chdir=infra output -json public_subnet_ids | python3 -c 'import json,sys;print(",".join(json.load(sys.stdin)))')
+SUBNETS=$(terraform -chdir=infra output -json app_subnet_ids | python3 -c 'import json,sys;print(",".join(json.load(sys.stdin)))')
 SG=$(terraform -chdir=infra output -raw task_sg_id)
 
 run_task() {
@@ -14,7 +14,7 @@ run_task() {
   local arn
   arn=$(aws ecs run-task --profile $PROFILE --cluster $CLUSTER \
     --task-definition note2action-api --launch-type FARGATE \
-    --network-configuration "awsvpcConfiguration={subnets=[$SUBNETS],securityGroups=[$SG],assignPublicIp=ENABLED}" \
+    --network-configuration "awsvpcConfiguration={subnets=[$SUBNETS],securityGroups=[$SG],assignPublicIp=DISABLED}" \
     --overrides "$overrides" --query 'tasks[0].taskArn' --output text)
   aws ecs wait tasks-stopped --profile $PROFILE --cluster $CLUSTER --tasks "$arn"
   local code

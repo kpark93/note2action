@@ -11,3 +11,4 @@ it costs. Newest last.
 | [0004](0004-postgres-row-level-security.md)   | Postgres RLS enforces per-user isolation            |
 | [0005](0005-header-routed-alb.md)             | One ALB, x-service header routing behind CloudFront |
 | [0006](0006-http-origin-behind-cloudfront.md) | Plaintext HTTP between CloudFront and the ALB       |
+| [0007](0007-private-app-subnets-nat.md)       | Tasks move to private subnets behind a NAT Gateway  |

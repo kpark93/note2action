@@ -97,14 +97,14 @@ jobs:
       - name: Run migrations
         run: |
           SUBNETS=$(aws ec2 describe-subnets \
-            --filters Name=tag:Name,Values='note2action-public-*' \
+            --filters Name=tag:Name,Values='note2action-app-*' \
             --query 'Subnets[].SubnetId' --output text | tr '\t' ',')
           SG=$(aws ec2 describe-security-groups \
             --filters Name=group-name,Values=note2action-task \
             --query 'SecurityGroups[0].GroupId' --output text)
           ARN=$(aws ecs run-task --cluster note2action \
             --task-definition note2action-api --launch-type FARGATE \
-            --network-configuration "awsvpcConfiguration={subnets=[$SUBNETS],securityGroups=[$SG],assignPublicIp=ENABLED}" \
+            --network-configuration "awsvpcConfiguration={subnets=[$SUBNETS],securityGroups=[$SG],assignPublicIp=DISABLED}" \
             --overrides '{"containerOverrides":[{"name":"api","command":["uv","run","--no-dev","alembic","upgrade","head"]}]}' \
             --query 'tasks[0].taskArn' --output text)
           aws ecs wait tasks-stopped --cluster note2action --tasks "$ARN"
