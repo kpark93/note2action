@@ -83,11 +83,14 @@ resource "aws_ecs_service" "api" {
   task_definition = aws_ecs_task_definition.api.arn
   desired_count   = 1
   launch_type     = "FARGATE"
+  # Private-app tier: no public IP; egress via NAT. Boot before the NAT
+  # route exists and image pulls fail — hence the depends_on.
   network_configuration {
-    subnets          = aws_subnet.public[*].id
+    subnets          = aws_subnet.app[*].id
     security_groups  = [aws_security_group.task.id]
-    assign_public_ip = true
+    assign_public_ip = false
   }
+  depends_on = [aws_route_table_association.app]
   load_balancer {
     target_group_arn = aws_lb_target_group.api.arn
     container_name   = "api"
@@ -101,11 +104,14 @@ resource "aws_ecs_service" "ai" {
   task_definition = aws_ecs_task_definition.ai.arn
   desired_count   = 1
   launch_type     = "FARGATE"
+  # Private-app tier: no public IP; egress via NAT. Boot before the NAT
+  # route exists and image pulls fail — hence the depends_on.
   network_configuration {
-    subnets          = aws_subnet.public[*].id
+    subnets          = aws_subnet.app[*].id
     security_groups  = [aws_security_group.task.id]
-    assign_public_ip = true
+    assign_public_ip = false
   }
+  depends_on = [aws_route_table_association.app]
   load_balancer {
     target_group_arn = aws_lb_target_group.ai.arn
     container_name   = "ai"
