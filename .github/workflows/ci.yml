@@ -1,7 +1,7 @@
 # Every gate the repo has, on every push and PR: eslint + ruff, typecheck,
 # vitest (web + ai), pytest unit, and pytest integration against a real
 # Postgres service container.
-name: CI
+name: CI/CD
 
 on:
   push:
