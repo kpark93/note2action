@@ -44,8 +44,9 @@ services:
       target: dev
     ports:
       - "3000:3000"
-    # Loads ANTHROPIC_API_KEY (and optional CHAT_MODEL). Optional so the stack
-    # still starts without it — chat just won't work until you add the key.
+    # Loads ANTHROPIC_API_KEY (and optional EXTRACT_MODEL). Optional so the
+    # stack still starts without it — extraction just won't work until you
+    # add the key.
     env_file:
       - path: apps/ai/.env
         required: false

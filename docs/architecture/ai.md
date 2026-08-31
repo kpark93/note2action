@@ -6,9 +6,7 @@ Nothing is persisted here — persistence is the api service's job.
 ```mermaid
 flowchart LR
     Client["web app<br/>(via /ai-api proxy,<br/>rewritten to /api/*)"] --> Extract["app/api/extract/route.ts"]
-    Client --> Chat["app/api/chat/route.ts"]
     Extract --> Provider["lib/provider.ts<br/>(model choice, one place)"]
-    Chat --> Provider
     Provider --> LLM["Anthropic model"]
     Schema["ExtractedItem zod schema<br/>(packages/shared)"] -.-> Extract
 ```
@@ -20,8 +18,6 @@ Notes:
   `ExtractResponse`. The schema's `.describe()` strings are sent to the
   model as instructions — the shared contract literally steers the
   extraction, which is why those descriptions must stay accurate.
-- **`/api/chat`** is the streaming demo route (`streamText` + `useChat`);
-  it shares the provider but not the schema.
 - **`lib/provider.ts` is the only file that knows which model runs.**
   Swapping vendors or models is a one-file change; routes and keys don't
   move.

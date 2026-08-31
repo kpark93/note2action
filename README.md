@@ -25,9 +25,8 @@ A full-stack monorepo: three apps and one shared package.
   database enforces per-user isolation. Persistence sits behind a repository
   seam (`postgres` for real, `memory` for tests).
 - **`apps/ai`** — Next.js (App Router) + Vercel AI SDK **v6**. `/api/extract`
-  turns raw notes into structured action items (plus a `/api/chat` demo);
-  both routes verify Clerk JWTs (same JWKS pattern as the API). Defaults to
-  Anthropic `claude-sonnet-5`.
+  turns raw notes into structured action items and verifies Clerk JWTs
+  (same JWKS pattern as the API). Defaults to Anthropic `claude-haiku-4-5`.
 - **`packages/shared`** — the **contract**: zod schemas (`ActionItem`,
   `Meeting`, extract requests/responses, …) used by `web` + `ai` and mirrored
   by pydantic models in the API.

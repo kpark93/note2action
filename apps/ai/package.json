@@ -13,7 +13,6 @@
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.108",
-    "@ai-sdk/react": "^3.0.249",
     "@note2action/shared": "workspace:*",
     "ai": "^6.0.247",
     "jose": "^6.2.10",

@@ -3525,3 +3525,49 @@ answers "what am I, and where does the request go next" in the same two
 lines, scanning the codebase gets faster and long headers stop rotting
 into prose nobody updates. Gates after the sweep: eslint + ruff clean,
 prettier clean, 0 type errors, 42+5 vitest, 23 pytest.
+
+## 2026-08-31 — Removed the chat route: the ai service does one thing now
+
+**WHAT changed:** The ai service had two model-backed routes: `/api/extract`
+(the one the product actually uses — notes in, action items out) and
+`/api/chat`, a streaming chat demo left over from Module 7, driven by a
+demo page at the service's root URL. Nothing in the web app ever called
+chat; it was reachable, authenticated surface that cost review attention
+(every auth or dependency change had to consider it) without doing any
+product work. The route, its test, and the demo page were deleted.
+
+Removal pulled three threads with it. `chatModel()` left
+`lib/provider.ts` — with only one route remaining, the provider file
+keeps only `extractModel()`. The `@ai-sdk/react` dependency (the
+package providing `useChat`, the React hook that streamed replies into
+the demo page) left `package.json`, because the deleted page was its
+only consumer — the `ai` package itself stays, extraction runs on it.
+And `CHAT_MODEL` left `.env.example`, since no code reads it anymore.
+
+One surprise during verification: `tsc --noEmit` failed after the
+deletion, pointing at files inside `.next/` — Next.js's **build cache**
+(generated artifacts, not source). It had stale type stubs still
+referencing the deleted route. Deleting `.next/` (always safe — it is
+regenerated on the next dev/build) fixed it: the lesson is that type
+errors in generated directories mean "stale artifacts," not "broken
+source."
+
+**WHICH files:** deleted `apps/ai/app/api/chat/route.ts`,
+`apps/ai/app/api/chat/route.test.ts`, `apps/ai/app/page.tsx`; trimmed
+`apps/ai/lib/provider.ts`, `apps/ai/package.json` (+ lockfile),
+`apps/ai/.env.example`; docs updated in `README.md` (also fixed the
+default-model claim — extract defaults to `claude-haiku-4-5`, the
+`claude-sonnet-5` default belonged to chat), `docs/architecture/ai.md`
+(mermaid diagram + bullet), and the compose file's env comment.
+ADR-0002 and the roadmap's Module 7 section were left alone on
+purpose: they are point-in-time records, and rewriting them would
+falsify history.
+
+**WHY:** Unused surface is not free. A live route must be kept secure,
+tested, and reasoned about on every change — that is real cost for
+zero product value, the same principle as deleting an uncalled export.
+The service is now honestly single-purpose: its root URL 404s (normal
+for an API-only service), and everything that remains is load-bearing.
+Verified: eslint clean, `tsc --noEmit` clean in web and ai, and the ai
+vitest suite green at 10 tests across 4 files (the chat tests left
+with their route).
