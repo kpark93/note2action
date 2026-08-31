@@ -3525,3 +3525,48 @@ answers "what am I, and where does the request go next" in the same two
 lines, scanning the codebase gets faster and long headers stop rotting
 into prose nobody updates. Gates after the sweep: eslint + ruff clean,
 prettier clean, 0 type errors, 42+5 vitest, 23 pytest.
+
+## 2026-08-31 — Postman E2E suite: the API tested over real HTTP, hermetically
+
+**WHAT changed:** The repo gained an end-to-end (E2E) test suite — tests
+that talk to the running API over real HTTP the way a browser would,
+instead of calling Python functions directly the way pytest does. The
+tests live in a **Postman collection** (a JSON file describing HTTP
+requests plus assertions — checks like "this must answer 401" — that
+Postman, a popular API tool, can open and run). Automation runs it
+with **newman**, Postman's command-line runner, via `pnpm run
+test:postman`.
+
+The hard problem was auth: every endpoint except `/api/health` demands
+a Clerk **JWT** (a signed token proving who is calling), and the API
+verifies signatures against a **JWKS** (a published set of public
+keys). Instead of involving Clerk at all, a helper script mints a
+throwaway RSA keypair, serves its public half as a local JWKS, and
+signs tokens for two fake users. The API is booted pointing
+`CLERK_JWKS_URL` at that local file — so the real verification code
+path runs, but the whole thing is **hermetic** (self-contained: no
+network, no accounts, no secrets). Two users matter because the
+best tests in the suite prove **cross-user isolation**: user B asking
+for user A's meeting gets 404 (not 403 — the API never confirms the
+row even exists).
+
+**WHICH files:** `apps/api/postman/note2action-api.postman_collection.json`
+(18 requests, 19 assertions: auth guard, meetings flow, items flow,
+cross-user isolation), `apps/api/postman/local.postman_environment.json`
+(the baseUrl; tokens are injected per-run, never committed),
+`apps/api/scripts/mint_test_jwt.py` (keypair + JWKS + two signed
+tokens), `scripts/postman-test.sh` (orchestrator: scratch database
+`note2action_postman` created and migrated by the admin role, API
+booted as the RLS-bound app role, then newman), root `package.json`
+(newman devDependency + `test:postman` script), and
+`.github/workflows/ci.yml` (a new `postman` job with a Postgres
+service container; `deploy` now also waits on it).
+
+**WHY:** pytest's integration tests already prove the repositories
+obey RLS, but they enter through Python. Only an over-the-wire suite
+proves the middleware, routing, status codes, and headers as a client
+actually experiences them — and it doubles as living API
+documentation anyone can import into Postman and click through.
+Verified: two full local runs green (18/18 requests, 19/19
+assertions, ~350ms), and newman confirmed to exit nonzero when
+assertions fail, so the CI job actually goes red on regressions.

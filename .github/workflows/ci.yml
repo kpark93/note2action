@@ -64,9 +64,40 @@ jobs:
       - run: uv run pytest -q
       - run: uv run pytest -m integration -q
 
+  postman:
+    name: Postman E2E (newman)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17.1-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      # Hermetic on purpose: scripts/postman-test.sh mints its own JWKS and
+      # tokens, so this job needs no Clerk secrets.
+      - run: uv sync
+        working-directory: apps/api
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run test:postman
+
   deploy:
     name: Deploy to AWS
-    needs: [web, api]
+    needs: [web, api, postman]
     if: github.ref == 'refs/heads/main'
     concurrency: deploy
     runs-on: ubuntu-latest
