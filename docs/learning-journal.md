@@ -3526,6 +3526,100 @@ lines, scanning the codebase gets faster and long headers stop rotting
 into prose nobody updates. Gates after the sweep: eslint + ruff clean,
 prettier clean, 0 type errors, 42+5 vitest, 23 pytest.
 
+## 2026-08-26 — Query cache tuned: data stays "fresh" for 60 seconds instead of 30
+
+**WHAT changed:** The web app uses TanStack Query, a library (pre-written
+code we pull into the project) that fetches data from our server and
+remembers — "caches" — the answers. Every cached answer has a `staleTime`:
+the number of milliseconds (thousandths of a second) the answer is
+considered fresh. While fresh, any screen that needs that data reuses the
+saved copy instead of asking the server again; once stale, the next use
+triggers a background refetch. We raised that window from `30_000` ms
+(30 seconds) to `60_000` ms (60 seconds) — the underscore is just a
+readability separator, like writing 30,000 — and updated the comment
+above it, which still said "30s", so the explanation matches the code
+again.
+
+**WHICH files:** `apps/web/src/lib/query-client.ts` — the one place the
+app-wide QueryClient (the object holding the cache and its defaults) is
+created, so this single line changes the default for every query in the
+app.
+
+**WHY:** Some parts of the page unmount and remount as you navigate —
+they are removed from the screen and rebuilt, like the sidebar's health
+dot. Each rebuild asks the cache for its data, and at 30 seconds that
+still caused more repeat requests to the server than the data deserves:
+it simply doesn't change that often. Doubling the window roughly halves
+that background traffic while keeping anything you see at most a minute
+old. The trade-off to remember: a bigger `staleTime` always means
+potentially older data on screen — tuning it is choosing where
+"fresh enough" sits for your app.
+
+## 2026-08-26 — Removed unused theme `toggle()` from the store
+
+**WHAT changed:** The web app's light/dark appearance is stored in a
+zustand **store** (a small shared box of state any component can read
+or update). That store exposed two ways to change the theme:
+`setTheme("dark")` — set it to an exact value — and `toggle()` — flip
+to whichever value it isn't. A grep (a project-wide text search)
+showed no component ever called `toggle()`; every caller uses
+`setTheme` with an explicit value. So `toggle()` was deleted, and the
+store's builder function shrank from `(set, get) => …` to
+`(set) => …` because `get` (the helper for reading current state
+inside the store) was only needed by the deleted function.
+
+**WHICH files:** `apps/web/src/lib/theme.store.ts` — the `toggle`
+entry left the `ThemeState` interface (the type describing the
+store's shape) and its implementation left the store body.
+
+**WHY:** An exported function that nothing calls is not "free" — it
+is API surface: it must be kept working, it widens the interface a
+reader has to understand, and it invites two code paths for one job.
+The design principle applied here: grep before assuming an export is
+load-bearing, and delete what the search proves dead. Verified with
+`tsc --noEmit` (type check only, no build) — zero errors, proving no
+hidden caller existed.
+
+## 2026-08-26 — Import meetings cache keys from the shared keys file
+
+**WHAT changed:** TypeScript (the type-checker: a program that reads
+the code without running it and flags mismatches) was happy, but the
+items hooks file was importing `meetingsKey` from the meetings hooks
+file — a leftover from when that key was defined there. Keys are
+addresses, and addresses belong in one shared file rather than
+scattered across the domains that happen to use them; importing from
+the old location keeps a stale path alive and tempts copies into
+other files. The real export lives in `query-keys.ts`.
+
+`meetingsKey` is a **cache key**: a label TanStack Query (the library
+that fetches server data and remembers the answers) uses like a
+street address for a piece of cached data. Meetings have more than
+one shape of data (a list, and one meeting by id), so `meetingsKey`
+is an **object** (a named bundle of values) with three parts:
+`all` (the shared prefix, meaning "everything meetings"), `list`,
+and `detail`. Passing the whole object as a query key is wrong;
+invalidation (telling the cache "this data is out of date, refetch
+it") must use `meetingsKey.all`, which is an array that matches
+every meetings query.
+
+We also stopped defining `itemsKey` a second time inside
+`items.queries.ts`. That name already exists in `query-keys.ts`;
+keeping two copies of the same address invites them to drift apart.
+
+**WHICH files:** `apps/web/src/domain/items/items.queries.ts` — import
+now reads `itemsKey` and `meetingsKey` from `@/lib/query-keys`, the
+local `export const itemsKey` was removed, and delete-item
+invalidation uses `meetingsKey.all`.
+
+**WHY:** Cache keys are addresses, not behavior. Putting them in one
+file (`query-keys.ts`) means one domain (a folder of code about one
+topic, here "items") can refresh another domain's cache ("meetings")
+without importing that domain's hooks (the functions views call to
+read or write data). The old import was a leftover from when
+`meetingsKey` used to be exported from the meetings hooks file. Fix
+verified with `tsc --noEmit` (TypeScript's "check types, don't build
+a finished app" command), which completed with no errors.
+
 ## 2026-08-31 — Postman E2E suite: the API tested over real HTTP, hermetically
 
 **WHAT changed:** The repo gained an end-to-end (E2E) test suite — tests

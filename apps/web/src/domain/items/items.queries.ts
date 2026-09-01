@@ -1,5 +1,7 @@
-/** TanStack Query hooks over server state: reads cached, writes optimistic —
- * instant update, rollback + toast on failure. Path §1 [hop 3/15]: → items.api.ts. */
+// TanStack Query hooks — the app's window onto server state. Reads are
+// cached; writes are OPTIMISTIC: instant cache update, reconciled with
+// the server, or rolled back + toasted on failure.
+// Path §1 [hop 3/15]: → items.api.ts (hop 4). (request-paths.md §1, §2)
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { QueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -14,7 +16,10 @@ import {
 import { applyPatch, markAllSaved, removeItem } from "./items.cache";
 import type { ActionItem } from "./items.types";
 
-/** Full items list, cached once and shared by every view — GET /api/items. */
+/**
+ * Full items list, cached by TanStack Query. Fires GET /api/items via
+ * items.api.ts fetchItems; every other view shares this one cache entry.
+ */
 export function useItemsQuery() {
   return useQuery({ queryKey: itemsKey, queryFn: fetchItems });
 }
@@ -47,8 +52,10 @@ function rollback(
   toast.error(message);
 }
 
-/** PATCH one item, optimistically: the cache updates instantly and the server
- * response reconciles it — or rollback + toast on failure. */
+/**
+ * PATCH one item. Optimistic: items.cache.ts updates the cache instantly;
+ * items.api.ts patchItem's response reconciles it, or rolls back + toasts.
+ */
 export function usePatchItem() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -68,8 +75,10 @@ export function usePatchItem() {
   });
 }
 
-/** Delete one item, optimistically — dropped instantly, restored with a toast
- * if the server call fails. */
+/**
+ * Delete one item. Optimistic: items.cache.ts drops it instantly; a
+ * failed items.api.ts deleteItem call restores it and shows a toast.
+ */
 export function useDeleteItem() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -84,8 +93,10 @@ export function useDeleteItem() {
   });
 }
 
-/** "Save N to Tasks", optimistically — the cache flips instantly; a reconciling
- * GET /api/items settles the batch. */
+/**
+ * "Save N to Tasks": optimistic — items.cache.ts flips the cache instantly;
+ * items.api.ts saveAllToTasks settles it via a reconciling GET /api/items.
+ */
 export function useSaveToTasks() {
   const queryClient = useQueryClient();
   return useMutation({

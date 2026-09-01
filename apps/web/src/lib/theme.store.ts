@@ -18,23 +18,17 @@ function apply(theme: Theme) {
 interface ThemeState {
   theme: Theme;
   setTheme: (theme: Theme) => void;
-  toggle: () => void;
 }
 
 export const useTheme = create<ThemeState>()(
   devtools(
-    (set, get) => ({
+    (set) => ({
       theme: document.documentElement.classList.contains("dark")
         ? "dark"
         : "light",
       setTheme: (theme) => {
         apply(theme);
         set({ theme }, false, "theme/setTheme");
-      },
-      toggle: () => {
-        const next: Theme = get().theme === "dark" ? "light" : "dark";
-        apply(next);
-        set({ theme: next }, false, "theme/toggle");
       },
     }),
     { name: "ThemeStore" },
