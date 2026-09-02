@@ -1,7 +1,6 @@
 /** Shared cross-view item selectors; view-specific derivations live in each
  * view's own *.utils.ts. Leaf — no network. */
 import type { ActionItem } from "@/domain/items/items.types";
-import { LOW_CONFIDENCE_THRESHOLD } from "@/domain/items/items.constants";
 
 /** Two-letter initials for an avatar badge; "?" for the Unassigned owner.
  * Used by tasks.utils.ts. */
@@ -9,15 +8,6 @@ export function initials(owner: string): string {
   if (owner === "Unassigned") return "?";
   const parts = owner.split(" ");
   return parts[0][0] + (parts[1] ? parts[1][0] : "");
-}
-
-/** True when the AI's confidence score is below the review threshold.
- * Used by review.utils.ts to flag cards for a closer look. */
-export function isLow(
-  item: ActionItem,
-  threshold = LOW_CONFIDENCE_THRESHOLD,
-): boolean {
-  return item.confidence < threshold;
 }
 
 /** Items not yet marked Done. Used by history.utils.ts. */
@@ -40,14 +30,11 @@ export interface Summary {
   donePct: string;
   doneCount: number;
   openCount: number;
-  flagCount: number;
+  reviewCount: number;
 }
 
 /** Drives the sidebar completion widget and the Review nav badge. */
-export function summary(
-  items: ActionItem[],
-  threshold = LOW_CONFIDENCE_THRESHOLD,
-): Summary {
+export function summary(items: ActionItem[]): Summary {
   const done = doneItems(items);
   const open = openItems(items);
   const total = items.length;
@@ -55,7 +42,7 @@ export function summary(
     donePct: total ? Math.round((done.length / total) * 100) + "%" : "0%",
     doneCount: done.length,
     openCount: open.length,
-    // The Review nav badge counts only items still awaiting review.
-    flagCount: pendingItems(items).filter((i) => isLow(i, threshold)).length,
+    // The Review nav badge counts every item still awaiting review.
+    reviewCount: pendingItems(items).length,
   };
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { flagSentence, reviewItems } from "./review.utils";
+import { reviewItems, reviewSentence } from "./review.utils";
 import { makeItem } from "@/test/fixtures";
 
 describe("reviewItems", () => {
@@ -13,16 +13,6 @@ describe("reviewItems", () => {
     expect(vms.map((v) => v.id)).toEqual([pending.id]);
   });
 
-  it("marks low confidence against the threshold and formats the pct", () => {
-    const [low, high] = reviewItems([
-      makeItem({ saved: false, confidence: 52 }),
-      makeItem({ saved: false, confidence: 96 }),
-    ]);
-    expect(low.low).toBe(true);
-    expect(low.pct).toBe("52%");
-    expect(high.low).toBe(false);
-  });
-
   it("staggers entrance delays by index", () => {
     const vms = reviewItems([
       makeItem({ saved: false }),
@@ -32,16 +22,13 @@ describe("reviewItems", () => {
   });
 });
 
-describe("flagSentence", () => {
-  it("names the flagged count when there is one", () => {
-    expect(flagSentence(2)).toBe(
-      "2 items were low confidence and are flagged below.",
-    );
+describe("reviewSentence", () => {
+  it("names the waiting count, pluralized", () => {
+    expect(reviewSentence(2)).toBe("2 items waiting for review.");
+    expect(reviewSentence(1)).toBe("1 item waiting for review.");
   });
 
-  it("celebrates when nothing is flagged", () => {
-    expect(flagSentence(0)).toBe(
-      "Everything came through with high confidence.",
-    );
+  it("celebrates an empty queue", () => {
+    expect(reviewSentence(0)).toBe("Review queue is empty.");
   });
 });

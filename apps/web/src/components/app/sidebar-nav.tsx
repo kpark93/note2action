@@ -17,7 +17,7 @@ const NAV = [
 /** Workspace nav links; Review carries a badge counting items awaiting review. */
 export function SidebarNav() {
   const items = useItemsQuery().data ?? [];
-  const { flagCount } = summary(items);
+  const { reviewCount } = summary(items);
 
   return (
     <>
@@ -40,9 +40,9 @@ export function SidebarNav() {
             })}
           >
             {label}
-            {to === "/review" && flagCount > 0 && (
+            {to === "/review" && reviewCount > 0 && (
               <Badge className="px-[7px] py-px text-[11px] font-semibold">
-                {flagCount}
+                {reviewCount}
               </Badge>
             )}
           </NavLink>

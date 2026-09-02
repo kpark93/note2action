@@ -27,6 +27,8 @@ interface TaskRowProps {
   onStatusChange: (id: number, value: Status) => void;
   /** Fires when the taskComplete animation ends; tasks.view.tsx then patches "Done". */
   onCompleted: (id: number) => void;
+  /** Opens the item detail modal; the view owns which item is open. */
+  onOpen: (id: number) => void;
 }
 
 /** Owner initials, title, due, priority pill, status select, send-back. */
@@ -35,13 +37,21 @@ export function TaskRow({
   isCompleting,
   onStatusChange,
   onCompleted,
+  onOpen,
 }: TaskRowProps) {
   const patchItem = usePatchItem();
   const sc = STATUS_STYLE[row.status];
 
   return (
     <div
-      className={`task-row grid ${COLS} items-center gap-[14px] rounded-[14px] bg-card px-4 py-[10px] ${
+      role="button"
+      tabIndex={0}
+      onClick={() => onOpen(row.id)}
+      // Only the row itself — Enter on a child control must not open the modal.
+      onKeyDown={(e) => {
+        if (e.key === "Enter" && e.target === e.currentTarget) onOpen(row.id);
+      }}
+      className={`task-row grid ${COLS} cursor-pointer items-center gap-[14px] rounded-[14px] bg-card px-4 py-[10px] ${
         isCompleting ? "task-complete" : "n2a-row"
       }`}
       style={isCompleting ? undefined : { animationDelay: row.delay }}
@@ -79,6 +89,7 @@ export function TaskRow({
         onValueChange={(v) => onStatusChange(row.id, v as Status)}
       >
         <SelectTrigger
+          onClick={(e) => e.stopPropagation()}
           className="w-full rounded-[11px] px-[11px] text-[12.5px] font-semibold shadow-none data-[size=default]:h-[34px] [&_svg]:!text-current"
           style={{ background: sc.bg, color: sc.fg, borderColor: sc.border }}
         >
@@ -95,9 +106,10 @@ export function TaskRow({
       <Button
         variant="outline"
         size="icon"
-        onClick={() =>
-          patchItem.mutate({ id: row.id, patch: { saved: false } })
-        }
+        onClick={(e) => {
+          e.stopPropagation();
+          patchItem.mutate({ id: row.id, patch: { saved: false } });
+        }}
         title="Send back to Review"
         aria-label="Send back to Review"
         className="h-7 w-7 justify-self-center rounded-[9px] border-border bg-transparent text-muted-foreground shadow-none dark:border-border dark:bg-transparent"

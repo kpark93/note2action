@@ -13,6 +13,3 @@ export type Owner = (typeof OWNERS)[number];
 
 export const STATUSES: Status[] = [...Status.options];
 export const PRIORITIES: Priority[] = [...Priority.options];
-
-/** Confidence below this is flagged as "needs review". */
-export const LOW_CONFIDENCE_THRESHOLD = 80;

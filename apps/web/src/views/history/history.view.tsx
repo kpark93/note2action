@@ -1,7 +1,9 @@
 /** History screen: completed items grouped by week, plus summary stats. Read
  * only — data from the TanStack cache; the owner filter is view-local state. */
+import { useState } from "react";
 import { useMeetingsQuery } from "@/domain/meetings/meetings.queries";
 import { useItemsQuery } from "@/domain/items/items.queries";
+import { ItemModal } from "@/components/app/item-modal";
 import { useHistoryStore } from "./history.store";
 import { OWNERS } from "@/domain/items/items.constants";
 import { historyGroups, historyStats } from "./history.utils";
@@ -21,6 +23,9 @@ export function HistoryView() {
   const meetings = useMeetingsQuery(1000).data ?? [];
   const historyOwner = useHistoryStore((s) => s.historyOwner);
   const setHistoryOwner = useHistoryStore((s) => s.setHistoryOwner);
+
+  /** Item shown in the detail modal, or null when closed. */
+  const [openItemId, setOpenItemId] = useState<number | null>(null);
 
   const groups = historyGroups(items, historyOwner);
   const stats = historyStats(items, meetings.length);
@@ -53,7 +58,7 @@ export function HistoryView() {
             <SectionHeading label={g.label} count={g.count} />
             <div className="flex flex-col gap-[6px]">
               {g.items.map((h) => (
-                <HistoryRow key={h.id} item={h} />
+                <HistoryRow key={h.id} item={h} onOpen={setOpenItemId} />
               ))}
             </div>
           </section>
@@ -64,6 +69,8 @@ export function HistoryView() {
           </EmptyState>
         )}
       </ScrollRegion>
+
+      <ItemModal itemId={openItemId} onClose={() => setOpenItemId(null)} />
     </ViewShell>
   );
 }

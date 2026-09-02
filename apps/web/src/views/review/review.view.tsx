@@ -2,8 +2,7 @@
  * inline, with a batch "Save to Tasks". Next hop: items.queries → ReviewCard. */
 import { useNavigate } from "react-router-dom";
 import { useItemsQuery, useSaveToTasks } from "@/domain/items/items.queries";
-import { useReviewStore } from "./review.store";
-import { flagSentence, reviewItems } from "./review.utils";
+import { reviewItems, reviewSentence } from "./review.utils";
 import { ReviewCard } from "./components/review-card";
 import { StepLabel } from "@/components/app/step-label";
 import { ViewHeader } from "@/components/app/view-header";
@@ -16,14 +15,10 @@ import { Button } from "@/components/ui/button";
 export function ReviewView() {
   const { data, isPending } = useItemsQuery();
   const items = data ?? [];
-  const onlyLow = useReviewStore((s) => s.onlyLow);
   const navigate = useNavigate();
-  const toggleOnlyLow = useReviewStore((s) => s.toggleOnlyLow);
   const saveToTasks = useSaveToTasks();
 
   const all = reviewItems(items);
-  const flagCount = all.filter((i) => i.low).length;
-  const visible = onlyLow ? all.filter((i) => i.low) : all;
 
   return (
     <ViewShell>
@@ -33,7 +28,7 @@ export function ReviewView() {
         description={
           <>
             Owners and dates were inferred from the transcript.{" "}
-            {flagSentence(flagCount)}
+            {reviewSentence(all.length)}
           </>
         }
         actions={
@@ -73,23 +68,8 @@ export function ReviewView() {
 
       <Toolbar className="gap-[14px]">
         <span className="text-[13px] text-muted-foreground">
-          {flagCount} need review
+          {all.length} in the queue
         </span>
-        <span className="h-[14px] w-px bg-border" />
-        <Button
-          variant="ghost"
-          onClick={toggleOnlyLow}
-          className="h-[31px] rounded-full px-[13px] text-[12.5px] font-medium"
-          style={{
-            background: onlyLow ? "hsl(var(--primary) / 0.15)" : "transparent",
-            color: onlyLow
-              ? "hsl(var(--pill-blue))"
-              : "hsl(var(--muted-foreground))",
-            border: `1px solid ${onlyLow ? "hsl(var(--primary) / 0.5)" : "hsl(var(--border))"}`,
-          }}
-        >
-          Only low confidence
-        </Button>
         <span className="flex-1" />
         <span className="text-[12.5px] text-muted-foreground">
           Edit any field inline · saves when you leave a field
@@ -106,15 +86,9 @@ export function ReviewView() {
             Head to Capture and extract action items from your notes.
           </EmptyState>
         </div>
-      ) : visible.length === 0 ? (
-        <div className="flex min-h-0 flex-1 items-center justify-center">
-          <EmptyState>
-            No low-confidence items — everything looks confident.
-          </EmptyState>
-        </div>
       ) : (
         <ScrollRegion className="grid auto-rows-min grid-cols-[repeat(auto-fill,minmax(252px,1fr))] content-start gap-[10px]">
-          {visible.map((item) => (
+          {all.map((item) => (
             <ReviewCard key={item.id} item={item} />
           ))}
         </ScrollRegion>
