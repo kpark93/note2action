@@ -8,6 +8,7 @@ import { OWNERS, PRIORITIES, STATUSES } from "@/domain/items/items.constants";
 import { savedTasks } from "@/domain/items/items.utils";
 import { taskRows } from "./tasks.utils";
 import { TaskRow } from "./components/task-row";
+import { ItemModal } from "@/components/app/item-modal";
 import { playPop } from "@/lib/sound";
 import type { Status } from "@/domain/items/items.types";
 import { Button } from "@/components/ui/button";
@@ -38,6 +39,9 @@ export function TasksView() {
   // Track the row being completed so it stays mounted long enough to play the
   // pop animation before it leaves the list for History.
   const [completingId, setCompletingId] = useState<number | null>(null);
+
+  /** Item shown in the detail modal, or null when closed. */
+  const [openItemId, setOpenItemId] = useState<number | null>(null);
 
   // Wired to TaskRow's onStatusChange: non-"Done" patches immediately
   // (optimistic); "Done" starts the pop animation and defers to handleCompleted.
@@ -140,6 +144,7 @@ export function TasksView() {
                       isCompleting={completingId === row.id}
                       onStatusChange={handleStatus}
                       onCompleted={handleCompleted}
+                      onOpen={setOpenItemId}
                     />
                   ))}
                 </div>
@@ -148,6 +153,8 @@ export function TasksView() {
           })
         )}
       </ScrollRegion>
+
+      <ItemModal itemId={openItemId} onClose={() => setOpenItemId(null)} />
     </ViewShell>
   );
 }

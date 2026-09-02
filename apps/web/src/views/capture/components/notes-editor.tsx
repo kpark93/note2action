@@ -123,7 +123,7 @@ export function NotesEditor() {
                 </span>
               </>
             ) : ready ? (
-              "AI extracts owner, priority, due date & confidence"
+              "AI extracts owner, priority & due date"
             ) : (
               "Paste at least a few lines"
             )}

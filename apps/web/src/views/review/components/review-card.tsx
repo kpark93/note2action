@@ -3,13 +3,11 @@
 import type { CSSProperties } from "react";
 import { useDeleteItem, usePatchItem } from "@/domain/items/items.queries";
 import { OWNERS } from "@/domain/items/items.constants";
-import { reviewStyle } from "@/views/review/review.utils";
 import type { Priority } from "@/domain/items/items.types";
 import type { ReviewItemVM } from "@/views/review/review.utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { ConfidencePill } from "./confidence-pill";
 import {
   Select,
   SelectContent,
@@ -18,13 +16,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-/** Confidence pill, title, owner/due/priority fields, confirm/discard. */
+/** Title, owner/due/priority fields, AI rationale, discard. */
 export function ReviewCard({ item }: { item: ReviewItemVM }) {
   // Both mutations are OPTIMISTIC: edits show immediately, then PATCH/
   // DELETE confirms — rollback + toast on failure. (request-paths.md §2)
   const patchItem = usePatchItem();
   const deleteItem = useDeleteItem();
-  const st = reviewStyle(item.low);
 
   // Text fields save on blur (one PATCH per edit, not per keystroke);
   // selects and buttons save immediately.
@@ -33,20 +30,17 @@ export function ReviewCard({ item }: { item: ReviewItemVM }) {
 
   return (
     <article
-      className="review-card n2a-card rounded-[16px] bg-card px-[13px] py-3"
+      className="review-card n2a-card rounded-[16px] border border-border bg-card px-[13px] py-3"
       style={
         {
-          border: `1px solid ${st.cardBorder}`,
-          boxShadow: st.cardShadow,
           animationDelay: item.delay,
-          "--hover-shadow": st.hoverShadow,
-          "--hover-border": st.hoverBorder,
+          "--hover-shadow": "0 12px 30px hsl(0 0% 0% / 0.35)",
+          "--hover-border": "hsl(var(--foreground) / 0.18)",
         } as CSSProperties
       }
     >
-      <div className="mb-[9px] flex items-center gap-[10px]">
-        <ConfidencePill pct={item.pct} low={item.low} />
-        <span className="ml-auto min-w-0 overflow-hidden text-[11.5px] text-ellipsis whitespace-nowrap text-muted-foreground">
+      <div className="mb-[9px] flex items-center justify-center">
+        <span className="min-w-0 overflow-hidden text-center text-[11.5px] text-ellipsis whitespace-nowrap text-muted-foreground">
           {item.meeting}
         </span>
       </div>
@@ -114,29 +108,16 @@ export function ReviewCard({ item }: { item: ReviewItemVM }) {
       </div>
 
       <div className="mt-[11px] flex items-center gap-[10px] border-t border-border pt-[10px]">
-        <span
-          className="min-w-0 flex-1 text-[12.5px] leading-[1.5]"
-          style={{ color: st.noteFg }}
-        >
+        <span className="min-w-0 flex-1 text-[12.5px] leading-[1.5] text-muted-foreground">
           {item.note}
         </span>
-        <span className="flex w-[82px] flex-none flex-col gap-[6px]">
-          {item.low && (
-            <Button
-              onClick={() => patch({ confidence: 100 })}
-              className="h-[29px] w-full rounded-[9px] px-0 text-[12.5px] font-semibold"
-            >
-              Confirm
-            </Button>
-          )}
-          <Button
-            variant="outline"
-            onClick={() => deleteItem.mutate(item.id)}
-            className="h-[29px] w-full rounded-[9px] border-border bg-transparent px-0 text-[12.5px] font-medium text-muted-foreground shadow-none dark:border-border dark:bg-transparent"
-          >
-            Discard
-          </Button>
-        </span>
+        <Button
+          variant="outline"
+          onClick={() => deleteItem.mutate(item.id)}
+          className="h-[29px] w-[82px] flex-none rounded-[9px] border-border bg-transparent px-0 text-[12.5px] font-medium text-muted-foreground shadow-none dark:border-border dark:bg-transparent"
+        >
+          Discard
+        </Button>
       </div>
     </article>
   );

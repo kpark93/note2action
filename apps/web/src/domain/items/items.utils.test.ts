@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import {
   doneItems,
   initials,
-  isLow,
   openItems,
   pendingItems,
   savedTasks,
@@ -21,17 +20,6 @@ describe("initials", () => {
 
   it("returns ? for Unassigned", () => {
     expect(initials("Unassigned")).toBe("?");
-  });
-});
-
-describe("isLow", () => {
-  it("flags confidence below the threshold, not at it", () => {
-    expect(isLow(makeItem({ confidence: 79 }))).toBe(true);
-    expect(isLow(makeItem({ confidence: 80 }))).toBe(false);
-  });
-
-  it("honors a custom threshold", () => {
-    expect(isLow(makeItem({ confidence: 50 }), 40)).toBe(false);
   });
 });
 
@@ -63,17 +51,18 @@ describe("summary", () => {
       donePct: "33%",
       doneCount: 1,
       openCount: 2,
-      flagCount: 0,
+      reviewCount: 0,
     });
   });
 
-  it("counts only unsaved low-confidence items as flags", () => {
+  it("counts every unsaved open item as awaiting review", () => {
     const s = summary([
-      makeItem({ saved: false, confidence: 50 }), // in Review → flagged
+      makeItem({ saved: false, confidence: 50 }),
+      makeItem({ saved: false, confidence: 95 }),
       makeItem({ saved: true, confidence: 50 }), // already in Tasks
-      makeItem({ saved: false, confidence: 95 }), // high confidence
+      makeItem({ saved: false, status: "Done" }), // closed, not reviewable
     ]);
-    expect(s.flagCount).toBe(1);
+    expect(s.reviewCount).toBe(2);
   });
 
   it("reports 0% for an empty list instead of dividing by zero", () => {
