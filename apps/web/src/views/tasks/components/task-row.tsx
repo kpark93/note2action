@@ -46,7 +46,13 @@ export function TaskRow({
     <div
       role="button"
       tabIndex={0}
-      onClick={() => onOpen(row.id)}
+      onClick={(e) => {
+        // Clicks inside the status Select's portaled dropdown bubble here
+        // through the React tree — only clicks on the row's own DOM open.
+        if (!(e.target instanceof Node) || !e.currentTarget.contains(e.target))
+          return;
+        onOpen(row.id);
+      }}
       // Only the row itself — Enter on a child control must not open the modal.
       onKeyDown={(e) => {
         if (e.key === "Enter" && e.target === e.currentTarget) onOpen(row.id);

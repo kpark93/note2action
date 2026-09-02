@@ -39,8 +39,8 @@ export function ReviewCard({ item }: { item: ReviewItemVM }) {
         } as CSSProperties
       }
     >
-      <div className="mb-[9px] flex items-center">
-        <span className="ml-auto min-w-0 overflow-hidden text-[11.5px] text-ellipsis whitespace-nowrap text-muted-foreground">
+      <div className="mb-[9px] flex items-center justify-center">
+        <span className="min-w-0 overflow-hidden text-center text-[11.5px] text-ellipsis whitespace-nowrap text-muted-foreground">
           {item.meeting}
         </span>
       </div>
