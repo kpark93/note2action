@@ -7,14 +7,8 @@ import { extractActionItems } from "@/domain/extraction/extraction.api";
 import { createMeeting } from "@/domain/meetings/meetings.api";
 import { itemsKey, meetingsKey } from "@/lib/query-keys";
 import { queryClient } from "@/lib/query-client";
-import {
-  DEFAULT_MEETING_TITLE,
-  DEFAULT_RAW,
-  SAMPLES,
-} from "./extraction.constants";
 
 interface ActionItemsState {
-  sampleIndex: number;
   /** Meeting id for the open transcript modal, or null when closed. */
   modalMeetingId: number | null;
   raw: string;
@@ -26,7 +20,6 @@ interface ActionItemsState {
 
   setRaw: (raw: string) => void;
   setMeetingTitle: (title: string) => void;
-  loadSample: () => void;
   openRecent: (meetingId: number) => void;
   closeModal: () => void;
   /** Load a recent capture's transcript into the editor (from the modal). */
@@ -40,30 +33,15 @@ interface ActionItemsState {
 export const useActionItems = create<ActionItemsState>()(
   devtools(
     (set, get) => ({
-      sampleIndex: 0,
       modalMeetingId: null,
-      raw: DEFAULT_RAW,
-      meetingTitle: DEFAULT_MEETING_TITLE,
+      raw: "",
+      meetingTitle: "",
       extracting: false,
       extractError: null,
 
       setRaw: (raw) => set({ raw }, false, "extraction/setRaw"),
       setMeetingTitle: (meetingTitle) =>
         set({ meetingTitle }, false, "extraction/setMeetingTitle"),
-
-      loadSample: () =>
-        set(
-          (s) => {
-            const next = (s.sampleIndex + 1) % SAMPLES.length;
-            return {
-              sampleIndex: next,
-              raw: SAMPLES[next].text,
-              meetingTitle: SAMPLES[next].title,
-            };
-          },
-          false,
-          "extraction/loadSample",
-        ),
 
       openRecent: (meetingId) =>
         set({ modalMeetingId: meetingId }, false, "extraction/openRecent"),
