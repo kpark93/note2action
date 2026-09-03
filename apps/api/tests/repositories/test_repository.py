@@ -13,7 +13,6 @@ def test_to_wire_maps_row_fields_onto_the_wire_schema() -> None:
         owner="Jane",
         due=date(2026, 8, 20),
         priority="Medium",
-        confidence=80,
         saved=True,
         note="from notes",
         status="In progress",
@@ -29,7 +28,6 @@ def test_to_wire_maps_row_fields_onto_the_wire_schema() -> None:
     assert item.owner == "Jane"
     assert item.due == "2026-08-20"
     assert item.priority == "Medium"
-    assert item.confidence == 80
     assert item.saved is True
     assert item.note == "from notes"
     assert item.status == "In progress"

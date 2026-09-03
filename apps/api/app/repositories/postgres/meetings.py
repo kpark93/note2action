@@ -51,7 +51,6 @@ class PostgresMeetingRepository:
                     owner=item.owner,
                     due=date.fromisoformat(item.due) if item.due else None,
                     priority=item.priority,
-                    confidence=item.confidence,
                     saved=False,
                     note=item.note or None,
                     status="Not started",

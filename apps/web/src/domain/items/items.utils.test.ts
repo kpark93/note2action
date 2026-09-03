@@ -57,9 +57,9 @@ describe("summary", () => {
 
   it("counts every unsaved open item as awaiting review", () => {
     const s = summary([
-      makeItem({ saved: false, confidence: 50 }),
-      makeItem({ saved: false, confidence: 95 }),
-      makeItem({ saved: true, confidence: 50 }), // already in Tasks
+      makeItem({ saved: false }),
+      makeItem({ saved: false }),
+      makeItem({ saved: true }), // already in Tasks
       makeItem({ saved: false, status: "Done" }), // closed, not reviewable
     ]);
     expect(s.reviewCount).toBe(2);

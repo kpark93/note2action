@@ -37,7 +37,6 @@ def seed(repos, clerk_id: str = "user_alice", items: int = 2):
                     owner="Kyle",
                     priority="Medium",
                     due="",
-                    confidence=90,
                     note="",
                 )
                 for i in range(items)

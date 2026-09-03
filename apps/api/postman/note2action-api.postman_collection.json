@@ -104,7 +104,7 @@
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\"title\":\"Postman E2E sync\",\"rawNotes\":\"Kyle: ship the newman suite.\\nDana: wire it into CI after.\",\"items\":[{\"title\":\"Ship the newman suite\",\"owner\":\"Kyle\",\"priority\":\"High\",\"due\":\"2026-09-04\",\"confidence\":92,\"note\":\"hermetic run\"},{\"title\":\"Wire suite into CI\",\"owner\":\"Dana\",\"priority\":\"Medium\",\"due\":\"\",\"confidence\":70,\"note\":\"\"}]}",
+              "raw": "{\"title\":\"Postman E2E sync\",\"rawNotes\":\"Kyle: ship the newman suite.\\nDana: wire it into CI after.\",\"items\":[{\"title\":\"Ship the newman suite\",\"owner\":\"Kyle\",\"priority\":\"High\",\"due\":\"2026-09-04\",\"note\":\"hermetic run\"},{\"title\":\"Wire suite into CI\",\"owner\":\"Dana\",\"priority\":\"Medium\",\"due\":\"\",\"note\":\"\"}]}",
               "options": { "raw": { "language": "json" } }
             }
           },

@@ -100,7 +100,6 @@ def test_created_data_belongs_to_its_creator() -> None:
                     "owner": "Unassigned",
                     "priority": "Low",
                     "due": "",
-                    "confidence": 70,
                     "note": "",
                 }
             ],

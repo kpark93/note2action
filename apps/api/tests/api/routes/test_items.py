@@ -23,7 +23,6 @@ def test_list_items_returns_full_action_items() -> None:
             "owner",
             "due",
             "priority",
-            "confidence",
             "saved",
             "note",
             "status",

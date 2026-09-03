@@ -21,8 +21,6 @@ export const ActionItem = z.object({
   owner: z.string(),
   due: z.string().nullable(),
   priority: Priority,
-  /** Persisted form only — already normalized; raw AI output stays loose. */
-  confidence: z.number().int().min(0).max(100),
   saved: z.boolean(),
   note: z.string().nullable(),
   status: Status,
@@ -43,7 +41,6 @@ export const ActionItemPatch = ActionItem.pick({
   owner: true,
   due: true,
   priority: true,
-  confidence: true,
   status: true,
   saved: true,
   note: true,

@@ -20,7 +20,6 @@ CAPTURE = {
             "owner": "Kyle",
             "priority": "High",
             "due": "",
-            "confidence": 95,
             "note": "",
         },
         {
@@ -28,7 +27,6 @@ CAPTURE = {
             "owner": "Kyle",
             "priority": "Medium",
             "due": "2026-09-01",
-            "confidence": 80,
             "note": "pytest",
         },
     ],

@@ -64,7 +64,7 @@ export const useActionItems = create<ActionItemsState>()(
         try {
           const extracted = await extractActionItems(payload);
           // Persist at extraction (Module 8): the capture becomes database rows
-          // NOW, so the Review queue survives refresh. Schema caps confidence 1-100.
+          // NOW, so the Review queue survives refresh.
           await createMeeting({
             title: get().meetingTitle,
             rawNotes: payload.notes,

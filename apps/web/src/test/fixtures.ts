@@ -3,7 +3,7 @@ import type { ActionItem } from "@/domain/items/items.types";
 
 let nextId = 1000;
 
-/** A saved, open, high-confidence item; override what the test cares about. */
+/** A saved, open item; override what the test cares about. */
 export function makeItem(overrides: Partial<ActionItem> = {}): ActionItem {
   return {
     id: nextId++,
@@ -12,7 +12,6 @@ export function makeItem(overrides: Partial<ActionItem> = {}): ActionItem {
     owner: "Kyle Park",
     due: "2026-08-14",
     priority: "Medium",
-    confidence: 90,
     status: "Not started",
     saved: true,
     meeting: "Weekly Sync — Aug 10",

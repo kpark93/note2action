@@ -21,7 +21,6 @@ class ActionItem(BaseModel):
     owner: str
     due: str | None
     priority: Priority
-    confidence: int
     saved: bool
     note: str | None
     status: Status
@@ -36,7 +35,6 @@ class ActionItemPatch(BaseModel):
     owner: str | None = None
     due: str | None = None
     priority: Priority | None = None
-    confidence: int | None = None
     status: Status | None = None
     saved: bool | None = None
     note: str | None = None
