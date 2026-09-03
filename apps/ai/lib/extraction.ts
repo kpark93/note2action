@@ -16,8 +16,7 @@ export async function extractItems(
     system:
       "You are note2action's extraction engine. Read raw meeting notes and " +
       "return only concrete, actionable to-do items. Infer each item's owner, " +
-      "priority, and due date, and rate your confidence. Never invent tasks " +
-      "that the notes don't imply.",
+      "priority, and due date. Never invent tasks that the notes don't imply.",
     prompt:
       `Today is ${today}. Meeting: "${meetingTitle}".\n` +
       `Known owners: ${owners.join(", ")}. Use "Unassigned" when no owner is clear.\n` +

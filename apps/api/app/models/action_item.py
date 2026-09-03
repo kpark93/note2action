@@ -40,7 +40,6 @@ class ActionItem(Base):
     owner: Mapped[str]
     due: Mapped[date | None]
     priority: Mapped[str]
-    confidence: Mapped[int]
     status: Mapped[str]
     saved: Mapped[bool] = mapped_column(
         default=False, server_default=text("false")

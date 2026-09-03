@@ -20,7 +20,6 @@ def test_create_meeting_persists_meeting_and_items() -> None:
                     "owner": "Alice",
                     "priority": "High",
                     "due": "2026-08-21",
-                    "confidence": 90,
                     "note": "from the notes",
                 },
                 {
@@ -28,7 +27,6 @@ def test_create_meeting_persists_meeting_and_items() -> None:
                     "owner": "Unassigned",
                     "priority": "Low",
                     "due": "",
-                    "confidence": 60,
                     "note": "",
                 },
             ],
@@ -79,7 +77,6 @@ def _capture(title: str) -> int:
                     "owner": "Kyle Park",
                     "priority": "Medium",
                     "due": "",
-                    "confidence": 80,
                     "note": "",
                 }
             ],

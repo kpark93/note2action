@@ -14,7 +14,6 @@ class ExtractedItem(BaseModel):
     owner: str
     priority: Priority
     due: str
-    confidence: int
     note: str
 
 
