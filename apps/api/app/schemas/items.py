@@ -50,3 +50,24 @@ class ItemsResponse(BaseModel):
     """GET /api/items — every action item the caller owns."""
 
     items: list[ActionItem]
+
+
+class ItemsPage(BaseModel):
+    """One keyset page — mirrors packages/shared ItemsPage. nextCursor is
+    opaque base64 (core/cursor.py); None = no more pages."""
+
+    items: list[ActionItem]
+    nextCursor: str | None
+
+
+class ItemSummary(BaseModel):
+    """GET /api/items/summary — sidebar + History-stat counts, mirrors
+    packages/shared. onTime: Done items closed on/before due (undated = on
+    time); meetings: how many captures the caller owns."""
+
+    done: int
+    open: int
+    review: int
+    total: int
+    onTime: int
+    meetings: int

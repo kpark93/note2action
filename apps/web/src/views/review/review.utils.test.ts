@@ -3,14 +3,12 @@ import { reviewItems, reviewSentence } from "./review.utils";
 import { makeItem } from "@/test/fixtures";
 
 describe("reviewItems", () => {
-  it("shows only unsaved open items", () => {
-    const pending = makeItem({ saved: false });
-    const vms = reviewItems([
-      pending,
-      makeItem({ saved: true }),
-      makeItem({ saved: false, status: "Done" }),
-    ]);
-    expect(vms.map((v) => v.id)).toEqual([pending.id]);
+  // Filtering to the pending queue moved server-side (view=review) —
+  // this only decorates whatever the server sent, in its order.
+  it("maps items to view models without filtering or reordering", () => {
+    const a = makeItem({ saved: false });
+    const b = makeItem({ saved: false });
+    expect(reviewItems([a, b]).map((v) => v.id)).toEqual([a.id, b.id]);
   });
 
   it("staggers entrance delays by index", () => {

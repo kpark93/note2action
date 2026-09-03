@@ -1,475 +1,834 @@
 {
-  "info": {
-    "name": "note2action API",
-    "description": "E2E suite for the FastAPI service. Automated entry point: `pnpm run test:postman` (hermetic — scratch DB, self-signed JWKS, throwaway uvicorn). Manual use: import into Postman with local.postman_environment.json and fill baseUrl/tokenA/tokenB (mint tokens via apps/api/scripts/mint_test_jwt.py).",
-    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
-  },
-  "auth": {
-    "type": "bearer",
-    "bearer": [{ "key": "token", "value": "{{tokenA}}", "type": "string" }]
-  },
-  "variable": [
-    { "key": "meetingId", "value": "" },
-    { "key": "itemKeepId", "value": "" },
-    { "key": "itemDeleteId", "value": "" }
-  ],
-  "item": [
-    {
-      "name": "auth guard",
-      "item": [
-        {
-          "name": "health — public, 200",
-          "request": {
-            "method": "GET",
-            "url": "{{baseUrl}}/api/health",
-            "auth": { "type": "noauth" }
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"200 with ok status\", function () {",
-                  "  pm.response.to.have.status(200);",
-                  "  var body = pm.response.json();",
-                  "  pm.expect(body.status).to.eql(\"ok\");",
-                  "  pm.expect(body.service).to.be.a(\"string\");",
-                  "});"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "items — no token, 401",
-          "request": {
-            "method": "GET",
-            "url": "{{baseUrl}}/api/items",
-            "auth": { "type": "noauth" }
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"401 with Bearer challenge\", function () {",
-                  "  pm.response.to.have.status(401);",
-                  "  pm.expect(pm.response.headers.get(\"WWW-Authenticate\")).to.eql(\"Bearer\");",
-                  "  pm.expect(pm.response.json().detail).to.eql(\"Not authenticated\");",
-                  "});"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "items — forged token, 401",
-          "request": {
-            "method": "GET",
-            "url": "{{baseUrl}}/api/items",
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                { "key": "token", "value": "not-a-real-jwt", "type": "string" }
-              ]
-            }
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"401 rejects forged token\", function () {",
-                  "  pm.response.to.have.status(401);",
-                  "  pm.expect(pm.response.json().detail).to.eql(\"Invalid or expired token\");",
-                  "});"
-                ]
-              }
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "name": "meetings — user A",
-      "item": [
-        {
-          "name": "create meeting — 201, captures ids",
-          "request": {
-            "method": "POST",
-            "url": "{{baseUrl}}/api/meetings",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\"title\":\"Postman E2E sync\",\"rawNotes\":\"Kyle: ship the newman suite.\\nDana: wire it into CI after.\",\"items\":[{\"title\":\"Ship the newman suite\",\"owner\":\"Kyle\",\"priority\":\"High\",\"due\":\"2026-09-04\",\"note\":\"hermetic run\"},{\"title\":\"Wire suite into CI\",\"owner\":\"Dana\",\"priority\":\"Medium\",\"due\":\"\",\"note\":\"\"}]}",
-              "options": { "raw": { "language": "json" } }
-            }
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"201 with meeting and both items\", function () {",
-                  "  pm.response.to.have.status(201);",
-                  "  var body = pm.response.json();",
-                  "  pm.expect(body.meeting.itemCount).to.eql(2);",
-                  "  pm.expect(body.items).to.have.lengthOf(2);",
-                  "  var del = body.items.find(function (i) { return i.title === \"Ship the newman suite\"; });",
-                  "  var keep = body.items.find(function (i) { return i.title === \"Wire suite into CI\"; });",
-                  "  pm.collectionVariables.set(\"meetingId\", body.meeting.id);",
-                  "  pm.collectionVariables.set(\"itemDeleteId\", del.id);",
-                  "  pm.collectionVariables.set(\"itemKeepId\", keep.id);",
-                  "});",
-                  "pm.test(\"empty due/note come back null, birth defaults applied\", function () {",
-                  "  var keep = pm.response.json().items.find(function (i) { return i.title === \"Wire suite into CI\"; });",
-                  "  pm.expect(keep.due).to.be.null;",
-                  "  pm.expect(keep.note).to.be.null;",
-                  "  pm.expect(keep.saved).to.eql(false);",
-                  "  pm.expect(keep.status).to.eql(\"Not started\");",
-                  "});"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "list meetings — includes new capture",
-          "request": { "method": "GET", "url": "{{baseUrl}}/api/meetings" },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"new capture listed with itemCount 2\", function () {",
-                  "  pm.response.to.have.status(200);",
-                  "  var id = Number(pm.collectionVariables.get(\"meetingId\"));",
-                  "  var found = pm.response.json().meetings.find(function (m) { return m.id === id; });",
-                  "  pm.expect(found, \"created meeting in list\").to.not.be.undefined;",
-                  "  pm.expect(found.itemCount).to.eql(2);",
-                  "});"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "meeting detail — matches capture",
-          "request": {
-            "method": "GET",
-            "url": "{{baseUrl}}/api/meetings/{{meetingId}}"
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"detail matches the capture\", function () {",
-                  "  pm.response.to.have.status(200);",
-                  "  var body = pm.response.json();",
-                  "  pm.expect(body.id).to.eql(Number(pm.collectionVariables.get(\"meetingId\")));",
-                  "  pm.expect(body.rawNotes).to.include(\"ship the newman suite\");",
-                  "  pm.expect(body.itemCount).to.eql(2);",
-                  "});"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "meeting detail — unknown id, 404",
-          "request": {
-            "method": "GET",
-            "url": "{{baseUrl}}/api/meetings/999999"
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"404 for unknown meeting\", function () {",
-                  "  pm.response.to.have.status(404);",
-                  "});"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "create meeting — malformed body, 422",
-          "request": {
-            "method": "POST",
-            "url": "{{baseUrl}}/api/meetings",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\"title\":\"no notes, no items\"}",
-              "options": { "raw": { "language": "json" } }
-            }
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"422 on malformed body\", function () {",
-                  "  pm.response.to.have.status(422);",
-                  "  pm.expect(pm.response.json().detail).to.be.an(\"array\");",
-                  "});"
-                ]
-              }
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "name": "items — user A",
-      "item": [
-        {
-          "name": "list items — both present, unsaved",
-          "request": { "method": "GET", "url": "{{baseUrl}}/api/items" },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"both captured items present, unsaved\", function () {",
-                  "  pm.response.to.have.status(200);",
-                  "  var mid = Number(pm.collectionVariables.get(\"meetingId\"));",
-                  "  var mine = pm.response.json().items.filter(function (i) { return i.meetingId === mid; });",
-                  "  pm.expect(mine).to.have.lengthOf(2);",
-                  "  mine.forEach(function (i) { pm.expect(i.saved).to.eql(false); });",
-                  "});"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "patch item — Done stamps completed",
-          "request": {
-            "method": "PATCH",
-            "url": "{{baseUrl}}/api/items/{{itemKeepId}}",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\"status\":\"Done\",\"owner\":\"Kyle P\"}",
-              "options": { "raw": { "language": "json" } }
-            }
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"patch applied and Done stamps completed\", function () {",
-                  "  pm.response.to.have.status(200);",
-                  "  var body = pm.response.json();",
-                  "  pm.expect(body.status).to.eql(\"Done\");",
-                  "  pm.expect(body.owner).to.eql(\"Kyle P\");",
-                  "  pm.expect(body.completed).to.be.a(\"string\");",
-                  "});"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "save-to-tasks — skips Done, saves pending",
-          "request": {
-            "method": "POST",
-            "url": "{{baseUrl}}/api/items/save-to-tasks"
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"saves the one pending non-Done item\", function () {",
-                  "  pm.response.to.have.status(200);",
-                  "  pm.expect(pm.response.json().updated).to.eql(1);",
-                  "});"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "delete item — 204",
-          "request": {
-            "method": "DELETE",
-            "url": "{{baseUrl}}/api/items/{{itemDeleteId}}"
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"204 no content\", function () {",
-                  "  pm.response.to.have.status(204);",
-                  "});"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "patch deleted item — 404",
-          "request": {
-            "method": "PATCH",
-            "url": "{{baseUrl}}/api/items/{{itemDeleteId}}",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\"owner\":\"ghost\"}",
-              "options": { "raw": { "language": "json" } }
-            }
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"404 after delete\", function () {",
-                  "  pm.response.to.have.status(404);",
-                  "  pm.expect(pm.response.json().detail).to.eql(\"Item not found\");",
-                  "});"
-                ]
-              }
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "name": "cross-user isolation — user B",
-      "auth": {
-        "type": "bearer",
-        "bearer": [{ "key": "token", "value": "{{tokenB}}", "type": "string" }]
-      },
-      "item": [
-        {
-          "name": "list meetings — A's capture invisible",
-          "request": { "method": "GET", "url": "{{baseUrl}}/api/meetings" },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"user A's capture is invisible\", function () {",
-                  "  pm.response.to.have.status(200);",
-                  "  var id = Number(pm.collectionVariables.get(\"meetingId\"));",
-                  "  var leaked = pm.response.json().meetings.find(function (m) { return m.id === id; });",
-                  "  pm.expect(leaked, \"cross-user leak\").to.be.undefined;",
-                  "});"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "meeting detail — A's id, 404 not 403",
-          "request": {
-            "method": "GET",
-            "url": "{{baseUrl}}/api/meetings/{{meetingId}}"
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"404, not 403 — existence is not leaked\", function () {",
-                  "  pm.response.to.have.status(404);",
-                  "});"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "list items — empty of A's items",
-          "request": { "method": "GET", "url": "{{baseUrl}}/api/items" },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"no items from user A's meeting\", function () {",
-                  "  pm.response.to.have.status(200);",
-                  "  var mid = Number(pm.collectionVariables.get(\"meetingId\"));",
-                  "  var leaked = pm.response.json().items.filter(function (i) { return i.meetingId === mid; });",
-                  "  pm.expect(leaked).to.have.lengthOf(0);",
-                  "});"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "patch A's item — 404",
-          "request": {
-            "method": "PATCH",
-            "url": "{{baseUrl}}/api/items/{{itemKeepId}}",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\"owner\":\"intruder\"}",
-              "options": { "raw": { "language": "json" } }
-            }
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"404, not 403 — cannot write another user's item\", function () {",
-                  "  pm.response.to.have.status(404);",
-                  "  pm.expect(pm.response.json().detail).to.eql(\"Item not found\");",
-                  "});"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "delete A's item — 404",
-          "request": {
-            "method": "DELETE",
-            "url": "{{baseUrl}}/api/items/{{itemKeepId}}"
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"404, not 403 — cannot delete another user's item\", function () {",
-                  "  pm.response.to.have.status(404);",
-                  "});"
-                ]
-              }
-            }
-          ]
-        }
-      ]
-    }
+ "info": {
+  "name": "note2action API",
+  "description": "E2E suite for the FastAPI service. Automated entry point: `pnpm run test:postman` (hermetic \u2014 scratch DB, self-signed JWKS, throwaway uvicorn). Manual use: import into Postman with local.postman_environment.json and fill baseUrl/tokenA/tokenB (mint tokens via apps/api/scripts/mint_test_jwt.py).",
+  "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+ },
+ "auth": {
+  "type": "bearer",
+  "bearer": [
+   {
+    "key": "token",
+    "value": "{{tokenA}}",
+    "type": "string"
+   }
   ]
+ },
+ "variable": [
+  {
+   "key": "meetingId",
+   "value": ""
+  },
+  {
+   "key": "itemKeepId",
+   "value": ""
+  },
+  {
+   "key": "itemDeleteId",
+   "value": ""
+  }
+ ],
+ "item": [
+  {
+   "name": "auth guard",
+   "item": [
+    {
+     "name": "health \u2014 public, 200",
+     "request": {
+      "method": "GET",
+      "url": "{{baseUrl}}/api/health",
+      "auth": {
+       "type": "noauth"
+      }
+     },
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test(\"200 with ok status\", function () {",
+         "  pm.response.to.have.status(200);",
+         "  var body = pm.response.json();",
+         "  pm.expect(body.status).to.eql(\"ok\");",
+         "  pm.expect(body.service).to.be.a(\"string\");",
+         "});"
+        ]
+       }
+      }
+     ]
+    },
+    {
+     "name": "items \u2014 no token, 401",
+     "request": {
+      "method": "GET",
+      "url": "{{baseUrl}}/api/items",
+      "auth": {
+       "type": "noauth"
+      }
+     },
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test(\"401 with Bearer challenge\", function () {",
+         "  pm.response.to.have.status(401);",
+         "  pm.expect(pm.response.headers.get(\"WWW-Authenticate\")).to.eql(\"Bearer\");",
+         "  pm.expect(pm.response.json().detail).to.eql(\"Not authenticated\");",
+         "});"
+        ]
+       }
+      }
+     ]
+    },
+    {
+     "name": "items \u2014 forged token, 401",
+     "request": {
+      "method": "GET",
+      "url": "{{baseUrl}}/api/items",
+      "auth": {
+       "type": "bearer",
+       "bearer": [
+        {
+         "key": "token",
+         "value": "not-a-real-jwt",
+         "type": "string"
+        }
+       ]
+      }
+     },
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test(\"401 rejects forged token\", function () {",
+         "  pm.response.to.have.status(401);",
+         "  pm.expect(pm.response.json().detail).to.eql(\"Invalid or expired token\");",
+         "});"
+        ]
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "meetings \u2014 user A",
+   "item": [
+    {
+     "name": "create meeting \u2014 201, captures ids",
+     "request": {
+      "method": "POST",
+      "url": "{{baseUrl}}/api/meetings",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       }
+      ],
+      "body": {
+       "mode": "raw",
+       "raw": "{\"title\":\"Postman E2E sync\",\"rawNotes\":\"Kyle: ship the newman suite.\\nDana: wire it into CI after.\",\"items\":[{\"title\":\"Ship the newman suite\",\"owner\":\"Kyle\",\"priority\":\"High\",\"due\":\"2026-09-04\",\"note\":\"hermetic run\"},{\"title\":\"Wire suite into CI\",\"owner\":\"Dana\",\"priority\":\"Medium\",\"due\":\"\",\"note\":\"\"}]}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     },
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test(\"201 with meeting and both items\", function () {",
+         "  pm.response.to.have.status(201);",
+         "  var body = pm.response.json();",
+         "  pm.expect(body.meeting.itemCount).to.eql(2);",
+         "  pm.expect(body.items).to.have.lengthOf(2);",
+         "  var del = body.items.find(function (i) { return i.title === \"Ship the newman suite\"; });",
+         "  var keep = body.items.find(function (i) { return i.title === \"Wire suite into CI\"; });",
+         "  pm.collectionVariables.set(\"meetingId\", body.meeting.id);",
+         "  pm.collectionVariables.set(\"itemDeleteId\", del.id);",
+         "  pm.collectionVariables.set(\"itemKeepId\", keep.id);",
+         "});",
+         "pm.test(\"empty due/note come back null, birth defaults applied\", function () {",
+         "  var keep = pm.response.json().items.find(function (i) { return i.title === \"Wire suite into CI\"; });",
+         "  pm.expect(keep.due).to.be.null;",
+         "  pm.expect(keep.note).to.be.null;",
+         "  pm.expect(keep.saved).to.eql(false);",
+         "  pm.expect(keep.status).to.eql(\"Not started\");",
+         "});"
+        ]
+       }
+      }
+     ]
+    },
+    {
+     "name": "list meetings \u2014 includes new capture",
+     "request": {
+      "method": "GET",
+      "url": "{{baseUrl}}/api/meetings"
+     },
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test(\"new capture listed with itemCount 2\", function () {",
+         "  pm.response.to.have.status(200);",
+         "  var id = Number(pm.collectionVariables.get(\"meetingId\"));",
+         "  var found = pm.response.json().meetings.find(function (m) { return m.id === id; });",
+         "  pm.expect(found, \"created meeting in list\").to.not.be.undefined;",
+         "  pm.expect(found.itemCount).to.eql(2);",
+         "});"
+        ]
+       }
+      }
+     ]
+    },
+    {
+     "name": "meeting detail \u2014 matches capture",
+     "request": {
+      "method": "GET",
+      "url": "{{baseUrl}}/api/meetings/{{meetingId}}"
+     },
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test(\"detail matches the capture\", function () {",
+         "  pm.response.to.have.status(200);",
+         "  var body = pm.response.json();",
+         "  pm.expect(body.id).to.eql(Number(pm.collectionVariables.get(\"meetingId\")));",
+         "  pm.expect(body.rawNotes).to.include(\"ship the newman suite\");",
+         "  pm.expect(body.itemCount).to.eql(2);",
+         "});"
+        ]
+       }
+      }
+     ]
+    },
+    {
+     "name": "meeting detail \u2014 unknown id, 404",
+     "request": {
+      "method": "GET",
+      "url": "{{baseUrl}}/api/meetings/999999"
+     },
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test(\"404 for unknown meeting\", function () {",
+         "  pm.response.to.have.status(404);",
+         "});"
+        ]
+       }
+      }
+     ]
+    },
+    {
+     "name": "create meeting \u2014 malformed body, 422",
+     "request": {
+      "method": "POST",
+      "url": "{{baseUrl}}/api/meetings",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       }
+      ],
+      "body": {
+       "mode": "raw",
+       "raw": "{\"title\":\"no notes, no items\"}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     },
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test(\"422 on malformed body\", function () {",
+         "  pm.response.to.have.status(422);",
+         "  pm.expect(pm.response.json().detail).to.be.an(\"array\");",
+         "});"
+        ]
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "items \u2014 user A",
+   "item": [
+    {
+     "name": "list items \u2014 both present, unsaved",
+     "request": {
+      "method": "GET",
+      "url": "{{baseUrl}}/api/items"
+     },
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test(\"both captured items present, unsaved\", function () {",
+         "  pm.response.to.have.status(200);",
+         "  var mid = Number(pm.collectionVariables.get(\"meetingId\"));",
+         "  var mine = pm.response.json().items.filter(function (i) { return i.meetingId === mid; });",
+         "  pm.expect(mine).to.have.lengthOf(2);",
+         "  mine.forEach(function (i) { pm.expect(i.saved).to.eql(false); });",
+         "});"
+        ]
+       }
+      }
+     ]
+    },
+    {
+     "name": "patch item \u2014 Done stamps completed",
+     "request": {
+      "method": "PATCH",
+      "url": "{{baseUrl}}/api/items/{{itemKeepId}}",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       }
+      ],
+      "body": {
+       "mode": "raw",
+       "raw": "{\"status\":\"Done\",\"owner\":\"Kyle P\"}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     },
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test(\"patch applied and Done stamps completed\", function () {",
+         "  pm.response.to.have.status(200);",
+         "  var body = pm.response.json();",
+         "  pm.expect(body.status).to.eql(\"Done\");",
+         "  pm.expect(body.owner).to.eql(\"Kyle P\");",
+         "  pm.expect(body.completed).to.be.a(\"string\");",
+         "});"
+        ]
+       }
+      }
+     ]
+    },
+    {
+     "name": "save-to-tasks \u2014 skips Done, saves pending",
+     "request": {
+      "method": "POST",
+      "url": "{{baseUrl}}/api/items/save-to-tasks"
+     },
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test(\"saves the one pending non-Done item\", function () {",
+         "  pm.response.to.have.status(200);",
+         "  pm.expect(pm.response.json().updated).to.eql(1);",
+         "});"
+        ]
+       }
+      }
+     ]
+    },
+    {
+     "name": "delete item \u2014 204",
+     "request": {
+      "method": "DELETE",
+      "url": "{{baseUrl}}/api/items/{{itemDeleteId}}"
+     },
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test(\"204 no content\", function () {",
+         "  pm.response.to.have.status(204);",
+         "});"
+        ]
+       }
+      }
+     ]
+    },
+    {
+     "name": "patch deleted item \u2014 404",
+     "request": {
+      "method": "PATCH",
+      "url": "{{baseUrl}}/api/items/{{itemDeleteId}}",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       }
+      ],
+      "body": {
+       "mode": "raw",
+       "raw": "{\"owner\":\"ghost\"}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     },
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test(\"404 after delete\", function () {",
+         "  pm.response.to.have.status(404);",
+         "  pm.expect(pm.response.json().detail).to.eql(\"Item not found\");",
+         "});"
+        ]
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "cross-user isolation \u2014 user B",
+   "auth": {
+    "type": "bearer",
+    "bearer": [
+     {
+      "key": "token",
+      "value": "{{tokenB}}",
+      "type": "string"
+     }
+    ]
+   },
+   "item": [
+    {
+     "name": "list meetings \u2014 A's capture invisible",
+     "request": {
+      "method": "GET",
+      "url": "{{baseUrl}}/api/meetings"
+     },
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test(\"user A's capture is invisible\", function () {",
+         "  pm.response.to.have.status(200);",
+         "  var id = Number(pm.collectionVariables.get(\"meetingId\"));",
+         "  var leaked = pm.response.json().meetings.find(function (m) { return m.id === id; });",
+         "  pm.expect(leaked, \"cross-user leak\").to.be.undefined;",
+         "});"
+        ]
+       }
+      }
+     ]
+    },
+    {
+     "name": "meeting detail \u2014 A's id, 404 not 403",
+     "request": {
+      "method": "GET",
+      "url": "{{baseUrl}}/api/meetings/{{meetingId}}"
+     },
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test(\"404, not 403 \u2014 existence is not leaked\", function () {",
+         "  pm.response.to.have.status(404);",
+         "});"
+        ]
+       }
+      }
+     ]
+    },
+    {
+     "name": "list items \u2014 empty of A's items",
+     "request": {
+      "method": "GET",
+      "url": "{{baseUrl}}/api/items"
+     },
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test(\"no items from user A's meeting\", function () {",
+         "  pm.response.to.have.status(200);",
+         "  var mid = Number(pm.collectionVariables.get(\"meetingId\"));",
+         "  var leaked = pm.response.json().items.filter(function (i) { return i.meetingId === mid; });",
+         "  pm.expect(leaked).to.have.lengthOf(0);",
+         "});"
+        ]
+       }
+      }
+     ]
+    },
+    {
+     "name": "patch A's item \u2014 404",
+     "request": {
+      "method": "PATCH",
+      "url": "{{baseUrl}}/api/items/{{itemKeepId}}",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       }
+      ],
+      "body": {
+       "mode": "raw",
+       "raw": "{\"owner\":\"intruder\"}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     },
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test(\"404, not 403 \u2014 cannot write another user's item\", function () {",
+         "  pm.response.to.have.status(404);",
+         "  pm.expect(pm.response.json().detail).to.eql(\"Item not found\");",
+         "});"
+        ]
+       }
+      }
+     ]
+    },
+    {
+     "name": "delete A's item \u2014 404",
+     "request": {
+      "method": "DELETE",
+      "url": "{{baseUrl}}/api/items/{{itemKeepId}}"
+     },
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test(\"404, not 403 \u2014 cannot delete another user's item\", function () {",
+         "  pm.response.to.have.status(404);",
+         "});"
+        ]
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "keyset pagination \u2014 user A",
+   "item": [
+    {
+     "name": "seed capture \u2014 201",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Authorization",
+        "value": "Bearer {{tokenA}}"
+       },
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       }
+      ],
+      "url": {
+       "raw": "{{baseUrl}}/api/meetings",
+       "host": [
+        "{{baseUrl}}"
+       ],
+       "path": [
+        "api",
+        "meetings"
+       ]
+      },
+      "body": {
+       "mode": "raw",
+       "raw": "{\"title\": \"Pagination seed\", \"rawNotes\": \"seed rows for the keyset walk\", \"items\": [{\"title\": \"page-a\", \"owner\": \"Kyle\", \"priority\": \"High\", \"due\": \"2126-01-05\", \"note\": \"\"}, {\"title\": \"page-b\", \"owner\": \"Kyle\", \"priority\": \"Low\", \"due\": \"2126-01-10\", \"note\": \"\"}, {\"title\": \"page-c\", \"owner\": \"Kyle\", \"priority\": \"Low\", \"due\": \"\", \"note\": \"\"}, {\"title\": \"page-d\", \"owner\": \"Kyle\", \"priority\": \"Low\", \"due\": \"\", \"note\": \"\"}]}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     },
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('201 created', () => pm.response.to.have.status(201));"
+        ]
+       }
+      }
+     ]
+    },
+    {
+     "name": "promote to tasks \u2014 200",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Authorization",
+        "value": "Bearer {{tokenA}}"
+       }
+      ],
+      "url": {
+       "raw": "{{baseUrl}}/api/items/save-to-tasks",
+       "host": [
+        "{{baseUrl}}"
+       ],
+       "path": [
+        "api",
+        "items",
+        "save-to-tasks"
+       ]
+      }
+     },
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('200 ok', () => pm.response.to.have.status(200));"
+        ]
+       }
+      }
+     ]
+    },
+    {
+     "name": "tasks page 1 \u2014 full page + cursor",
+     "request": {
+      "method": "GET",
+      "header": [
+       {
+        "key": "Authorization",
+        "value": "Bearer {{tokenA}}"
+       }
+      ],
+      "url": {
+       "raw": "{{baseUrl}}/api/items?view=tasks&limit=2",
+       "host": [
+        "{{baseUrl}}"
+       ],
+       "path": [
+        "api",
+        "items"
+       ],
+       "query": [
+        {
+         "key": "view",
+         "value": "tasks"
+        },
+        {
+         "key": "limit",
+         "value": "2"
+        }
+       ]
+      }
+     },
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "const body = pm.response.json();",
+         "pm.test('200 with 2 items', () => {",
+         "  pm.response.to.have.status(200);",
+         "  pm.expect(body.items).to.have.length(2);",
+         "});",
+         "pm.test('nextCursor present', () => pm.expect(body.nextCursor).to.be.a('string'));",
+         "pm.collectionVariables.set('pageCursor', body.nextCursor);",
+         "pm.collectionVariables.set('pageOneIds', JSON.stringify(body.items.map(i => i.id)));"
+        ]
+       }
+      }
+     ]
+    },
+    {
+     "name": "tasks page 2 \u2014 disjoint from page 1",
+     "request": {
+      "method": "GET",
+      "header": [
+       {
+        "key": "Authorization",
+        "value": "Bearer {{tokenA}}"
+       }
+      ],
+      "url": {
+       "raw": "{{baseUrl}}/api/items?view=tasks&limit=2&cursor={{pageCursor}}",
+       "host": [
+        "{{baseUrl}}"
+       ],
+       "path": [
+        "api",
+        "items"
+       ],
+       "query": [
+        {
+         "key": "view",
+         "value": "tasks"
+        },
+        {
+         "key": "limit",
+         "value": "2"
+        },
+        {
+         "key": "cursor",
+         "value": "{{pageCursor}}"
+        }
+       ]
+      }
+     },
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "const body = pm.response.json();",
+         "const pageOne = JSON.parse(pm.collectionVariables.get('pageOneIds'));",
+         "pm.test('200 with rows', () => {",
+         "  pm.response.to.have.status(200);",
+         "  pm.expect(body.items.length).to.be.above(0);",
+         "});",
+         "pm.test('no overlap with page 1', () => {",
+         "  const ids = body.items.map(i => i.id);",
+         "  pm.expect(ids.filter(id => pageOne.includes(id))).to.have.length(0);",
+         "});"
+        ]
+       }
+      }
+     ]
+    },
+    {
+     "name": "summary \u2014 counts only",
+     "request": {
+      "method": "GET",
+      "header": [
+       {
+        "key": "Authorization",
+        "value": "Bearer {{tokenA}}"
+       }
+      ],
+      "url": {
+       "raw": "{{baseUrl}}/api/items/summary",
+       "host": [
+        "{{baseUrl}}"
+       ],
+       "path": [
+        "api",
+        "items",
+        "summary"
+       ]
+      }
+     },
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "const body = pm.response.json();",
+         "pm.test('200 with all count fields', () => {",
+         "  pm.response.to.have.status(200);",
+         "  ['done','open','review','total','onTime','meetings'].forEach(k =>",
+         "    pm.expect(body[k], k).to.be.a('number'));",
+         "});"
+        ]
+       }
+      }
+     ]
+    },
+    {
+     "name": "tampered cursor \u2014 422",
+     "request": {
+      "method": "GET",
+      "header": [
+       {
+        "key": "Authorization",
+        "value": "Bearer {{tokenA}}"
+       }
+      ],
+      "url": {
+       "raw": "{{baseUrl}}/api/items?view=tasks&cursor=@@nope@@",
+       "host": [
+        "{{baseUrl}}"
+       ],
+       "path": [
+        "api",
+        "items"
+       ],
+       "query": [
+        {
+         "key": "view",
+         "value": "tasks"
+        },
+        {
+         "key": "cursor",
+         "value": "@@nope@@"
+        }
+       ]
+      }
+     },
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('422 invalid cursor', () => pm.response.to.have.status(422));"
+        ]
+       }
+      }
+     ]
+    }
+   ]
+  }
+ ]
 }

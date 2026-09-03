@@ -55,3 +55,11 @@ class MeetingDetail(BaseModel):
     rawNotes: str
     capturedAt: str
     itemCount: int
+
+
+class MeetingsPage(BaseModel):
+    """GET /api/meetings — one keyset page, newest first; mirrors
+    packages/shared MeetingsPage. nextCursor None = no more pages."""
+
+    meetings: list[Meeting]
+    nextCursor: str | None

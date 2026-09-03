@@ -3,7 +3,7 @@ Next hop: services/meetings.py → here → session.py → Postgres."""
 
 from datetime import date, datetime, timezone
 
-from sqlalchemy import func, select
+from sqlalchemy import and_, func, or_, select
 
 from app.models import ActionItem as ActionItemRow
 from app.models import Meeting as MeetingRow
@@ -73,29 +73,51 @@ class PostgresMeetingRepository:
             session.commit()
             return response
 
-    def list_meetings(self, user_id: int, limit: int) -> list[Meeting]:
-        """The user's most recent meetings, newest first, with each
-        item count computed by an outer-joined COUNT (no N+1 queries)."""
+    def list_meetings_page(
+        self, user_id: int, cursor: dict | None, limit: int
+    ) -> tuple[list[Meeting], dict | None]:
+        """Keyset page, newest first by (captured_at DESC, id DESC); item
+        counts by outer-joined COUNT (no N+1). limit+1 detects a next page."""
         with rls_session(user_id) as session:
-            rows = session.execute(
+            q = (
                 select(MeetingRow, func.count(ActionItemRow.id))
                 .outerjoin(
                     ActionItemRow, ActionItemRow.meeting_id == MeetingRow.id
                 )
                 .where(MeetingRow.user_id == user_id)
                 .group_by(MeetingRow.id)
-                .order_by(MeetingRow.captured_at.desc())
-                .limit(limit)
-            ).all()
-            return [
+            )
+            if cursor is not None:
+                t = datetime.fromisoformat(cursor["t"])
+                q = q.where(
+                    or_(
+                        MeetingRow.captured_at < t,
+                        and_(
+                            MeetingRow.captured_at == t,
+                            MeetingRow.id < cursor["i"],
+                        ),
+                    )
+                )
+            q = q.order_by(
+                MeetingRow.captured_at.desc(), MeetingRow.id.desc()
+            ).limit(limit + 1)
+            rows = session.execute(q).all()
+            has_more = len(rows) > limit
+            page = [
                 Meeting(
                     id=meeting.id,
                     title=meeting.title,
                     capturedAt=meeting.captured_at.isoformat(),
                     itemCount=count,
                 )
-                for meeting, count in rows
+                for meeting, count in rows[:limit]
             ]
+            next_cursor = (
+                {"t": page[-1].capturedAt, "i": page[-1].id}
+                if has_more and page
+                else None
+            )
+            return page, next_cursor
 
     def get_meeting(
         self, user_id: int, meeting_id: int

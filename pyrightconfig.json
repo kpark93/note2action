@@ -1,0 +1,14 @@
+{
+  "extraPaths": ["apps/api"],
+  "venvPath": "apps/api",
+  "venv": ".venv",
+  "exclude": [
+    "**/node_modules",
+    "**/__pycache__",
+    "**/.venv",
+    "apps/web",
+    "apps/ai",
+    "packages"
+  ],
+  "typeCheckingMode": "off"
+}

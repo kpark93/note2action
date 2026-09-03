@@ -1,6 +1,6 @@
 /** Detail dialog for one action item, opened by clicking a Tasks or History
  * row — every edit is an optimistic write. Next hop: usePatchItem. */
-import { useItemsQuery, usePatchItem } from "@/domain/items/items.queries";
+import { useItemQuery, usePatchItem } from "@/domain/items/items.queries";
 import { OWNERS, PRIORITIES, STATUSES } from "@/domain/items/items.constants";
 import { formatDate } from "@/lib/dates";
 import type { Priority, Status } from "@/domain/items/items.types";
@@ -33,9 +33,8 @@ const FIELD_TRIGGER =
 
 /** Title, owner/due/priority/status fields, and the editable AI rationale. */
 export function ItemModal({ itemId, onClose }: ItemModalProps) {
-  const items = useItemsQuery().data ?? [];
   const patchItem = usePatchItem();
-  const item = items.find((i) => i.id === itemId) ?? null;
+  const item = useItemQuery(itemId).data ?? null;
 
   // Text fields save on blur (one PATCH per edit, not per keystroke);
   // selects and the date input save immediately — same optimistic write

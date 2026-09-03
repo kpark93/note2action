@@ -1,7 +1,7 @@
 /** Step 2 of the flow: the queue of extracted-but-unsaved items, editable
  * inline, with a batch "Save to Tasks". Next hop: items.queries → ReviewCard. */
 import { useNavigate } from "react-router-dom";
-import { useItemsQuery, useSaveToTasks } from "@/domain/items/items.queries";
+import { useReviewQuery, useSaveToTasks } from "@/domain/items/items.queries";
 import { reviewItems, reviewSentence } from "./review.utils";
 import { ReviewCard } from "./components/review-card";
 import { StepLabel } from "@/components/app/step-label";
@@ -13,7 +13,7 @@ import { Toolbar } from "@/components/app/toolbar";
 import { Button } from "@/components/ui/button";
 
 export function ReviewView() {
-  const { data, isPending } = useItemsQuery();
+  const { data, isPending } = useReviewQuery();
   const items = data ?? [];
   const navigate = useNavigate();
   const saveToTasks = useSaveToTasks();

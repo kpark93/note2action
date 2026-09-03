@@ -4,7 +4,7 @@ used by tests and Docker-free dev. Implements the same protocols.py shapes."""
 from dataclasses import dataclass
 from datetime import date, datetime, timezone
 
-from app.schemas.items import ActionItem, ActionItemPatch
+from app.schemas.items import ActionItem, ActionItemPatch, ItemSummary
 from app.schemas.meetings import (
     CreateMeetingRequest,
     CreateMeetingResponse,
@@ -129,6 +129,125 @@ class MemoryItemRepository:
             if self.state.owns_meeting(user_id, item.meetingId)
         ]
 
+    def list_tasks_page(
+        self,
+        user_id: int,
+        owner: str | None,
+        status: str | None,
+        priority: str | None,
+        cursor: dict | None,
+        limit: int,
+    ) -> tuple[list[ActionItem], dict | None]:
+        """Python twin of the Postgres keyset walk — same order, same
+        cursor semantics, so route tests exercise the real contract."""
+        rows = sorted(
+            (
+                it
+                for it in self.list_items(user_id)
+                if it.saved
+                and it.status != "Done"
+                and (owner is None or it.owner == owner)
+                and (status is None or it.status == status)
+                and (priority is None or it.priority == priority)
+            ),
+            # ISO date strings sort chronologically; None (undated) sorts last.
+            key=lambda it: (it.due is None, it.due or "", it.id),
+        )
+        if cursor is not None:
+            d, i = cursor["d"], cursor["i"]
+            rows = [
+                it
+                for it in rows
+                if (
+                    (it.due is None and it.id > i)
+                    if d is None
+                    else (
+                        it.due is None
+                        or it.due > d
+                        or (it.due == d and it.id > i)
+                    )
+                )
+            ]
+        page, more = rows[:limit], rows[limit:]
+        next_cursor = (
+            {"d": page[-1].due, "i": page[-1].id} if more and page else None
+        )
+        return page, next_cursor
+
+    def list_history_page(
+        self,
+        user_id: int,
+        owner: str | None,
+        cursor: dict | None,
+        limit: int,
+    ) -> tuple[list[ActionItem], dict | None]:
+        """Done items, newest completion first (completed is never None for
+        Done rows — the DB CHECK guarantees it)."""
+        rows = sorted(
+            (
+                it
+                for it in self.list_items(user_id)
+                if it.status == "Done"
+                and (owner is None or it.owner == owner)
+            ),
+            key=lambda it: (it.completed or "", it.id),
+            reverse=True,
+        )
+        if cursor is not None:
+            c, i = cursor["c"], cursor["i"]
+            rows = [
+                it
+                for it in rows
+                if (it.completed or "") < c
+                or ((it.completed or "") == c and it.id < i)
+            ]
+        page, more = rows[:limit], rows[limit:]
+        next_cursor = (
+            {"c": page[-1].completed, "i": page[-1].id}
+            if more and page
+            else None
+        )
+        return page, next_cursor
+
+    def list_review(self, user_id: int) -> list[ActionItem]:
+        """Pending queue — unsaved and still open, in insertion order."""
+        return [
+            it
+            for it in self.list_items(user_id)
+            if not it.saved and it.status != "Done"
+        ]
+
+    def get_item(self, user_id: int, item_id: int) -> ActionItem | None:
+        """One item; None when missing or someone else's (route → 404)."""
+        for it in self.list_items(user_id):
+            if it.id == item_id:
+                return it
+        return None
+
+    def count_summary(self, user_id: int) -> ItemSummary:
+        """The sidebar's + History stats' counts, without shipping rows."""
+        mine = self.list_items(user_id)
+        done = [it for it in mine if it.status == "Done"]
+        review = sum(
+            1 for it in mine if not it.saved and it.status != "Done"
+        )
+        on_time = sum(
+            1
+            for it in done
+            if it.due is None or (it.completed or "") <= it.due
+        )
+        meetings = sum(
+            1 for r in self.state.meetings if r.user_id == user_id
+        )
+        return ItemSummary(
+            done=len(done),
+            open=len(mine) - len(done),
+            review=review,
+            total=len(mine),
+            onTime=on_time,
+            meetings=meetings,
+        )
+
     def update_item(
         self, user_id: int, item_id: int, patch: ActionItemPatch
     ) -> ActionItem | None:
@@ -221,16 +340,31 @@ class MemoryMeetingRepository:
             items=created,
         )
 
-    def list_meetings(self, user_id: int, limit: int) -> list[Meeting]:
-        """The user's most recent meetings, newest first, capped at limit."""
-        newest_first = sorted(
+    def list_meetings_page(
+        self, user_id: int, cursor: dict | None, limit: int
+    ) -> tuple[list[Meeting], dict | None]:
+        """Newest first by (captured_at DESC, id DESC); keyset payloads."""
+        records = sorted(
             (
                 record
                 for record in self.state.meetings
                 if record.user_id == user_id
             ),
-            key=lambda record: record.captured_at,
+            key=lambda record: (record.captured_at, record.id),
             reverse=True,
+        )
+        if cursor is not None:
+            t, i = cursor["t"], cursor["i"]
+            records = [
+                r
+                for r in records
+                if r.captured_at < t or (r.captured_at == t and r.id < i)
+            ]
+        page, more = records[:limit], records[limit:]
+        next_cursor = (
+            {"t": page[-1].captured_at, "i": page[-1].id}
+            if more and page
+            else None
         )
         return [
             Meeting(
@@ -239,8 +373,8 @@ class MemoryMeetingRepository:
                 capturedAt=record.captured_at,
                 itemCount=self.state.item_count(record.id),
             )
-            for record in newest_first[:limit]
-        ]
+            for record in page
+        ], next_cursor
 
     def get_meeting(
         self, user_id: int, meeting_id: int

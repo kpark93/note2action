@@ -34,6 +34,27 @@ export const ItemsResponse = z.object({
 });
 export type ItemsResponse = z.infer<typeof ItemsResponse>;
 
+/** GET /api/items?view=tasks|history|review — one keyset page. nextCursor is
+ * opaque (base64 of the last row's sort key + id); null = no more pages. */
+export const ItemsPage = z.object({
+  items: z.array(ActionItem),
+  nextCursor: z.string().nullable(),
+});
+export type ItemsPage = z.infer<typeof ItemsPage>;
+
+/** GET /api/items/summary — the counts the sidebar and History stats need,
+ * computed in SQL so no view ever fetches all rows just to count them. */
+export const ItemSummary = z.object({
+  done: z.number().int(),
+  open: z.number().int(),
+  review: z.number().int(),
+  total: z.number().int(),
+  /** Done items closed on/before their due date (undated counts as on time). */
+  onTime: z.number().int(),
+  meetings: z.number().int(),
+});
+export type ItemSummary = z.infer<typeof ItemSummary>;
+
 /** PATCH /api/items/{id} body — ActionItem's editable fields, all optional.
  * `completed` is deliberately absent: the server stamps it from `status`. */
 export const ActionItemPatch = ActionItem.pick({

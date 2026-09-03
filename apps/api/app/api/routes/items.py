@@ -1,14 +1,18 @@
 """Action item routes — list, edit, delete, bulk-save. Each handler resolves the
 user (api/deps.py), then delegates. Path §1 [hop 8/15]: → services/items.py."""
 
-from fastapi import APIRouter, Depends, HTTPException
+from typing import Literal
+
+from fastapi import APIRouter, Depends, HTTPException, Query
 
 from app.api.deps import current_user_id, get_repositories
+from app.core.cursor import CursorError
 from app.repositories.protocols import Repositories
 from app.schemas import (
     ActionItem,
     ActionItemPatch,
-    ItemsResponse,
+    ItemsPage,
+    ItemSummary,
     SaveToTasksResponse,
 )
 from app.services import items as items_service
@@ -16,13 +20,54 @@ from app.services import items as items_service
 router = APIRouter()
 
 
-@router.get("/api/items", response_model=ItemsResponse)
+@router.get("/api/items", response_model=ItemsPage)
 def list_items(
+    view: Literal["tasks", "history", "review"] | None = None,
+    owner: str | None = None,
+    status: str | None = None,
+    priority: str | None = None,
+    cursor: str | None = None,
+    limit: int = Query(default=20, ge=1, le=100),
     user_id: int = Depends(current_user_id),
     repos: Repositories = Depends(get_repositories),
-) -> ItemsResponse:
-    """GET /api/items: delegates to services/items.py list_items."""
-    return ItemsResponse(items=items_service.list_items(repos.items, user_id))
+) -> ItemsPage:
+    """GET /api/items: bare = the legacy full list; with `view` = one keyset
+    page (services/items.py list_page). A cursor we didn't mint is a 422."""
+    if view is None:
+        return ItemsPage(
+            items=items_service.list_items(repos.items, user_id),
+            nextCursor=None,
+        )
+    try:
+        return items_service.list_page(
+            repos.items, user_id, view, owner, status, priority, cursor, limit
+        )
+    except CursorError as exc:
+        raise HTTPException(status_code=422, detail="Invalid cursor") from exc
+
+
+# Declared before /api/items/{item_id}: route order decides whether "summary"
+# is a path segment or a (failing) integer item id.
+@router.get("/api/items/summary", response_model=ItemSummary)
+def item_summary(
+    user_id: int = Depends(current_user_id),
+    repos: Repositories = Depends(get_repositories),
+) -> ItemSummary:
+    """GET /api/items/summary: sidebar counts via services/items.py."""
+    return items_service.summarize(repos.items, user_id)
+
+
+@router.get("/api/items/{item_id}", response_model=ActionItem)
+def get_item(
+    item_id: int,
+    user_id: int = Depends(current_user_id),
+    repos: Repositories = Depends(get_repositories),
+) -> ActionItem:
+    """GET /api/items/{id}: one item; 404-not-403 for missing/not theirs."""
+    item = items_service.get_item(repos.items, user_id, item_id)
+    if item is None:
+        raise HTTPException(status_code=404, detail="Item not found")
+    return item
 
 
 @router.patch("/api/items/{item_id}", response_model=ActionItem)

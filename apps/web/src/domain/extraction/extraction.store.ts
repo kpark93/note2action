@@ -71,7 +71,7 @@ export const useActionItems = create<ActionItemsState>()(
             items: extracted,
           });
           // The server now owns the truth — make every view refetch it.
-          await queryClient.invalidateQueries({ queryKey: itemsKey });
+          await queryClient.invalidateQueries({ queryKey: itemsKey.all });
           await queryClient.invalidateQueries({ queryKey: meetingsKey.all });
           set({ extracting: false }, false, "extraction/extractNotes:done");
         } catch (err) {

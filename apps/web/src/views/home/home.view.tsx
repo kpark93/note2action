@@ -3,8 +3,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "@clerk/clerk-react";
-import { useItemsQuery } from "@/domain/items/items.queries";
-import { pendingItems, savedTasks } from "@/domain/items/items.utils";
+import { useSummaryQuery } from "@/domain/items/items.queries";
 import { Button } from "@/components/ui/button";
 import { ViewShell } from "@/components/app/view-shell";
 import { RecapCard } from "./components/recap-card";
@@ -18,7 +17,7 @@ const GREETINGS = [
 ];
 
 export function HomeView() {
-  const items = useItemsQuery().data ?? [];
+  const summary = useSummaryQuery().data;
   const navigate = useNavigate();
   const { user } = useUser();
   const firstName = user?.firstName ?? "there";
@@ -27,8 +26,9 @@ export function HomeView() {
   );
   const greeting = greet(firstName);
 
-  const toReview = pendingItems(items).length;
-  const openTasks = savedTasks(items).length;
+  const toReview = summary?.review ?? 0;
+  // summary.open counts saved + unsaved open items; Tasks shows the saved ones.
+  const openTasks = summary ? summary.open - summary.review : 0;
 
   const summaryLine =
     toReview === 0 && openTasks === 0

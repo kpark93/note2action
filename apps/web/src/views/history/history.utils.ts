@@ -1,7 +1,7 @@
-/** Pure view-model builders for the History screen — no network, no state;
- * shapes raw items from useItemsQuery for display. */
+/** Pure view-model builders for the History screen — filtering and ordering
+ * moved server-side (view=history keyset); grouping and stat tiles live here. */
+import type { ItemSummary } from "@note2action/shared";
 import type { ActionItem } from "@/domain/items/items.types";
-import { doneItems, openItems } from "@/domain/items/items.utils";
 import { formatDate, weekOf } from "@/lib/dates";
 
 /** "Today" is pinned so the seeded due/completed dates stay meaningful. */
@@ -14,18 +14,12 @@ export interface HistoryGroupVM {
   items: (ActionItem & { completedLabel: string })[];
 }
 
-/** Completed items filtered by owner, grouped into week buckets newest first;
- * each item carries a pre-formatted completedLabel. */
-export function historyGroups(
-  items: ActionItem[],
-  historyOwner: string,
-): HistoryGroupVM[] {
-  const done = doneItems(items)
-    .filter((i) => historyOwner === "All" || i.owner === historyOwner)
-    .sort((a, b) => (b.completed || "").localeCompare(a.completed || ""));
-
+/** Server-ordered Done items → week buckets, newest bucket first; each item
+ * carries a pre-formatted completedLabel. Arrival order is preserved inside
+ * a bucket — the server already sorted by completion. */
+export function historyGroups(items: ActionItem[]): HistoryGroupVM[] {
   const groupMap: Record<string, ActionItem[]> = {};
-  for (const it of done) {
+  for (const it of items) {
     const k = weekOf(it.completed || TODAY);
     (groupMap[k] ||= []).push(it);
   }
@@ -54,39 +48,39 @@ export interface StatVM {
   delta: string;
 }
 
-/** Builds the three StatCard tiles: completed all-time, on-time rate, still open. */
-export function historyStats(
-  items: ActionItem[],
-  meetingCount: number,
-): StatVM[] {
-  const done = doneItems(items);
-  const open = openItems(items);
-  const total = items.length;
-  const onTime = done.filter(
-    (i) => !i.due || (i.completed || "") <= i.due,
-  ).length;
-  const donePct = total ? Math.round((done.length / total) * 100) : 0;
-  const onTimePct = done.length ? Math.round((onTime / done.length) * 100) : 0;
+/** The three StatCard tiles, computed from the server's summary counts —
+ * loaded pages can't be the basis, they grow as the user scrolls. */
+export function historyStats(summary: ItemSummary): StatVM[] {
+  const donePct = summary.total
+    ? Math.round((summary.done / summary.total) * 100)
+    : 0;
+  const onTimePct = summary.done
+    ? Math.round((summary.onTime / summary.done) * 100)
+    : 0;
 
   return [
     {
       label: "Completed all time",
-      value: done.length,
+      value: summary.done,
       percent: donePct,
       barColor: "hsl(var(--primary))",
-      delta: `across ${meetingCount} ${meetingCount === 1 ? "meeting" : "meetings"}`,
+      delta: `across ${summary.meetings} ${
+        summary.meetings === 1 ? "meeting" : "meetings"
+      }`,
     },
     {
       label: "Closed on or before due date",
-      value: done.length ? onTimePct + "%" : "—",
+      value: summary.done ? onTimePct + "%" : "—",
       percent: onTimePct,
       barColor: "hsl(var(--primary) / 0.65)",
-      delta: onTime + " of " + done.length,
+      delta: summary.onTime + " of " + summary.done,
     },
     {
       label: "Still open",
-      value: open.length,
-      percent: total ? Math.round((open.length / total) * 100) : 0,
+      value: summary.open,
+      percent: summary.total
+        ? Math.round((summary.open / summary.total) * 100)
+        : 0,
       barColor: "hsl(var(--muted-foreground))",
       delta: "in Tasks",
     },
