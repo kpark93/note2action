@@ -12,5 +12,9 @@ export function getHealth() {
 
 /** TanStack Query hook for the API health check (drives the sidebar status dot). */
 export function useHealth() {
-  return useQuery({ queryKey: healthKey, queryFn: getHealth });
+  return useQuery({
+    queryKey: healthKey,
+    queryFn: getHealth,
+    refetchOnWindowFocus: false,
+  });
 }
