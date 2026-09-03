@@ -13,8 +13,10 @@ interface LoadMoreSentinelProps {
 }
 
 /** IntersectionObserver-driven: purely event-based, no scroll math, no
- * timers. The observer re-fires whenever the sentinel re-enters the
- * viewport, so a short first page keeps loading until it fills the screen. */
+ * timers. One subtlety: the observer only fires on visibility *transitions*,
+ * so a sentinel that stays on screen after a short page loads would stall
+ * the walk — the loading→idle effect below re-asks in that case, chaining
+ * pages until the sentinel finally scrolls out of view or pages run out. */
 export function LoadMoreSentinel({
   onVisible,
   disabled,
@@ -24,18 +26,30 @@ export function LoadMoreSentinel({
   // Latest callback without re-creating the observer every render.
   const onVisibleRef = useRef(onVisible);
   onVisibleRef.current = onVisible;
+  // Live visibility, updated on every transition in both directions.
+  const intersectingRef = useRef(false);
 
   useEffect(() => {
     const el = ref.current;
     if (!el || disabled) return;
     const observer = new IntersectionObserver((entries) => {
-      if (entries.some((entry) => entry.isIntersecting)) {
-        onVisibleRef.current();
-      }
+      intersectingRef.current = entries.some((entry) => entry.isIntersecting);
+      if (intersectingRef.current) onVisibleRef.current();
     });
     observer.observe(el);
-    return () => observer.disconnect();
+    return () => {
+      intersectingRef.current = false;
+      observer.disconnect();
+    };
   }, [disabled]);
+
+  useEffect(() => {
+    // A page just settled (loading flipped false) with the sentinel still
+    // visible: no intersection transition is coming — request the next page.
+    if (!disabled && !loading && intersectingRef.current) {
+      onVisibleRef.current();
+    }
+  }, [disabled, loading]);
 
   if (disabled) return null;
   return (
