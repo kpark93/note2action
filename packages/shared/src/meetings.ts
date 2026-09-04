@@ -38,9 +38,17 @@ export const MeetingsResponse = z.object({
 });
 export type MeetingsResponse = z.infer<typeof MeetingsResponse>;
 
-/** GET /api/meetings/{id} — a Meeting plus its transcript, said as the
- * relationship (extend), not a restated shape. */
+/** GET /api/meetings with `cursor` — one keyset page, newest first. */
+export const MeetingsPage = z.object({
+  meetings: z.array(Meeting),
+  nextCursor: z.string().nullable(),
+});
+export type MeetingsPage = z.infer<typeof MeetingsPage>;
+
+/** GET /api/meetings/{id} — a Meeting plus its transcript and the items
+ * extracted from it, said as the relationship (extend), not a restated shape. */
 export const MeetingDetail = Meeting.extend({
   rawNotes: z.string(),
+  items: z.array(ActionItem),
 });
 export type MeetingDetail = z.infer<typeof MeetingDetail>;

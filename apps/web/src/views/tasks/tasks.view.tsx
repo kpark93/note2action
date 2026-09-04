@@ -2,13 +2,17 @@
  * dropdown per row (optimistic writes). Path §1 [hop 2/15]: → items.queries. */
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useItemsQuery, usePatchItem } from "@/domain/items/items.queries";
+import {
+  usePatchItem,
+  useSummaryQuery,
+  useTasksInfinite,
+} from "@/domain/items/items.queries";
 import { useTasksStore } from "./tasks.store";
 import { OWNERS, PRIORITIES, STATUSES } from "@/domain/items/items.constants";
-import { savedTasks } from "@/domain/items/items.utils";
 import { taskRows } from "./tasks.utils";
 import { TaskRow } from "./components/task-row";
 import { ItemModal } from "@/components/app/item-modal";
+import { LoadMoreSentinel } from "@/components/app/load-more-sentinel";
 import { playPop } from "@/lib/sound";
 import type { Status } from "@/domain/items/items.types";
 import { Button } from "@/components/ui/button";
@@ -25,7 +29,6 @@ const OPEN_STATUSES = STATUSES.slice(0, 3);
 const STATUS_SECTIONS: Status[] = ["In progress", "Blocked", "Not started"];
 
 export function TasksView() {
-  const items = useItemsQuery().data ?? [];
   const filterOwner = useTasksStore((s) => s.filterOwner);
   const filterStatus = useTasksStore((s) => s.filterStatus);
   const filterPriority = useTasksStore((s) => s.filterPriority);
@@ -61,8 +64,19 @@ export function TasksView() {
     setCompletingId((cur) => (cur === id ? null : cur));
   };
 
-  const rows = taskRows(items, filterOwner, filterStatus, filterPriority);
-  const savedCount = savedTasks(items).length;
+  // Filters ride in the query key — changing one starts a fresh server walk.
+  const tasksQuery = useTasksInfinite(
+    filterOwner,
+    filterStatus,
+    filterPriority,
+  );
+  const rows = taskRows(
+    tasksQuery.data?.pages.flatMap((page) => page.items) ?? [],
+  );
+  // Total saved-open count comes from the summary — the loaded pages can't
+  // know it. (summary.open includes Review items; subtract them.)
+  const summary = useSummaryQuery().data;
+  const savedCount = summary ? summary.open - summary.review : 0;
 
   return (
     <ViewShell>
@@ -71,7 +85,8 @@ export function TasksView() {
         title="Tasks"
         description={
           <>
-            {rows.length} of {savedCount} open items · completed work moves to{" "}
+            {rows.length} loaded of {savedCount} open items · completed work
+            moves to{" "}
             <a
               href="#"
               onClick={(e) => {
@@ -125,9 +140,11 @@ export function TasksView() {
       <ScrollRegion className="flex flex-col gap-4">
         {rows.length === 0 ? (
           <div className="rounded-[16px] bg-card px-5 py-[52px] text-center text-[13.5px] text-muted-foreground">
-            {savedCount === 0
-              ? "No tasks yet — save items from the Review tab."
-              : "No open items match these filters."}
+            {tasksQuery.isPending
+              ? "Loading tasks…"
+              : savedCount === 0
+                ? "No tasks yet — save items from the Review tab."
+                : "No open items match these filters."}
           </div>
         ) : (
           STATUS_SECTIONS.map((status) => {
@@ -136,7 +153,9 @@ export function TasksView() {
             return (
               <section key={status}>
                 <SectionHeading label={status} count={sectionRows.length} />
-                <div className="flex flex-col gap-[7px]">
+                {/* 2-up at xl; narrower viewports keep the single column —
+                    the row's fixed cells need ~440px before the title. */}
+                <div className="grid grid-cols-1 gap-[7px] xl:grid-cols-2 xl:gap-x-[10px]">
                   {sectionRows.map((row) => (
                     <TaskRow
                       key={row.id}
@@ -152,6 +171,15 @@ export function TasksView() {
             );
           })
         )}
+        <LoadMoreSentinel
+          disabled={!tasksQuery.hasNextPage}
+          loading={tasksQuery.isFetchingNextPage}
+          onVisible={() => {
+            if (tasksQuery.hasNextPage && !tasksQuery.isFetchingNextPage) {
+              void tasksQuery.fetchNextPage();
+            }
+          }}
+        />
       </ScrollRegion>
 
       <ItemModal itemId={openItemId} onClose={() => setOpenItemId(null)} />

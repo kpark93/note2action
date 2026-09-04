@@ -5,5 +5,12 @@
     "**/__pycache__": true,
     "**/.pytest_cache": true,
     "**/.ruff_cache": true
-  }
+  },
+
+  // Cmd-click / go-to-definition for apps/api. Cursor Pyright is the language
+  // server (Pylance is not supported here); leave python.languageServer off
+  // so the two don't fight. extraPaths is in pyrightconfig.json because
+  // cursorpyright ignores these settings when a pyproject.toml exists.
+  "python.defaultInterpreterPath": "${workspaceFolder}/apps/api/.venv/bin/python",
+  "python.languageServer": "None"
 }

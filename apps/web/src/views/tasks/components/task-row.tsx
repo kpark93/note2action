@@ -1,8 +1,7 @@
 /** One task row: owner, title, due, priority, status dropdown, send-back icon.
  * Next hop: usePatchItem for send-back; status changes call onStatusChange. */
 import { usePatchItem } from "@/domain/items/items.queries";
-import { STATUSES } from "@/domain/items/items.constants";
-import { STATUS_STYLE } from "@/views/tasks/tasks.utils";
+import { STATUSES, STATUS_STYLE } from "@/domain/items/items.constants";
 import type { TaskRowVM } from "@/views/tasks/tasks.utils";
 import type { Status } from "@/domain/items/items.types";
 import { Undo2 } from "lucide-react";
@@ -17,7 +16,9 @@ import {
 } from "@/components/ui/select";
 
 /** Shared grid template so every row's columns line up without a header row. */
-export const COLS = "grid-cols-[minmax(0,1fr)_96px_88px_132px_34px]";
+/** Metadata cells sized to their content so the cluster hugs the right edge
+ * and the 1fr title keeps every remaining pixel. */
+export const COLS = "grid-cols-[minmax(0,1fr)_68px_72px_118px_30px]";
 
 interface TaskRowProps {
   row: TaskRowVM;
@@ -57,7 +58,7 @@ export function TaskRow({
       onKeyDown={(e) => {
         if (e.key === "Enter" && e.target === e.currentTarget) onOpen(row.id);
       }}
-      className={`task-row grid ${COLS} cursor-pointer items-center gap-[14px] rounded-[14px] bg-card px-4 py-[10px] ${
+      className={`task-row grid ${COLS} cursor-pointer items-center gap-[10px] rounded-[14px] bg-card px-4 py-[10px] ${
         isCompleting ? "task-complete" : "n2a-row"
       }`}
       style={isCompleting ? undefined : { animationDelay: row.delay }}

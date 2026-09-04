@@ -116,6 +116,17 @@ def test_get_meeting_returns_transcript() -> None:
     assert body["itemCount"] == 1
 
 
+def test_get_meeting_includes_only_its_items() -> None:
+    meeting_id = _capture("Standup")
+    _capture("Other meeting")
+
+    body = client.get(f"/api/meetings/{meeting_id}").json()
+    assert [item["title"] for item in body["items"]] == ["Item from Standup"]
+    # Full ActionItem shape — the modal renders status pills from these.
+    assert body["items"][0]["status"] == "Not started"
+    assert body["items"][0]["meetingId"] == meeting_id
+
+
 def test_get_unknown_meeting_returns_404() -> None:
     response = client.get("/api/meetings/999")
     assert response.status_code == 404

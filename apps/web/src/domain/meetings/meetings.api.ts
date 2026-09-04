@@ -3,6 +3,7 @@
 import {
   CreateMeetingResponse,
   MeetingDetail,
+  MeetingsPage,
   MeetingsResponse,
   type CreateMeetingRequest,
   type Meeting,
@@ -25,6 +26,15 @@ export async function fetchMeetings(limit = 3): Promise<Meeting[]> {
     schema: MeetingsResponse,
   });
   return meetings;
+}
+
+/** One keyset page of captures for the Meetings screen's infinite walk. */
+export async function fetchMeetingsPage(
+  cursor: string | null,
+): Promise<MeetingsPage> {
+  const params = new URLSearchParams({ limit: "20" });
+  if (cursor) params.set("cursor", cursor);
+  return request(`/api/meetings?${params}`, { schema: MeetingsPage });
 }
 
 /** One full capture, transcript included — the modal. */

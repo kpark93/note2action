@@ -22,6 +22,35 @@ export function applyPatch(
   });
 }
 
+/** applyPatch lifted over infinite pages — state updates in place; position
+ * stays stale until the settle-time refetch reorders it (server's call). */
+export function patchPages<P extends { items: ActionItem[] }>(
+  data: { pages: P[]; pageParams: unknown[] },
+  id: number,
+  patch: ItemPatch,
+): { pages: P[]; pageParams: unknown[] } {
+  return {
+    ...data,
+    pages: data.pages.map((page) => ({
+      ...page,
+      items: applyPatch(page.items, id, patch),
+    })),
+  };
+}
+
+/** First copy of an item found across a pages structure, or undefined —
+ * lets the detail query start from cache instead of fetching. */
+export function findInPages<P extends { items: ActionItem[] }>(
+  data: { pages: P[] } | undefined,
+  id: number,
+): ActionItem | undefined {
+  for (const page of data?.pages ?? []) {
+    const hit = page.items.find((item) => item.id === id);
+    if (hit) return hit;
+  }
+  return undefined;
+}
+
 /** Drop one item from the cache. Used by useDeleteItem's optimistic update. */
 export function removeItem(items: ActionItem[], id: number): ActionItem[] {
   return items.filter((item) => item.id !== id);

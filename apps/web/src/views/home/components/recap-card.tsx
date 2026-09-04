@@ -1,10 +1,10 @@
-/** One of the two clickable tiles on Home ("N to review", "N open tasks").
+/** One clickable summary tile on Home ("N to review", "N meetings captured").
  * Leaf — no further calls. */
 interface RecapCardProps {
   value: number;
   label: string;
   cta: string;
-  /** Navigates to the relevant screen (Review or Tasks); set by the caller. */
+  /** Navigates to the relevant screen; set by the caller. */
   onClick: () => void;
 }
 

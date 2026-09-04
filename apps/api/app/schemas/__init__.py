@@ -5,7 +5,9 @@ from .health import HealthResponse
 from .items import (
     ActionItem,
     ActionItemPatch,
+    ItemsPage,
     ItemsResponse,
+    ItemSummary,
     Priority,
     SaveToTasksResponse,
     Status,
@@ -16,6 +18,7 @@ from .meetings import (
     ExtractedItem,
     Meeting,
     MeetingDetail,
+    MeetingsPage,
     MeetingsResponse,
 )
 
@@ -26,9 +29,12 @@ __all__ = [
     "CreateMeetingResponse",
     "ExtractedItem",
     "HealthResponse",
+    "ItemSummary",
+    "ItemsPage",
     "ItemsResponse",
     "Meeting",
     "MeetingDetail",
+    "MeetingsPage",
     "MeetingsResponse",
     "Priority",
     "SaveToTasksResponse",

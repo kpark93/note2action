@@ -48,10 +48,20 @@ class MeetingsResponse(BaseModel):
 
 
 class MeetingDetail(BaseModel):
-    """GET /api/meetings/{id} — one full capture, transcript included."""
+    """GET /api/meetings/{id} — one full capture: transcript plus the
+    items extracted from it (the modal's status pills)."""
 
     id: int
     title: str
     rawNotes: str
     capturedAt: str
     itemCount: int
+    items: list[ActionItem]
+
+
+class MeetingsPage(BaseModel):
+    """GET /api/meetings — one keyset page, newest first; mirrors
+    packages/shared MeetingsPage. nextCursor None = no more pages."""
+
+    meetings: list[Meeting]
+    nextCursor: str | None

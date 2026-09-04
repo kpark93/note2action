@@ -1,7 +1,8 @@
 /** Full list of saved captures (the Capture screen's RECENT strip caps at 3;
  * this has no limit). Next hop: meetings.queries + openRecent() → RecentModal. */
-import { useMeetingsQuery } from "@/domain/meetings/meetings.queries";
+import { useMeetingsInfinite } from "@/domain/meetings/meetings.queries";
 import { useActionItems } from "@/domain/extraction/extraction.store";
+import { LoadMoreSentinel } from "@/components/app/load-more-sentinel";
 import { formatDate, timeAgo } from "@/lib/dates";
 import { ViewShell } from "@/components/app/view-shell";
 import { ViewHeader } from "@/components/app/view-header";
@@ -11,10 +12,11 @@ import { EmptyState } from "@/components/app/empty-state";
 /** All saved captures, newest first, as full-width cards — clicking one opens
  * the shared RecentModal via the same store action RECENT uses. */
 export function MeetingsView() {
-  // All meetings, not the RECENT strip's three (limit=1000 stands in for
-  // "no limit" until the API needs real paging).
-  const { data, isPending } = useMeetingsQuery(1000);
-  const meetings = data ?? [];
+  // Real paging now: pages of 20, newest first, loaded as the user scrolls.
+  const meetingsQuery = useMeetingsInfinite();
+  const { isPending } = meetingsQuery;
+  const meetings =
+    meetingsQuery.data?.pages.flatMap((page) => page.meetings) ?? [];
   const openRecent = useActionItems((s) => s.openRecent);
 
   return (
@@ -67,6 +69,18 @@ export function MeetingsView() {
               </span>
             </button>
           ))}
+          <LoadMoreSentinel
+            disabled={!meetingsQuery.hasNextPage}
+            loading={meetingsQuery.isFetchingNextPage}
+            onVisible={() => {
+              if (
+                meetingsQuery.hasNextPage &&
+                !meetingsQuery.isFetchingNextPage
+              ) {
+                void meetingsQuery.fetchNextPage();
+              }
+            }}
+          />
         </ScrollRegion>
       )}
     </ViewShell>

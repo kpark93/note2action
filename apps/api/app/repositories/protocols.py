@@ -4,7 +4,7 @@
 from dataclasses import dataclass
 from typing import Protocol
 
-from app.schemas.items import ActionItem, ActionItemPatch
+from app.schemas.items import ActionItem, ActionItemPatch, ItemSummary
 from app.schemas.meetings import (
     CreateMeetingRequest,
     CreateMeetingResponse,
@@ -28,6 +28,37 @@ class ItemRepository(Protocol):
 
     def list_items(self, user_id: int) -> list[ActionItem]: ...
 
+    def list_tasks_page(
+        self,
+        user_id: int,
+        owner: str | None,
+        status: str | None,
+        priority: str | None,
+        cursor: dict | None,
+        limit: int,
+    ) -> tuple[list[ActionItem], dict | None]:
+        """Saved, still-open items in (due ASC NULLS LAST, id ASC) order.
+        Cursor/next-cursor are decoded keyset payloads, not base64."""
+        ...
+
+    def list_history_page(
+        self,
+        user_id: int,
+        owner: str | None,
+        cursor: dict | None,
+        limit: int,
+    ) -> tuple[list[ActionItem], dict | None]:
+        """Done items in (completed DESC, id DESC) order; keyset payloads."""
+        ...
+
+    def list_review(self, user_id: int) -> list[ActionItem]:
+        """Extracted-but-unsaved open items — the (bounded) Review queue."""
+        ...
+
+    def get_item(self, user_id: int, item_id: int) -> ActionItem | None: ...
+
+    def count_summary(self, user_id: int) -> ItemSummary: ...
+
     def update_item(
         self, user_id: int, item_id: int, patch: ActionItemPatch
     ) -> ActionItem | None: ...
@@ -45,7 +76,11 @@ class MeetingRepository(Protocol):
         self, user_id: int, request: CreateMeetingRequest
     ) -> CreateMeetingResponse: ...
 
-    def list_meetings(self, user_id: int, limit: int) -> list[Meeting]: ...
+    def list_meetings_page(
+        self, user_id: int, cursor: dict | None, limit: int
+    ) -> tuple[list[Meeting], dict | None]:
+        """Newest first by (captured_at DESC, id DESC); keyset payloads."""
+        ...
 
     def get_meeting(
         self, user_id: int, meeting_id: int

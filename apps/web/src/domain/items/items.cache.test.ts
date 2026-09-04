@@ -1,7 +1,53 @@
 import { describe, expect, it } from "vitest";
 import { todayISO } from "@/lib/dates";
 import { makeItem } from "@/test/fixtures";
-import { applyPatch, markAllSaved, removeItem } from "./items.cache";
+import {
+  applyPatch,
+  findInPages,
+  markAllSaved,
+  patchPages,
+  removeItem,
+} from "./items.cache";
+
+describe("findInPages", () => {
+  it("finds an item on any page", () => {
+    const target = makeItem({ title: "Wanted" });
+    const data = {
+      pages: [
+        { items: [makeItem()], nextCursor: "c1" },
+        { items: [target], nextCursor: null },
+      ],
+    };
+    expect(findInPages(data, target.id)).toEqual(target);
+  });
+
+  it("returns undefined for a missing item or absent cache", () => {
+    expect(findInPages({ pages: [] }, 1)).toBeUndefined();
+    expect(findInPages(undefined, 1)).toBeUndefined();
+  });
+});
+
+describe("patchPages", () => {
+  it("patches the matching item wherever it sits in the pages", () => {
+    const target = makeItem({ title: "Old", status: "Not started" });
+    const bystander = makeItem();
+    const data = {
+      pages: [
+        { items: [bystander], nextCursor: "c1" },
+        { items: [target], nextCursor: null },
+      ],
+      pageParams: [null, "c1"],
+    };
+
+    const next = patchPages(data, target.id, { status: "Done" });
+
+    expect(next.pages[1].items[0].status).toBe("Done");
+    // The server rule rides along: Done stamps completed.
+    expect(next.pages[1].items[0].completed).toBe(todayISO());
+    expect(next.pages[0].items[0]).toEqual(bystander);
+    expect(next.pages[1].nextCursor).toBeNull();
+  });
+});
 
 describe("applyPatch", () => {
   it("applies field changes to the matching item only", () => {

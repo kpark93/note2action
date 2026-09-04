@@ -1,15 +1,16 @@
 """Meeting routes — capture a meeting with AI-extracted items, browse past
 captures. Next hop: services/meetings.py → repositories/."""
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 
 from app.api.deps import current_user_id, get_repositories
+from app.core.cursor import CursorError
 from app.repositories.protocols import Repositories
 from app.schemas import (
     CreateMeetingRequest,
     CreateMeetingResponse,
     MeetingDetail,
-    MeetingsResponse,
+    MeetingsPage,
 )
 from app.services import meetings as meetings_service
 
@@ -29,17 +30,21 @@ def create_meeting(
     return meetings_service.create_meeting(repos.meetings, user_id, request)
 
 
-@router.get("/api/meetings", response_model=MeetingsResponse)
+@router.get("/api/meetings", response_model=MeetingsPage)
 def list_meetings(
-    limit: int = 3,
+    limit: int = Query(default=3, ge=1, le=100),
+    cursor: str | None = None,
     user_id: int = Depends(current_user_id),
     repos: Repositories = Depends(get_repositories),
-) -> MeetingsResponse:
-    """GET /api/meetings: delegates to services/meetings.py
-    list_meetings; newest first (default 3)."""
-    return MeetingsResponse(
-        meetings=meetings_service.list_meetings(repos.meetings, user_id, limit)
-    )
+) -> MeetingsPage:
+    """GET /api/meetings: one keyset page, newest first (default 3 — the
+    RECENT strip's size). nextCursor rides along; legacy callers ignore it."""
+    try:
+        return meetings_service.list_meetings_page(
+            repos.meetings, user_id, cursor, limit
+        )
+    except CursorError as exc:
+        raise HTTPException(status_code=422, detail="Invalid cursor") from exc
 
 
 @router.get("/api/meetings/{meeting_id}", response_model=MeetingDetail)

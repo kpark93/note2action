@@ -15,6 +15,5 @@ export function useHealth() {
   return useQuery({
     queryKey: healthKey,
     queryFn: getHealth,
-    refetchOnWindowFocus: false,
   });
 }

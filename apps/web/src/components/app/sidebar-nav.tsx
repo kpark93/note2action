@@ -1,8 +1,7 @@
 /** The workspace nav links inside the sidebar — reads useItemsQuery itself so
  * the Review badge updates from the shared cache, no props from Sidebar. */
 import { NavLink } from "react-router-dom";
-import { useItemsQuery } from "@/domain/items/items.queries";
-import { summary } from "@/domain/items/items.utils";
+import { useSummaryQuery } from "@/domain/items/items.queries";
 import { Badge } from "@/components/ui/badge";
 
 const NAV = [
@@ -16,8 +15,7 @@ const NAV = [
 
 /** Workspace nav links; Review carries a badge counting items awaiting review. */
 export function SidebarNav() {
-  const items = useItemsQuery().data ?? [];
-  const { reviewCount } = summary(items);
+  const reviewCount = useSummaryQuery().data?.review ?? 0;
 
   return (
     <>
