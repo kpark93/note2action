@@ -1,5 +1,5 @@
-/** Landing screen: greeting, one-line summary, two RecapCard tiles. Read-only —
- * items come from the shared TanStack cache, same data every screen sees. */
+/** Landing screen: greeting, one-line summary, four RecapCard tiles. Read-only
+ * — everything comes from the shared summary cache, no fetches of its own. */
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "@clerk/clerk-react";
@@ -29,6 +29,8 @@ export function HomeView() {
   const toReview = summary?.review ?? 0;
   // summary.open counts saved + unsaved open items; Tasks shows the saved ones.
   const openTasks = summary ? summary.open - summary.review : 0;
+  const done = summary?.done ?? 0;
+  const meetings = summary?.meetings ?? 0;
 
   const summaryLine =
     toReview === 0 && openTasks === 0
@@ -60,6 +62,18 @@ export function HomeView() {
           label={`open ${openTasks === 1 ? "task" : "tasks"}`}
           cta="Go to Tasks"
           onClick={() => navigate("/tasks")}
+        />
+        <RecapCard
+          value={done}
+          label={`tasks completed across ${meetings} ${meetings === 1 ? "meeting" : "meetings"}`}
+          cta="Go to History"
+          onClick={() => navigate("/history")}
+        />
+        <RecapCard
+          value={meetings}
+          label={`${meetings === 1 ? "meeting" : "meetings"} captured`}
+          cta="Go to Meetings"
+          onClick={() => navigate("/meetings")}
         />
       </div>
 
