@@ -382,12 +382,18 @@ class MemoryMeetingRepository:
         """One full meeting; None if missing or not the caller's."""
         for record in self.state.meetings:
             if record.id == meeting_id and record.user_id == user_id:
+                items = [
+                    item
+                    for item in self.state.items
+                    if item.meetingId == record.id
+                ]
                 return MeetingDetail(
                     id=record.id,
                     title=record.title,
                     rawNotes=record.raw_notes,
                     capturedAt=record.captured_at,
-                    itemCount=self.state.item_count(record.id),
+                    itemCount=len(items),
+                    items=items,
                 )
         return None
 

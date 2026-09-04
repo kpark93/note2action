@@ -1,8 +1,8 @@
-/** Shared transcript-preview dialog, mounted once in app-layout.tsx — opened by
+/** Shared capture-detail dialog, mounted once in app-layout.tsx — opened by
  * setting `modalMeetingId` in the extraction store (openRecent). */
 import { useRef } from "react";
-import { useNavigate } from "react-router-dom";
 import { useMeetingQuery } from "@/domain/meetings/meetings.queries";
+import { STATUS_STYLE } from "@/domain/items/items.constants";
 import { useActionItems } from "@/domain/extraction/extraction.store";
 import { timeAgo } from "@/lib/dates";
 import {
@@ -16,21 +16,21 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 
-/** Full-transcript preview for a recent capture, with a "Load into capture". */
+/** Transcript plus this meeting's extracted items with read-only status
+ * pills, both from GET /api/meetings/{id}. */
 export function RecentModal() {
   const modalMeetingId = useActionItems((s) => s.modalMeetingId);
   const closeModal = useActionItems((s) => s.closeModal);
-  const loadTranscript = useActionItems((s) => s.loadTranscript);
-  const navigate = useNavigate();
 
   const open = modalMeetingId !== null;
-  // The transcript comes from the API; the query only runs while open.
+  // Transcript + items arrive together on the detail; only runs while open.
   const current = useMeetingQuery(modalMeetingId).data ?? null;
-  // Keep the last transcript rendered through the close animation so the exit
+  // Keep the last capture rendered through the close animation so the exit
   // fade doesn't flash an empty modal.
   const lastRef = useRef(current);
   if (current) lastRef.current = current;
   const meeting = current ?? lastRef.current;
+  const items = meeting?.items ?? [];
   const words = meeting?.rawNotes.trim()
     ? meeting.rawNotes.trim().split(/\s+/).length
     : 0;
@@ -63,8 +63,28 @@ export function RecentModal() {
                 ×
               </DialogClose>
             </DialogHeader>
-            <div className="min-h-0 flex-1 overflow-y-auto px-5 py-[18px] text-[13.5px] leading-[1.75] whitespace-pre-wrap text-foreground">
-              {meeting.rawNotes}
+            <div className="min-h-0 flex-1 overflow-y-auto px-5 py-[18px]">
+              <p className="text-[13.5px] leading-[1.75] whitespace-pre-wrap text-foreground">
+                {meeting.rawNotes}
+              </p>
+              <h3 className="mt-[22px] mb-[10px] text-[11px] font-semibold tracking-[0.08em] text-muted-foreground uppercase">
+                Extracted items
+              </h3>
+              {items.length === 0 ? (
+                <p className="text-[12.5px] text-muted-foreground">
+                  No items from this meeting are still around.
+                </p>
+              ) : (
+                <ul className="flex flex-col gap-[6px]">
+                  {items.map((item) => (
+                    <ItemRow
+                      key={item.id}
+                      title={item.title}
+                      status={item.status}
+                    />
+                  ))}
+                </ul>
+              )}
             </div>
             <DialogFooter className="flex flex-row items-center gap-[10px] border-t border-border px-5 py-[14px] sm:justify-start">
               <span className="text-[12px] text-muted-foreground">
@@ -79,20 +99,38 @@ export function RecentModal() {
                   Close
                 </Button>
               </DialogClose>
-              <Button
-                onClick={() => {
-                  loadTranscript(meeting.title, meeting.rawNotes);
-                  navigate("/capture");
-                }}
-                className="h-9 rounded-[11px] px-4 text-[13px] font-semibold"
-                style={{ boxShadow: "0 8px 22px hsl(var(--primary) / 0.3)" }}
-              >
-                Load into capture
-              </Button>
             </DialogFooter>
           </>
         )}
       </DialogContent>
     </Dialog>
+  );
+}
+
+/** One extracted item: title left, read-only status pill right. */
+function ItemRow({
+  title,
+  status,
+}: {
+  title: string;
+  status: keyof typeof STATUS_STYLE;
+}) {
+  const sc = STATUS_STYLE[status];
+  return (
+    <li className="flex items-center gap-3 rounded-[10px] border border-border px-3 py-[8px]">
+      <span className="min-w-0 flex-1 truncate text-[13px] text-foreground">
+        {title}
+      </span>
+      <span
+        className="flex-none rounded-full border px-[9px] py-[2px] text-[11px] font-medium"
+        style={{
+          background: sc.bg,
+          color: sc.fg,
+          borderColor: sc.border,
+        }}
+      >
+        {status}
+      </span>
+    </li>
   );
 }

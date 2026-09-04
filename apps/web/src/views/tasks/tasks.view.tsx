@@ -153,7 +153,9 @@ export function TasksView() {
             return (
               <section key={status}>
                 <SectionHeading label={status} count={sectionRows.length} />
-                <div className="flex flex-col gap-[7px]">
+                {/* 2-up at xl; narrower viewports keep the single column —
+                    the row's fixed cells need ~440px before the title. */}
+                <div className="grid grid-cols-1 gap-[7px] xl:grid-cols-2 xl:gap-x-[10px]">
                   {sectionRows.map((row) => (
                     <TaskRow
                       key={row.id}

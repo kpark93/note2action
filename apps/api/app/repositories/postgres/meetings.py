@@ -128,15 +128,21 @@ class PostgresMeetingRepository:
             row = session.get(MeetingRow, meeting_id)
             if row is None or row.user_id != user_id:
                 return None
-            count = session.execute(
-                select(func.count())
-                .select_from(ActionItemRow)
-                .where(ActionItemRow.meeting_id == meeting_id)
-            ).scalar_one()
+            item_rows = (
+                session.execute(
+                    select(ActionItemRow)
+                    .where(ActionItemRow.meeting_id == meeting_id)
+                    .order_by(ActionItemRow.id)
+                )
+                .scalars()
+                .all()
+            )
+            items = [to_wire(item, row.title) for item in item_rows]
             return MeetingDetail(
                 id=row.id,
                 title=row.title,
                 rawNotes=row.raw_notes,
                 capturedAt=row.captured_at.isoformat(),
-                itemCount=count,
+                itemCount=len(items),
+                items=items,
             )

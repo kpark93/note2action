@@ -22,8 +22,6 @@ interface ActionItemsState {
   setMeetingTitle: (title: string) => void;
   openRecent: (meetingId: number) => void;
   closeModal: () => void;
-  /** Load a recent capture's transcript into the editor (from the modal). */
-  loadTranscript: (title: string, text: string) => void;
   /** Runs an AI extraction, then persists the capture via the API — lives in
    * the store (not a component) so it keeps running if the user leaves. */
   extractNotes: (payload: ExtractRequest) => void;
@@ -47,12 +45,6 @@ export const useActionItems = create<ActionItemsState>()(
         set({ modalMeetingId: meetingId }, false, "extraction/openRecent"),
       closeModal: () =>
         set({ modalMeetingId: null }, false, "extraction/closeModal"),
-      loadTranscript: (title, text) =>
-        set(
-          { raw: text, meetingTitle: title, modalMeetingId: null },
-          false,
-          "extraction/loadTranscript",
-        ),
 
       extractNotes: async (payload) => {
         if (get().extracting) return; // ignore double-clicks
@@ -70,9 +62,10 @@ export const useActionItems = create<ActionItemsState>()(
             rawNotes: payload.notes,
             items: extracted,
           });
-          // The server now owns the truth — make every view refetch it.
+          // The server now owns the truth. Items block navigation (Review
+          // renders them); the meetings strip refreshes lazily on next look.
           await queryClient.invalidateQueries({ queryKey: itemsKey.all });
-          await queryClient.invalidateQueries({ queryKey: meetingsKey.all });
+          void queryClient.invalidateQueries({ queryKey: meetingsKey.all });
           set({ extracting: false }, false, "extraction/extractNotes:done");
         } catch (err) {
           set(
