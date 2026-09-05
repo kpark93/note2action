@@ -50,7 +50,8 @@ def test_capture_then_done_full_path():
     # Not in the request body — the server stamps it.
     assert done.json()["completed"] is not None
 
-    items = client.get("/api/items", headers=ALICE).json()["items"]
+    # Done + unsaved lives on the history walk, not review or tasks.
+    items = client.get("/api/items?view=history", headers=ALICE).json()["items"]
     target = next(i for i in items if i["id"] == item_id)
     assert target["status"] == "Done"
 
@@ -71,7 +72,7 @@ def test_cross_user_access_is_404_and_invisible():
         client.get(f"/api/meetings/{meeting_id}", headers=BOB).status_code
         == 404
     )
-    assert client.get("/api/items", headers=BOB).json()["items"] == []
+    assert client.get("/api/items?view=review", headers=BOB).json()["items"] == []
 
 
 def test_save_to_tasks_endpoint_counts():

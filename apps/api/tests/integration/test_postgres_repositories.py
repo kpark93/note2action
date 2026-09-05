@@ -59,7 +59,8 @@ def test_done_patch_survives_commit(repos):
     assert result.status == "Done"
     assert result.completed == date.today().isoformat()
     # Fresh session: the write really committed, not just the response.
-    persisted = {i.id: i for i in repos.items.list_items(user_id)}
+    history, _ = repos.items.list_history_page(user_id, None, None, 50)
+    persisted = {i.id: i for i in history}
     assert persisted[item_ids[0]].status == "Done"
     assert persisted[item_ids[0]].completed == date.today().isoformat()
 
@@ -68,8 +69,8 @@ def test_users_see_only_their_own_items(repos):
     alice, alice_items = seed(repos, "user_alice", items=2)
     bob, bob_items = seed(repos, "user_bob", items=1)
 
-    assert {i.id for i in repos.items.list_items(alice)} == set(alice_items)
-    assert {i.id for i in repos.items.list_items(bob)} == set(bob_items)
+    assert {i.id for i in repos.items.list_review(alice)} == set(alice_items)
+    assert {i.id for i in repos.items.list_review(bob)} == set(bob_items)
 
 
 def test_update_foreign_item_returns_none(repos):
@@ -83,7 +84,7 @@ def test_update_foreign_item_returns_none(repos):
         is None
     )
     # Alice's row is untouched by the failed cross-user patch.
-    alice_view = {i.id: i for i in repos.items.list_items(alice)}
+    alice_view = {i.id: i for i in repos.items.list_review(alice)}
     assert alice_view[alice_items[0]].status == "Not started"
 
 
@@ -93,7 +94,7 @@ def test_delete_foreign_item_returns_false(repos):
 
     assert repos.items.delete_item(bob, alice_items[0]) is False
     assert repos.items.delete_item(alice, alice_items[0]) is True
-    assert {i.id for i in repos.items.list_items(alice)} == {alice_items[1]}
+    assert {i.id for i in repos.items.list_review(alice)} == {alice_items[1]}
 
 
 def test_save_all_to_tasks_counts_only_pending(repos):
