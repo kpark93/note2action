@@ -33,7 +33,6 @@ erDiagram
         text owner "free text, NOT a FK - see decision 1"
         date due "nullable - AI may infer none"
         text priority "High | Medium | Low"
-        int confidence "0-100 from AI; Confirm sets 100"
         text status "Not started | In progress | Blocked | Done"
         boolean saved "false = Review queue, true = Tasks list"
         text note "AI's supporting quote, nullable"
@@ -79,19 +78,16 @@ until auth exists.
 
 ## Columns that exist because of the UI
 
-- `confidence` — the Review screen's pill and "needs review" flow
 - `saved` — the Review → Tasks workflow boundary
 - `note` — the supporting quote under each Review card
 - `completed` — History's week grouping and on-time stat
 - `meetings.raw_notes` — the Recent-captures strip and its transcript modal
-  (currently faked by a hard-coded constant; this column makes it real)
 
 ## Deliberately NOT columns (derived on demand)
 
 | UI element                                  | Derived from                                  |
 | ------------------------------------------- | --------------------------------------------- |
 | "N items to review" / "N open tasks" (Home) | counts over `saved` + `status`                |
-| "Low confidence" flag                       | `confidence < 80` (threshold is app config)   |
 | Tasks section grouping                      | `status`                                      |
 | Owner initials circle                       | `owner`                                       |
 | History week groups ("Week of Aug 4")       | `completed`                                   |

@@ -8,8 +8,13 @@ from tests.conftest import AUTH
 client = TestClient(app, headers=AUTH)
 
 
+def test_list_items_without_view_is_rejected() -> None:
+    # The unpaginated full dump is gone: view picks a bounded keyset walk.
+    assert client.get("/api/items").status_code == 422
+
+
 def test_list_items_returns_full_action_items() -> None:
-    response = client.get("/api/items")
+    response = client.get("/api/items?view=review")
     assert response.status_code == 200
     items = response.json()["items"]
     assert len(items) == 2
@@ -58,7 +63,7 @@ def test_delete_removes_item_and_returns_no_content() -> None:
     assert response.status_code == 204
     assert response.content == b""
 
-    remaining = client.get("/api/items").json()["items"]
+    remaining = client.get("/api/items?view=review").json()["items"]
     assert {item["id"] for item in remaining} == {2}
 
 
@@ -74,8 +79,10 @@ def test_save_to_tasks_saves_all_pending_items() -> None:
     assert response.status_code == 200
     assert response.json() == {"updated": 2}
 
-    items = client.get("/api/items").json()["items"]
-    assert all(item["saved"] for item in items)
+    # Saved items leave Review and appear on the Tasks walk.
+    assert client.get("/api/items?view=review").json()["items"] == []
+    items = client.get("/api/items?view=tasks").json()["items"]
+    assert all(item["saved"] for item in items) and len(items) == 2
 
     # Nothing pending anymore — the batch is a valid no-op the second time.
     response = client.post("/api/items/save-to-tasks")

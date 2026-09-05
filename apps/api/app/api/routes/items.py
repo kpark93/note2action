@@ -22,7 +22,7 @@ router = APIRouter()
 
 @router.get("/api/items", response_model=ItemsPage)
 def list_items(
-    view: Literal["tasks", "history", "review"] | None = None,
+    view: Literal["tasks", "history", "review"],
     owner: str | None = None,
     status: str | None = None,
     priority: str | None = None,
@@ -31,13 +31,8 @@ def list_items(
     user_id: int = Depends(current_user_id),
     repos: Repositories = Depends(get_repositories),
 ) -> ItemsPage:
-    """GET /api/items: bare = the legacy full list; with `view` = one keyset
-    page (services/items.py list_page). A cursor we didn't mint is a 422."""
-    if view is None:
-        return ItemsPage(
-            items=items_service.list_items(repos.items, user_id),
-            nextCursor=None,
-        )
+    """GET /api/items: one keyset page of the required `view`'s walk
+    (services/items.py list_page). A cursor we didn't mint is a 422."""
     try:
         return items_service.list_page(
             repos.items, user_id, view, owner, status, priority, cursor, limit

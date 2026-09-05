@@ -48,6 +48,3 @@ infra/terraform.tfvars
 # claude code memory
 .claude/
 .cursor/
-
-#docs
-docs/

@@ -28,12 +28,6 @@ export const ActionItem = z.object({
 });
 export type ActionItem = z.infer<typeof ActionItem>;
 
-/** GET /api/items */
-export const ItemsResponse = z.object({
-  items: z.array(ActionItem),
-});
-export type ItemsResponse = z.infer<typeof ItemsResponse>;
-
 /** GET /api/items?view=tasks|history|review — one keyset page. nextCursor is
  * opaque (base64 of the last row's sort key + id); null = no more pages. */
 export const ItemsPage = z.object({

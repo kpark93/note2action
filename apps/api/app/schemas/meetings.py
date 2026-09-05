@@ -41,12 +41,6 @@ class CreateMeetingResponse(BaseModel):
     items: list[ActionItem]
 
 
-class MeetingsResponse(BaseModel):
-    """GET /api/meetings — recent captures, newest first."""
-
-    meetings: list[Meeting]
-
-
 class MeetingDetail(BaseModel):
     """GET /api/meetings/{id} — one full capture: transcript plus the
     items extracted from it (the modal's status pills)."""

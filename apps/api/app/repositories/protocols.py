@@ -26,7 +26,6 @@ class ItemRepository(Protocol):
     """Persistence boundary for action items; someone else's row looks
     like a missing one (None/False → 404) — never leaking existence."""
 
-    def list_items(self, user_id: int) -> list[ActionItem]: ...
 
     def list_tasks_page(
         self,

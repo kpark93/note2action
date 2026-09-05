@@ -46,12 +46,6 @@ class SaveToTasksResponse(BaseModel):
     updated: int
 
 
-class ItemsResponse(BaseModel):
-    """GET /api/items — every action item the caller owns."""
-
-    items: list[ActionItem]
-
-
 class ItemsPage(BaseModel):
     """One keyset page — mirrors packages/shared ItemsPage. nextCursor is
     opaque base64 (core/cursor.py); None = no more pages."""

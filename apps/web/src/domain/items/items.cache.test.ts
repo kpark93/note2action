@@ -3,11 +3,124 @@ import { todayISO } from "@/lib/dates";
 import { makeItem } from "@/test/fixtures";
 import {
   applyPatch,
+  applySummaryDelta,
   findInPages,
+  keptOnSettle,
   markAllSaved,
   patchPages,
   removeItem,
+  summaryAfterSaveAll,
 } from "./items.cache";
+
+describe("keptOnSettle", () => {
+  it("keeps only the reconciled detail entry", () => {
+    expect(keptOnSettle(["items", "detail", 7], { detailId: 7 })).toBe(true);
+    expect(keptOnSettle(["items", "detail", 8], { detailId: 7 })).toBe(false);
+  });
+
+  it("keeps the summary only when the delta was applied", () => {
+    expect(keptOnSettle(["items", "summary"], { summary: true })).toBe(true);
+    expect(keptOnSettle(["items", "summary"], {})).toBe(false);
+  });
+
+  it("statusOnly keeps walks whose membership cannot change", () => {
+    const keep = { statusOnly: true };
+    expect(keptOnSettle(["items", "tasks", "All", "All", "All"], keep)).toBe(
+      true,
+    );
+    expect(
+      keptOnSettle(["items", "tasks", "Kyle Park", "All", "High"], keep),
+    ).toBe(true);
+    expect(keptOnSettle(["items", "review"], keep)).toBe(true);
+    expect(keptOnSettle(["items", "history", "All"], keep)).toBe(true);
+  });
+
+  it("statusOnly still invalidates status-filtered tasks walks", () => {
+    expect(
+      keptOnSettle(["items", "tasks", "All", "Blocked", "All"], {
+        statusOnly: true,
+      }),
+    ).toBe(false);
+  });
+
+  it("keeps nothing without flags", () => {
+    expect(keptOnSettle(["items", "tasks", "All", "All", "All"], {})).toBe(
+      false,
+    );
+    expect(keptOnSettle(["items", "review"], {})).toBe(false);
+  });
+});
+
+const SUMMARY = {
+  done: 3,
+  open: 5,
+  review: 2,
+  total: 8,
+  onTime: 2,
+  meetings: 4,
+};
+
+describe("applySummaryDelta", () => {
+  it("moves an item from open to done, on time when undated", () => {
+    const before = makeItem({
+      status: "Not started",
+      saved: true,
+      due: undefined,
+    });
+    const after = applyPatch([before], before.id, { status: "Done" })[0];
+    expect(applySummaryDelta(SUMMARY, before, after)).toEqual({
+      ...SUMMARY,
+      done: 4,
+      open: 4,
+      onTime: 3,
+    });
+  });
+
+  it("counts a late completion as done but not on time", () => {
+    const before = makeItem({
+      status: "Blocked",
+      saved: true,
+      due: "2000-01-01",
+    });
+    const after = applyPatch([before], before.id, { status: "Done" })[0];
+    expect(applySummaryDelta(SUMMARY, before, after)).toEqual({
+      ...SUMMARY,
+      done: 4,
+      open: 4,
+    });
+  });
+
+  it("returns an unsaved item to the review bucket on send-back", () => {
+    const before = makeItem({ status: "In progress", saved: true });
+    const after = { ...before, saved: false };
+    expect(applySummaryDelta(SUMMARY, before, after)).toEqual({
+      ...SUMMARY,
+      review: 3,
+    });
+  });
+
+  it("drops every bucket the item occupied on delete", () => {
+    const before = makeItem({ status: "Not started", saved: false });
+    expect(applySummaryDelta(SUMMARY, before, null)).toEqual({
+      ...SUMMARY,
+      open: 4,
+      review: 1,
+      total: 7,
+    });
+  });
+
+  it("never touches the meetings count", () => {
+    const before = makeItem({ status: "Not started", saved: true });
+    const next = applySummaryDelta(SUMMARY, before, null);
+    expect(next.meetings).toBe(SUMMARY.meetings);
+  });
+});
+
+describe("summaryAfterSaveAll", () => {
+  it("empties the review bucket and changes nothing else", () => {
+    expect(summaryAfterSaveAll(SUMMARY)).toEqual({ ...SUMMARY, review: 0 });
+  });
+});
 
 describe("findInPages", () => {
   it("finds an item on any page", () => {

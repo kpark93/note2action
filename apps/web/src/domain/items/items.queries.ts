@@ -26,11 +26,16 @@ import {
 } from "./items.api";
 import {
   applyPatch,
+  applySummaryDelta,
   findInPages,
+  keptOnSettle,
   markAllSaved,
   patchPages,
   removeItem,
+  summaryAfterSaveAll,
+  type SettleKeep,
 } from "./items.cache";
+import type { ItemSummary } from "@note2action/shared";
 import type { ActionItem } from "./items.types";
 
 /** The Review queue — bounded (one capture's worth), so never paginated. */
@@ -115,6 +120,10 @@ export function useItemQuery(id: number | null) {
 
 interface Snapshot {
   previous: ActionItem[] | undefined;
+  /** True when the summary was adjusted by delta — settle keeps it then. */
+  summaryAdjusted?: boolean;
+  /** The item's status before the patch; undefined = wasn't cached. */
+  beforeStatus?: ActionItem["status"];
 }
 
 /** Cancel in-flight item fetches (so they can't overwrite the optimistic
@@ -144,17 +153,28 @@ function rollback(
   toast.error(message);
 }
 
-/** Settle a write: item caches (pages, counts, review, detail) refetch —
- * membership and order are the server's call. `keepDetailId` skips one detail
- * entry a PATCH already reconciled from its response, so an open modal isn't
- * refetched with data it was just handed. */
-function settleItems(queryClient: QueryClient, keepDetailId?: number) {
+/** Settle a write: item caches refetch — membership and order are the
+ * server's call. `keep` (items.cache.ts keptOnSettle) skips entries already
+ * made true client-side; they still heal on natural staleness. */
+function settleItems(queryClient: QueryClient, keep?: SettleKeep) {
   void queryClient.invalidateQueries({
     queryKey: itemsKey.all,
-    predicate: (query) =>
-      keepDetailId === undefined ||
-      !(query.queryKey[1] === "detail" && query.queryKey[2] === keepDetailId),
+    predicate: (query) => !keptOnSettle(query.queryKey, keep ?? {}),
   });
+}
+
+/** Optimistically shift the summary counts for one item's change; returns
+ * false (→ settle refetches instead) when the prior state isn't cached. */
+function adjustSummary(
+  queryClient: QueryClient,
+  before: ActionItem | undefined,
+  after: (before: ActionItem) => ActionItem | null,
+): boolean {
+  if (!before) return false;
+  queryClient.setQueryData<ItemSummary>(itemsKey.summary, (summary) =>
+    summary ? applySummaryDelta(summary, before, after(before)) : summary,
+  );
+  return true;
 }
 
 /** Patch an item in place across every cached tasks/history page — state flips
@@ -183,6 +203,7 @@ export function usePatchItem() {
     mutationFn: ({ id, patch }: { id: number; patch: ItemPatch }) =>
       patchItem(id, patch),
     onMutate: async ({ id, patch }) => {
+      const before = findCachedItem(queryClient, id)?.item;
       const snapshot = await optimistically(queryClient, (items) =>
         applyPatch(items, id, patch),
       );
@@ -190,6 +211,12 @@ export function usePatchItem() {
         item ? applyPatch([item], id, patch)[0] : item,
       );
       patchPageCaches(queryClient, id, patch);
+      snapshot.summaryAdjusted = adjustSummary(
+        queryClient,
+        before,
+        (b) => applyPatch([b], id, patch)[0],
+      );
+      snapshot.beforeStatus = before?.status;
       return snapshot;
     },
     onSuccess: (serverItem) => {
@@ -198,10 +225,27 @@ export function usePatchItem() {
     },
     onError: (_error, _vars, snapshot) =>
       rollback(queryClient, snapshot, "Couldn't save the change — reverted."),
-    // On success the reconciled detail is already truth — keep it; on error
-    // it holds the failed optimistic guess, so let the refetch heal it too.
-    onSettled: (_data, error, { id }) => {
-      settleItems(queryClient, error ? undefined : id);
+    // On success the reconciled detail and delta'd summary are already
+    // truth — keep both; a status-only change between non-Done states also
+    // keeps every walk it can't have moved the item in or out of. On error
+    // the refetch heals everything.
+    onSettled: (_data, error, { id, patch }, snapshot) => {
+      const statusOnly =
+        Object.keys(patch).length === 1 &&
+        patch.status !== undefined &&
+        patch.status !== "Done" &&
+        snapshot?.beforeStatus !== undefined &&
+        snapshot.beforeStatus !== "Done";
+      settleItems(
+        queryClient,
+        error
+          ? undefined
+          : {
+              detailId: id,
+              summary: snapshot?.summaryAdjusted,
+              statusOnly,
+            },
+      );
       void queryClient.invalidateQueries({ queryKey: meetingsKey.detailAll });
     },
   });
@@ -215,13 +259,22 @@ export function useDeleteItem() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: deleteItem,
-    onMutate: (id) =>
-      optimistically(queryClient, (items) => removeItem(items, id)),
+    onMutate: async (id) => {
+      const before = findCachedItem(queryClient, id)?.item;
+      const snapshot = await optimistically(queryClient, (items) =>
+        removeItem(items, id),
+      );
+      snapshot.summaryAdjusted = adjustSummary(queryClient, before, () => null);
+      return snapshot;
+    },
     onError: (_error, _id, snapshot) =>
       rollback(queryClient, snapshot, "Couldn't delete the item — restored."),
     // Deletes change Meeting.itemCount, so every meetings shape refetches.
-    onSettled: () => {
-      settleItems(queryClient);
+    onSettled: (_data, error, _id, snapshot) => {
+      settleItems(
+        queryClient,
+        error ? undefined : { summary: snapshot?.summaryAdjusted },
+      );
       void queryClient.invalidateQueries({ queryKey: meetingsKey.all });
     },
   });
@@ -235,12 +288,23 @@ export function useSaveToTasks() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: saveAllToTasks,
-    onMutate: () => optimistically(queryClient, markAllSaved),
+    onMutate: async () => {
+      const snapshot = await optimistically(queryClient, markAllSaved);
+      // The batch rule needs no per-item lookup: Review always empties.
+      queryClient.setQueryData<ItemSummary>(itemsKey.summary, (summary) =>
+        summary ? summaryAfterSaveAll(summary) : summary,
+      );
+      snapshot.summaryAdjusted = true;
+      return snapshot;
+    },
     onError: (_error, _vars, snapshot) =>
       rollback(queryClient, snapshot, "Couldn't save to Tasks — reverted."),
     // Saved flags change item state, not counts: meetings detail only.
-    onSettled: () => {
-      settleItems(queryClient);
+    onSettled: (_data, error, _vars, snapshot) => {
+      settleItems(
+        queryClient,
+        error ? undefined : { summary: snapshot?.summaryAdjusted },
+      );
       void queryClient.invalidateQueries({ queryKey: meetingsKey.detailAll });
     },
   });

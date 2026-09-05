@@ -31,7 +31,7 @@ def test_identity_from_claims_reads_sub_and_optional_name() -> None:
 
 def test_name_claim_flows_from_token_to_user_record() -> None:
     named = {"Authorization": "Bearer user_named|Priya Shah"}
-    assert client.get("/api/items", headers=named).status_code == 200
+    assert client.get("/api/items?view=review", headers=named).status_code == 200
 
     users = main_module.app.state.repositories.users
     user_id = users.get_or_create_user("user_named", None)
@@ -58,8 +58,11 @@ def test_garbage_token_is_401() -> None:
 
 def test_users_only_see_their_own_items() -> None:
     # The seeded user owns the two seed items; a stranger owns nothing.
-    assert len(client.get("/api/items").json()["items"]) == 2
-    assert client.get("/api/items", headers=STRANGER).json()["items"] == []
+    assert len(client.get("/api/items?view=review").json()["items"]) == 2
+    assert (
+        client.get("/api/items?view=review", headers=STRANGER).json()["items"]
+        == []
+    )
 
 
 def test_strangers_cannot_touch_someone_elses_item() -> None:
@@ -75,7 +78,7 @@ def test_strangers_cannot_touch_someone_elses_item() -> None:
     assert save.json() == {"updated": 0}
 
     # The rightful owner's item is untouched by all of the above.
-    items = client.get("/api/items").json()["items"]
+    items = client.get("/api/items?view=review").json()["items"]
     assert {item["id"] for item in items} == {1, 2}
     assert all(not item["saved"] for item in items)
 
@@ -109,9 +112,11 @@ def test_created_data_belongs_to_its_creator() -> None:
 
     # The stranger sees exactly their capture; the seeded user still sees
     # exactly the seeds. Neither list leaks into the other.
-    stranger_items = client.get("/api/items", headers=STRANGER).json()["items"]
+    stranger_items = client.get(
+        "/api/items?view=review", headers=STRANGER
+    ).json()["items"]
     assert [item["title"] for item in stranger_items] == ["Stranger's task"]
-    assert len(client.get("/api/items").json()["items"]) == 2
+    assert len(client.get("/api/items?view=review").json()["items"]) == 2
     assert [
         m["title"]
         for m in client.get("/api/meetings", headers=STRANGER).json()[

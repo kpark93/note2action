@@ -121,8 +121,9 @@ class MemoryItemRepository:
     def __init__(self, state: MemoryState) -> None:
         self.state = state
 
-    def list_items(self, user_id: int) -> list[ActionItem]:
-        """Every item whose meeting the given user owns."""
+    def _list_items(self, user_id: int) -> list[ActionItem]:
+        """Internal: every item the user owns — the fake's page/summary
+        methods slice this; no route serves it whole anymore."""
         return [
             item
             for item in self.state.items
@@ -143,7 +144,7 @@ class MemoryItemRepository:
         rows = sorted(
             (
                 it
-                for it in self.list_items(user_id)
+                for it in self._list_items(user_id)
                 if it.saved
                 and it.status != "Done"
                 and (owner is None or it.owner == owner)
@@ -186,7 +187,7 @@ class MemoryItemRepository:
         rows = sorted(
             (
                 it
-                for it in self.list_items(user_id)
+                for it in self._list_items(user_id)
                 if it.status == "Done"
                 and (owner is None or it.owner == owner)
             ),
@@ -213,20 +214,20 @@ class MemoryItemRepository:
         """Pending queue — unsaved and still open, in insertion order."""
         return [
             it
-            for it in self.list_items(user_id)
+            for it in self._list_items(user_id)
             if not it.saved and it.status != "Done"
         ]
 
     def get_item(self, user_id: int, item_id: int) -> ActionItem | None:
         """One item; None when missing or someone else's (route → 404)."""
-        for it in self.list_items(user_id):
+        for it in self._list_items(user_id):
             if it.id == item_id:
                 return it
         return None
 
     def count_summary(self, user_id: int) -> ItemSummary:
         """The sidebar's + History stats' counts, without shipping rows."""
-        mine = self.list_items(user_id)
+        mine = self._list_items(user_id)
         done = [it for it in mine if it.status == "Done"]
         review = sum(
             1 for it in mine if not it.saved and it.status != "Done"
