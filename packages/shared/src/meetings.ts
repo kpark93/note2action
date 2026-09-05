@@ -32,12 +32,6 @@ export const CreateMeetingResponse = z.object({
 });
 export type CreateMeetingResponse = z.infer<typeof CreateMeetingResponse>;
 
-/** GET /api/meetings — recent captures, newest first. */
-export const MeetingsResponse = z.object({
-  meetings: z.array(Meeting),
-});
-export type MeetingsResponse = z.infer<typeof MeetingsResponse>;
-
 /** GET /api/meetings with `cursor` — one keyset page, newest first. */
 export const MeetingsPage = z.object({
   meetings: z.array(Meeting),

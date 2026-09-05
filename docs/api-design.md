@@ -1,8 +1,14 @@
 # API Design — note2action
 
-Module 8 deliverable. The contract, designed before the handlers exist.
+> **Point-in-time record** (Module 8 deliverable): the contract as designed
+> before the handlers existed, implemented across Modules 9–10. The API has
+> since evolved — notably `GET /api/items` now requires a `view` and is
+> keyset-paginated, and `GET /api/items/summary` exists. For the current
+> shape, read `packages/shared/src/` (the live contract) and
+> `docs/architecture/api.md`; this file is deliberately left as history.
+
 Companion to `docs/database-schema.md` — every endpoint here reads or writes
-the tables defined there. Implemented across Modules 9–10.
+the tables defined there.
 
 ## Conventions
 

@@ -66,8 +66,10 @@ Clerk bits (free dev account at <https://clerk.com>):
 
 - **Publishable key** (`pk_test_…`) → `apps/web/.env`. Public by design — it
   only tells the browser which Clerk app to talk to.
-- **JWKS URL** (API Keys → JWKS URL) → `apps/api/.env`. Public signing keys;
-  the API verifies session tokens with them locally, no shared secret.
+- **JWKS URL** (API Keys → JWKS URL) → `apps/api/.env` **and** `apps/ai/.env`.
+  Public signing keys; both backends verify session tokens with them locally,
+  no shared secret. Leaving it out of `apps/ai/.env` runs extraction with
+  auth bypassed — fine for a quick poke, wrong for anything else.
 - **Session claim** — in Clerk dashboard → Sessions → Customize session token,
   add `{"name": "{{user.full_name}}"}` so the API learns each user's name from
   the verified token.

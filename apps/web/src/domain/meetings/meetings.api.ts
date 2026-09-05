@@ -4,7 +4,6 @@ import {
   CreateMeetingResponse,
   MeetingDetail,
   MeetingsPage,
-  MeetingsResponse,
   type CreateMeetingRequest,
   type Meeting,
 } from "@note2action/shared";
@@ -20,10 +19,11 @@ export async function createMeeting(
   });
 }
 
-/** Recent captures, newest first — the RECENT strip. */
+/** Recent captures, newest first — the RECENT strip. Same paged endpoint as
+ * the infinite walk; the strip just never asks for page two. */
 export async function fetchMeetings(limit = 3): Promise<Meeting[]> {
   const { meetings } = await request(`/api/meetings?limit=${limit}`, {
-    schema: MeetingsResponse,
+    schema: MeetingsPage,
   });
   return meetings;
 }
