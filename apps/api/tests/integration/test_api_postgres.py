@@ -87,7 +87,7 @@ def test_save_to_tasks_endpoint_counts():
 
 
 def test_no_token_is_401():
-    assert client.get("/api/items").status_code == 401
+    assert client.get("/api/items?view=review").status_code == 401
 
 
 def test_tasks_keyset_walk_crosses_dated_undated_boundary():

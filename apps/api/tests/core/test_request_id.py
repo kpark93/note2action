@@ -27,7 +27,7 @@ def test_request_ids_are_unique_per_request() -> None:
 
 def test_access_log_line_is_structured(caplog) -> None:
     with caplog.at_level(logging.INFO, logger="note2action.access"):
-        response = client.get("/api/items", headers=AUTH)
+        response = client.get("/api/items?view=review", headers=AUTH)
     assert response.status_code == 200
     line = caplog.records[-1].getMessage()
     assert f"request_id={response.headers['X-Request-ID']}" in line
@@ -40,7 +40,7 @@ def test_access_log_line_is_structured(caplog) -> None:
 
 def test_401s_are_logged_too(caplog) -> None:
     with caplog.at_level(logging.INFO, logger="note2action.access"):
-        response = client.get("/api/items")
+        response = client.get("/api/items?view=review")
     assert response.status_code == 401
     line = caplog.records[-1].getMessage()
     assert "status=401" in line

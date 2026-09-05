@@ -18,16 +18,6 @@ class PostgresItemRepository:
     """Every method opens an rls_session (session.py) so RLS scopes
     each query; user_id also filters here — two layers of isolation."""
 
-    def list_items(self, user_id: int) -> list[ActionItem]:
-        """Every item the given user owns, with its meeting's title."""
-        with rls_session(user_id) as session:
-            rows = session.execute(
-                select(ActionItemRow, MeetingRow.title)
-                .join(MeetingRow, ActionItemRow.meeting_id == MeetingRow.id)
-                .where(ActionItemRow.user_id == user_id)
-            ).all()
-            return [to_wire(row, title) for row, title in rows]
-
     def list_tasks_page(
         self,
         user_id: int,

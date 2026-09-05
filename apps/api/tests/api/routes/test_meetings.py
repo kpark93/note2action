@@ -52,8 +52,8 @@ def test_create_meeting_persists_meeting_and_items() -> None:
         body["meeting"]["id"]
     }
 
-    # The new items join the one list every screen slices.
-    items = client.get("/api/items").json()["items"]
+    # The new items land in the Review queue (unsaved on arrival).
+    items = client.get("/api/items?view=review").json()["items"]
     assert len(items) == 4
 
 

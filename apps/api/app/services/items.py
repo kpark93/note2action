@@ -13,11 +13,6 @@ from app.schemas.items import (
 )
 
 
-def list_items(items: ItemRepository, user_id: int) -> list[ActionItem]:
-    """Calls ItemRepository.list_items; every item the user owns."""
-    return items.list_items(user_id)
-
-
 def _tasks_cursor(raw: str) -> dict:
     """Decode + shape-check a tasks cursor: {"d": ISO date | None, "i": id}.
     Anything else is a tampered/foreign cursor → CursorError → 422."""
