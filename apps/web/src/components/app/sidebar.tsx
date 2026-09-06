@@ -1,7 +1,6 @@
 /** Left-hand app chrome: logo, nav, completion widget, theme switch, account.
  * Rendered once by app-layout.tsx — the only home for these cross-screen bits. */
 import { UserButton, useUser } from "@clerk/clerk-react";
-import { useHealth } from "@/domain/health/health.queries";
 import { useTheme } from "@/lib/theme.store";
 import { Button } from "@/components/ui/button";
 import { SidebarNav } from "./sidebar-nav";
@@ -17,22 +16,6 @@ export function Sidebar() {
   const { user } = useUser();
   const displayName = user?.fullName ?? user?.username ?? "Account";
   const email = user?.primaryEmailAddress?.emailAddress ?? "";
-
-  // Live API health, surfaced as a small dot — keeps the TanStack Query
-  // health check and the Vite /api proxy wired into the real UI.
-  const health = useHealth();
-  const healthColor =
-    health.status === "success"
-      ? "hsl(var(--success))"
-      : health.status === "error"
-        ? "hsl(var(--destructive))"
-        : "hsl(var(--warning))";
-  const healthLabel =
-    health.status === "success"
-      ? "API online"
-      : health.status === "error"
-        ? "API offline"
-        : "Checking API…";
 
   return (
     <aside className="flex w-[198px] flex-none flex-col overflow-hidden rounded-[20px] bg-background px-4 py-[18px]">
@@ -88,11 +71,6 @@ export function Sidebar() {
             {email}
           </span>
         </span>
-        <span
-          className="ml-auto h-[7px] w-[7px] flex-none rounded-full"
-          style={{ background: healthColor }}
-          title={healthLabel}
-        />
       </div>
     </aside>
   );
