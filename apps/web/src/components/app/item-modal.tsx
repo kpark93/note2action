@@ -1,5 +1,5 @@
-/** Detail dialog for one action item, opened by clicking a Tasks or History
- * row — every edit is an optimistic write. Next hop: usePatchItem. */
+/** Detail dialog for one action item, opened by clicking a Tasks row —
+ * every edit is an optimistic write. Next hop: usePatchItem. */
 import { useItemQuery, usePatchItem } from "@/domain/items/items.queries";
 import { OWNERS, PRIORITIES, STATUSES } from "@/domain/items/items.constants";
 import { formatDate } from "@/lib/dates";

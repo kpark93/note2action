@@ -2,7 +2,7 @@
  * write. Next hop: usePatchItem / useDeleteItem. */
 import type { CSSProperties } from "react";
 import { useDeleteItem, usePatchItem } from "@/domain/items/items.queries";
-import { OWNERS } from "@/domain/items/items.constants";
+import { OWNERS, PRIORITY_STYLE } from "@/domain/items/items.constants";
 import type { Priority } from "@/domain/items/items.types";
 import type { ReviewItemVM } from "@/views/review/review.utils";
 import { Button } from "@/components/ui/button";
@@ -30,7 +30,7 @@ export function ReviewCard({ item }: { item: ReviewItemVM }) {
 
   return (
     <article
-      className="review-card n2a-card rounded-[16px] border border-border bg-card px-[13px] py-3"
+      className="review-card n2a-card flex h-full flex-col rounded-[16px] border border-border bg-card px-[13px] py-3"
       style={
         {
           animationDelay: item.delay,
@@ -54,7 +54,7 @@ export function ReviewCard({ item }: { item: ReviewItemVM }) {
         className="review-title mb-[9px] block field-sizing-fixed min-h-[38px] w-full resize-none overflow-hidden rounded-[11px] border-transparent bg-transparent px-[7px] py-[5px] text-[14.5px] leading-[1.35] font-semibold tracking-[-0.02em] text-foreground shadow-none md:text-[14.5px] dark:bg-transparent"
       />
 
-      <div className="grid grid-cols-[minmax(0,1fr)] gap-[9px]">
+      <div className="mb-[11px] grid grid-cols-[minmax(0,1fr)] gap-[9px]">
         <label className="flex flex-col gap-[6px]">
           <span className="text-[11px] font-medium text-muted-foreground">
             Owner
@@ -94,7 +94,14 @@ export function ReviewCard({ item }: { item: ReviewItemVM }) {
               value={item.priority}
               onValueChange={(v) => patch({ priority: v as Priority })}
             >
-              <SelectTrigger className="w-full rounded-[10px] border-border bg-secondary px-2 text-[12.5px] text-foreground data-[size=default]:h-8">
+              {/* Same colors as Tasks' priority pills (PRIORITY_STYLE). */}
+              <SelectTrigger
+                className="w-full rounded-[10px] border-0 px-2 text-[12.5px] font-semibold data-[size=default]:h-8 [&_svg]:!text-current"
+                style={{
+                  background: PRIORITY_STYLE[item.priority].bg,
+                  color: PRIORITY_STYLE[item.priority].fg,
+                }}
+              >
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -107,8 +114,14 @@ export function ReviewCard({ item }: { item: ReviewItemVM }) {
         </div>
       </div>
 
-      <div className="mt-[11px] flex items-center gap-[10px] border-t border-border pt-[10px]">
-        <span className="min-w-0 flex-1 text-[12.5px] leading-[1.5] text-muted-foreground">
+      {/* mt-auto pins this footer to the card's bottom edge; the note is a
+          fixed two-line block (clamped + min-height) so the divider and
+          Discard sit at identical heights on every card. */}
+      <div className="mt-auto flex items-center gap-[10px] border-t border-border pt-[10px]">
+        <span
+          title={item.note}
+          className="line-clamp-3 min-h-[57px] min-w-0 flex-1 text-[12.5px] leading-[1.5] text-muted-foreground"
+        >
           {item.note}
         </span>
         <Button
