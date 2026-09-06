@@ -1,9 +1,8 @@
-/** Shared capture-detail dialog, mounted once in app-layout.tsx — opened by
- * setting `modalMeetingId` in the extraction store (openRecent). */
+/** Capture-detail dialog, mounted by the views that can open it (Capture's
+ * RECENT strip, the Meetings screen) — same prop shape as ItemModal. */
 import { useRef } from "react";
 import { useMeetingQuery } from "@/domain/meetings/meetings.queries";
 import { STATUS_STYLE } from "@/domain/items/items.constants";
-import { useActionItems } from "@/domain/extraction/extraction.store";
 import { timeAgo } from "@/lib/dates";
 import {
   Dialog,
@@ -16,15 +15,18 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 
+interface RecentModalProps {
+  /** Meeting to show, or null when closed. */
+  meetingId: number | null;
+  onClose: () => void;
+}
+
 /** Transcript plus this meeting's extracted items with read-only status
  * pills, both from GET /api/meetings/{id}. */
-export function RecentModal() {
-  const modalMeetingId = useActionItems((s) => s.modalMeetingId);
-  const closeModal = useActionItems((s) => s.closeModal);
-
-  const open = modalMeetingId !== null;
+export function RecentModal({ meetingId, onClose }: RecentModalProps) {
+  const open = meetingId !== null;
   // Transcript + items arrive together on the detail; only runs while open.
-  const current = useMeetingQuery(modalMeetingId).data ?? null;
+  const current = useMeetingQuery(meetingId).data ?? null;
   // Keep the last capture rendered through the close animation so the exit
   // fade doesn't flash an empty modal.
   const lastRef = useRef(current);
@@ -39,7 +41,7 @@ export function RecentModal() {
     <Dialog
       open={open}
       onOpenChange={(next) => {
-        if (!next) closeModal();
+        if (!next) onClose();
       }}
     >
       <DialogContent

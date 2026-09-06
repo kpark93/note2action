@@ -132,11 +132,14 @@ changes item state, not counts).
 What it feels like: paste notes, click **Extract**, and reviewable items
 appear (and survive a refresh).
 
-1. `views/capture/capture.view.tsx` — Extract button calls
-   `useActionItems().extractNotes(payload)` on the extraction store.
-2. `domain/extraction/extraction.store.ts :: extractNotes` — a zustand
-   store, not a component, so the flow keeps running even if you switch
-   tabs. Sets `extracting: true`, then:
+1. `views/capture/components/notes-editor.tsx` — the Extract button calls
+   `useExtractCapture().mutate(payload, { onSuccess: navigate })`. The
+   draft text/title live in `extraction.store.ts` (client state only).
+2. `domain/extraction/extraction.queries.ts :: useExtractCapture` — a
+   TanStack **mutation**, so the flow keeps running even if you leave
+   Capture (hook-level callbacks fire regardless of unmount; the
+   navigate callback correctly skips). `useExtractionStatus` reads the
+   shared mutation cache, so the spinner survives remounts. Then:
 3. `domain/extraction/extraction.api.ts :: extractActionItems` →
    `lib/http.ts` → `fetch("/ai-api/extract")`. The vite proxy rewrites
    `/ai-api/*` to the **Next.js AI app** on :3000 (a separate service, so
@@ -148,17 +151,18 @@ appear (and survive a refresh).
    the `.describe()` strings on `ExtractedItem`
    (`packages/shared/src/extraction.ts`) are literally instructions sent to
    the model.
-5. Back in the store: the extracted items are **immediately persisted** —
+5. Back in the mutation: the extracted items are **immediately persisted** —
    `domain/meetings/meetings.api.ts :: createMeeting` → POST
    `/api/meetings` → middleware → `routes/meetings.py` →
    `services/meetings.py` → `repositories/postgres/meetings.py ::
 create_meeting`: the meeting row and all its item rows are inserted in
    **one transaction** (all-or-nothing), `user_id` stamped from the
    verified token, never from the request body.
-6. The store then invalidates `["items"]` (awaited — Review renders these
-   rows next) and `["meetings"]` (fire-and-forget — the RECENT strip
-   refreshes without holding up the navigation). The capture now exists as
-   rows, so the Review queue survives any refresh.
+6. The mutation's `onSuccess` clears the draft, invalidates `["items"]`
+   (awaited — the navigate callback fires only after Review's data is
+   fresh) and `["meetings"]` (fire-and-forget — the RECENT strip refreshes
+   without holding up the navigation). The capture now exists as rows, so
+   the Review queue survives any refresh.
 
 ---
 

@@ -1,7 +1,8 @@
 /** Full list of saved captures (the Capture screen's RECENT strip caps at 3;
- * this has no limit). Next hop: meetings.queries + openRecent() → RecentModal. */
+ * this has no limit). Next hop: meetings.queries + its own RecentModal. */
+import { useState } from "react";
 import { useMeetingsInfinite } from "@/domain/meetings/meetings.queries";
-import { useActionItems } from "@/domain/extraction/extraction.store";
+import { RecentModal } from "@/components/app/recent-modal";
 import { LoadMoreSentinel } from "@/components/app/load-more-sentinel";
 import { formatDate, timeAgo } from "@/lib/dates";
 import { ViewShell } from "@/components/app/view-shell";
@@ -10,14 +11,15 @@ import { ScrollRegion } from "@/components/app/scroll-region";
 import { EmptyState } from "@/components/app/empty-state";
 
 /** All saved captures, newest first, as full-width cards — clicking one opens
- * the shared RecentModal via the same store action RECENT uses. */
+ * this view's RecentModal. */
 export function MeetingsView() {
   // Real paging now: pages of 20, newest first, loaded as the user scrolls.
   const meetingsQuery = useMeetingsInfinite();
   const { isPending } = meetingsQuery;
   const meetings =
     meetingsQuery.data?.pages.flatMap((page) => page.meetings) ?? [];
-  const openRecent = useActionItems((s) => s.openRecent);
+  /** Meeting shown in the transcript modal, or null when closed. */
+  const [openMeetingId, setOpenMeetingId] = useState<number | null>(null);
 
   return (
     <ViewShell>
@@ -41,7 +43,7 @@ export function MeetingsView() {
           {meetings.map((meeting, idx) => (
             <button
               key={meeting.id}
-              onClick={() => openRecent(meeting.id)}
+              onClick={() => setOpenMeetingId(meeting.id)}
               className="n2a-row recent-btn flex w-full cursor-pointer items-center gap-4 rounded-[14px] border border-border bg-card px-4 py-[13px] text-left text-foreground"
               style={{ animationDelay: idx * 35 + "ms" }}
             >
@@ -83,6 +85,10 @@ export function MeetingsView() {
           />
         </ScrollRegion>
       )}
+      <RecentModal
+        meetingId={openMeetingId}
+        onClose={() => setOpenMeetingId(null)}
+      />
     </ViewShell>
   );
 }

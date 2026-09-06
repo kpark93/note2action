@@ -1,13 +1,16 @@
 /** Row of recent-capture chips below the Capture editor — clicking one opens
- * the shared RecentModal via the extraction store's openRecent(). */
+ * the view's RecentModal via the onOpen prop. */
 import { useMeetingsQuery } from "@/domain/meetings/meetings.queries";
-import { useActionItems } from "@/domain/extraction/extraction.store";
 import { timeAgo } from "@/lib/dates";
 
 /** Strip of recent captures below the editor (from the API); click to preview. */
-export function RecentCaptures() {
+export function RecentCaptures({
+  onOpen,
+}: {
+  /** Opens the transcript modal; the view owns which meeting is open. */
+  onOpen: (id: number) => void;
+}) {
   const meetings = useMeetingsQuery().data ?? [];
-  const openRecent = useActionItems((s) => s.openRecent);
 
   if (meetings.length === 0) return null;
 
@@ -20,7 +23,7 @@ export function RecentCaptures() {
         {meetings.map((meeting) => (
           <button
             key={meeting.id}
-            onClick={() => openRecent(meeting.id)}
+            onClick={() => onOpen(meeting.id)}
             className="recent-btn flex min-w-0 flex-1 cursor-pointer flex-col gap-1 rounded-[14px] border border-border bg-card px-[14px] py-[11px] text-left text-foreground"
           >
             <span className="w-full overflow-hidden text-[13px] font-semibold text-ellipsis whitespace-nowrap">
