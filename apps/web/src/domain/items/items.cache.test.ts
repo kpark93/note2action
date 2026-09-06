@@ -9,6 +9,7 @@ import {
   markAllSaved,
   patchPages,
   removeItem,
+  summaryAfterCapture,
   summaryAfterSaveAll,
 } from "./items.cache";
 
@@ -113,6 +114,24 @@ describe("applySummaryDelta", () => {
     const before = makeItem({ status: "Not started", saved: true });
     const next = applySummaryDelta(SUMMARY, before, null);
     expect(next.meetings).toBe(SUMMARY.meetings);
+  });
+});
+
+describe("summaryAfterCapture", () => {
+  it("adds the new items to total/open/review and counts the meeting", () => {
+    expect(summaryAfterCapture(SUMMARY, 3)).toEqual({
+      ...SUMMARY,
+      total: 11,
+      open: 8,
+      review: 5,
+      meetings: 5,
+    });
+  });
+
+  it("leaves done and onTime untouched — new items are never Done", () => {
+    const next = summaryAfterCapture(SUMMARY, 2);
+    expect(next.done).toBe(SUMMARY.done);
+    expect(next.onTime).toBe(SUMMARY.onTime);
   });
 });
 

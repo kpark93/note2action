@@ -4,6 +4,7 @@
 // invalidating the paginated lists — pages refetch instead of being
 // surgically patched. Path §1 [hop 3/15]: → items.api.ts (hop 4).
 import {
+  skipToken,
   useInfiniteQuery,
   useMutation,
   useQuery,
@@ -104,13 +105,14 @@ function findCachedItem(
 }
 
 /** One item for the detail modal; starts from the row's cached copy (a fresh
- * page means zero fetches on open) and only hits the API once that's stale. */
+ * page means zero fetches on open) and only hits the API once that's stale.
+ * skipToken (docs: disabling-queries) parks the query type-safely when no
+ * item is open — no sentinel id, no `id as number`. */
 export function useItemQuery(id: number | null) {
   const queryClient = useQueryClient();
   return useQuery({
-    queryKey: itemsKey.detail(id ?? -1),
-    queryFn: () => fetchItem(id as number),
-    enabled: id !== null,
+    queryKey: itemsKey.detail(id),
+    queryFn: id === null ? skipToken : () => fetchItem(id),
     initialData: () =>
       id === null ? undefined : findCachedItem(queryClient, id)?.item,
     initialDataUpdatedAt: () =>
@@ -124,6 +126,8 @@ interface Snapshot {
   summaryAdjusted?: boolean;
   /** The item's status before the patch; undefined = wasn't cached. */
   beforeStatus?: ActionItem["status"];
+  /** Deleted item's meeting — only that meeting's detail goes stale. */
+  meetingId?: number;
 }
 
 /** Cancel in-flight item fetches (so they can't overwrite the optimistic
@@ -200,6 +204,10 @@ function patchPageCaches(
 export function usePatchItem() {
   const queryClient = useQueryClient();
   return useMutation({
+    // Same-scope mutations run in serial (docs: mutation scopes) — two fast
+    // edits can't reconcile out of order, where a slow older response would
+    // overwrite the detail cache after a newer one landed.
+    scope: { id: "item-patch" },
     mutationFn: ({ id, patch }: { id: number; patch: ItemPatch }) =>
       patchItem(id, patch),
     onMutate: async ({ id, patch }) => {
@@ -265,17 +273,27 @@ export function useDeleteItem() {
         removeItem(items, id),
       );
       snapshot.summaryAdjusted = adjustSummary(queryClient, before, () => null);
+      snapshot.meetingId = before?.meetingId;
       return snapshot;
     },
     onError: (_error, _id, snapshot) =>
       rollback(queryClient, snapshot, "Couldn't delete the item — restored."),
-    // Deletes change Meeting.itemCount, so every meetings shape refetches.
+    // Deletes change one meeting's itemCount: lists refetch, but only that
+    // meeting's detail is dirty — others keep. Unknown meeting = refetch all.
     onSettled: (_data, error, _id, snapshot) => {
       settleItems(
         queryClient,
         error ? undefined : { summary: snapshot?.summaryAdjusted },
       );
-      void queryClient.invalidateQueries({ queryKey: meetingsKey.all });
+      const meetingId = snapshot?.meetingId;
+      void queryClient.invalidateQueries({
+        queryKey: meetingsKey.all,
+        predicate: (query) =>
+          error !== null ||
+          meetingId === undefined ||
+          query.queryKey[1] !== "detail" ||
+          query.queryKey[2] === meetingId,
+      });
     },
   });
 }

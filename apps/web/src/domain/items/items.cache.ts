@@ -71,6 +71,21 @@ export function applySummaryDelta(
   };
 }
 
+/** Mirrors a capture: n new items are born open + unsaved (never Done), and
+ * one meeting joins the count. */
+export function summaryAfterCapture(
+  summary: ItemSummary,
+  newItems: number,
+): ItemSummary {
+  return {
+    ...summary,
+    total: summary.total + newItems,
+    open: summary.open + newItems,
+    review: summary.review + newItems,
+    meetings: summary.meetings + 1,
+  };
+}
+
 /** Mirrors the batch rule: every pending item saves, so Review empties. */
 export function summaryAfterSaveAll(summary: ItemSummary): ItemSummary {
   return { ...summary, review: 0 };

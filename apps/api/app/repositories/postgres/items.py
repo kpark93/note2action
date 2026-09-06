@@ -4,6 +4,7 @@
 from datetime import date
 
 from sqlalchemy import and_, func, or_, select
+from sqlalchemy import delete as sql_delete
 from sqlalchemy import update as sql_update
 
 from app.models import ActionItem as ActionItemRow
@@ -155,10 +156,16 @@ class PostgresItemRepository:
             return to_wire(row, title)
 
     def count_summary(self, user_id: int) -> ItemSummary:
-        """One aggregate query per table — FILTER clauses over round trips."""
+        """One round trip for every count — FILTER clauses for the item
+        buckets, a scalar subquery for the meetings total."""
         with rls_session(user_id) as session:
             done_f = ActionItemRow.status == "Done"
-            total, done, review, on_time = session.execute(
+            meetings_sq = (
+                select(func.count())
+                .where(MeetingRow.user_id == user_id)
+                .scalar_subquery()
+            )
+            total, done, review, on_time, meetings = session.execute(
                 select(
                     func.count(),
                     func.count().filter(done_f),
@@ -174,11 +181,9 @@ class PostgresItemRepository:
                             ),
                         )
                     ),
+                    meetings_sq,
                 ).where(ActionItemRow.user_id == user_id)
             ).one()
-            meetings = session.execute(
-                select(func.count()).where(MeetingRow.user_id == user_id)
-            ).scalar_one()
             return ItemSummary(
                 done=done,
                 open=total - done,
@@ -194,11 +199,18 @@ class PostgresItemRepository:
         """Applies a partial edit; None if missing or not the caller's.
         Built before commit(): SET LOCAL identity dies at commit."""
         with rls_session(user_id) as session:
-            row = session.get(ActionItemRow, item_id)
+            # One trip: the row with its meeting title joined in, instead of
+            # two session.get()s.
+            hit = session.execute(
+                select(ActionItemRow, MeetingRow.title)
+                .join(MeetingRow, ActionItemRow.meeting_id == MeetingRow.id)
+                .where(ActionItemRow.id == item_id)
+            ).first()
             # Someone else's row looks exactly like a missing one (→ 404) —
             # admitting otherwise would leak whose it is.
-            if row is None or row.user_id != user_id:
+            if hit is None or hit[0].user_id != user_id:
                 return None
+            row, meeting_title = hit
             changes = patch.model_dump(exclude_unset=True)
             # The wire speaks "YYYY-MM-DD" strings; the due column holds dates.
             if changes.get("due") is not None:
@@ -207,7 +219,6 @@ class PostgresItemRepository:
                 setattr(row, field, value)
             if "status" in changes:
                 row.completed = date.today() if row.status == "Done" else None
-            meeting_title = session.get(MeetingRow, row.meeting_id).title
             # Before commit(): SET LOCAL identity dies at commit, so a
             # later read here would re-SELECT under no identity → RLS-denied.
             result = to_wire(row, meeting_title)
@@ -215,14 +226,18 @@ class PostgresItemRepository:
             return result
 
     def delete_item(self, user_id: int, item_id: int) -> bool:
-        """Delete one item; False if missing or not the caller's."""
+        """Delete one item; False if missing or not the caller's. One trip:
+        the WHERE answers ownership (RLS filters independently on top), and
+        the rowcount says whether anything was there to delete."""
         with rls_session(user_id) as session:
-            row = session.get(ActionItemRow, item_id)
-            if row is None or row.user_id != user_id:
-                return False
-            session.delete(row)
+            result = session.execute(
+                sql_delete(ActionItemRow).where(
+                    ActionItemRow.id == item_id,
+                    ActionItemRow.user_id == user_id,
+                )
+            )
             session.commit()
-            return True
+            return result.rowcount > 0
 
     def save_all_to_tasks(self, user_id: int) -> int:
         """Mark every not-yet-saved, not-Done item as saved in one bulk
