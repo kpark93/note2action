@@ -1,8 +1,12 @@
 from datetime import date
 
+import app.main as main_module
 from app.models import ActionItem as ActionItemRow
+from app.models import User as UserRow
 from app.repositories.mappers import to_wire
-from app.repositories.memory import MemoryState, MemoryUserRepository
+from sqlalchemy import select
+
+from tests.conftest import APP_URL
 
 
 def test_to_wire_maps_row_fields_onto_the_wire_schema() -> None:
@@ -34,17 +38,32 @@ def test_to_wire_maps_row_fields_onto_the_wire_schema() -> None:
     assert item.completed is None
 
 
+def _stored_name(clerk_id: str) -> str:
+    """Read a user's persisted name straight off the table (no RLS on users)."""
+    from sqlalchemy import create_engine
+    from sqlalchemy.orm import Session
+
+    engine = create_engine(APP_URL)
+    try:
+        with Session(engine) as session:
+            return session.execute(
+                select(UserRow.name).where(UserRow.clerk_id == clerk_id)
+            ).scalar_one()
+    finally:
+        engine.dispose()
+
+
 def test_get_or_create_user_name_laws() -> None:
-    """Same laws both repository implementations must obey (white-box on the fake)."""
-    repo = MemoryUserRepository(MemoryState())
+    """The name laws, proven against the real implementation."""
+    repo = main_module.app.state.repositories.users
 
     # New user with a name claim → the name sticks.
     jane = repo.get_or_create_user("user_jane", "Jane Doe")
-    assert repo.state.user_names[jane] == "Jane Doe"
+    assert _stored_name("user_jane") == "Jane Doe"
 
     # New user without a name claim → placeholder.
-    anon = repo.get_or_create_user("user_anon", None)
-    assert repo.state.user_names[anon] == "New user"
+    repo.get_or_create_user("user_anon", None)
+    assert _stored_name("user_anon") == "New user"
 
     # Same clerk id always maps to the same user…
     assert repo.get_or_create_user("user_jane", "Jane Doe") == jane
@@ -52,6 +71,6 @@ def test_get_or_create_user_name_laws() -> None:
     # …a changed claim refreshes the name (Clerk is the profile's source of
     # truth), and a missing claim never erases what we have.
     repo.get_or_create_user("user_jane", "Jane Smith")
-    assert repo.state.user_names[jane] == "Jane Smith"
+    assert _stored_name("user_jane") == "Jane Smith"
     repo.get_or_create_user("user_jane", None)
-    assert repo.state.user_names[jane] == "Jane Smith"
+    assert _stored_name("user_jane") == "Jane Smith"

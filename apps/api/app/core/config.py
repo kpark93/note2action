@@ -1,7 +1,5 @@
 """App-wide settings, loaded once from the environment / apps/api/.env — read by
-app/main.py (repository + verifier choice) and core/db.py (connection string)."""
-
-from typing import Literal
+app/main.py (verifier wiring) and core/db.py (connection string)."""
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -16,9 +14,6 @@ class Settings(BaseSettings):
     # Migrations need DDL powers the app role deliberately lacks — they run
     # as the admin role. Unset = fall back to database_url (pre-RLS setups).
     migrations_database_url: str | None = None
-    # No default and no free-form strings: a typo'd REPOSITORY crashes at
-    # startup instead of silently running on RAM and losing every write.
-    repository: Literal["postgres", "memory"]
     # Where Clerk publishes this app's public signing keys (JWKS). Unset =
     # auth is unconfigured and every protected endpoint answers 500 loudly.
     clerk_jwks_url: str | None = None

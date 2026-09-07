@@ -47,13 +47,11 @@ EOF
 (cd "$API_DIR" &&
   DATABASE_URL="postgresql+psycopg://postgres:postgres@localhost:5432/$DB" \
   MIGRATIONS_DATABASE_URL="postgresql+psycopg://postgres:postgres@localhost:5432/$DB" \
-  REPOSITORY=postgres \
   .venv/bin/alembic upgrade head)
 
 # cwd stays at the repo root so apps/api/.env is NOT loaded — every setting the
 # server sees is the explicit hermetic one below.
 DATABASE_URL="postgresql+psycopg://note2action_app:note2action_app_dev@localhost:5432/$DB" \
-  REPOSITORY=postgres \
   CLERK_JWKS_URL="http://127.0.0.1:$JWKS_PORT/jwks.json" \
   "$API_DIR/.venv/bin/uvicorn" app.main:app --app-dir "$API_DIR" \
   --port "$API_PORT" > "$RUN_DIR/api.log" 2>&1 &

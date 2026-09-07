@@ -28,7 +28,6 @@ resource "aws_ecs_task_definition" "api" {
     image        = "${aws_ecr_repository.api.repository_url}:latest"
     essential    = true
     portMappings = [{ containerPort = 8000 }]
-    environment  = [{ name = "REPOSITORY", value = "postgres" }]
     secrets = [
       { name = "DATABASE_URL", valueFrom = aws_ssm_parameter.database_url.arn },
       { name = "MIGRATIONS_DATABASE_URL", valueFrom = aws_ssm_parameter.migrations_database_url.arn },
