@@ -40,8 +40,15 @@ class ActionItemPatch(BaseModel):
     note: str | None = None
 
 
-class SaveToTasksResponse(BaseModel):
-    """POST /api/items/save-to-tasks — how many pending items were saved."""
+class ItemsBulkPatch(BaseModel):
+    """PATCH /api/items body. Literal[True]: promoting the review queue is
+    the only bulk transition — widen the type when a second one exists."""
+
+    saved: Literal[True]
+
+
+class BulkUpdateResponse(BaseModel):
+    """PATCH /api/items — how many rows the bulk patch changed."""
 
     updated: int
 

@@ -11,9 +11,10 @@ from app.repositories.protocols import Repositories
 from app.schemas import (
     ActionItem,
     ActionItemPatch,
+    BulkUpdateResponse,
+    ItemsBulkPatch,
     ItemsPage,
     ItemSummary,
-    SaveToTasksResponse,
 )
 from app.services import items as items_service
 
@@ -92,13 +93,18 @@ def delete_item(
         raise HTTPException(status_code=404, detail="Item not found")
 
 
-@router.post("/api/items/save-to-tasks", response_model=SaveToTasksResponse)
-def save_to_tasks(
+@router.patch("/api/items", response_model=BulkUpdateResponse)
+def bulk_update_items(
+    patch: ItemsBulkPatch,
+    view: Literal["review"],
     user_id: int = Depends(current_user_id),
     repos: Repositories = Depends(get_repositories),
-) -> SaveToTasksResponse:
-    """POST /api/items/save-to-tasks: delegates to services/items.py
-    save_all_to_tasks; returns how many items changed."""
-    return SaveToTasksResponse(
+) -> BulkUpdateResponse:
+    """PATCH /api/items?view=review {"saved": true}: promote the whole
+    review queue. The URL names the data, the method names the operation —
+    same partial-update verb as PATCH /api/items/{id}, applied to a view.
+    The pydantic/Literal types 422 any other view or body (delegates to
+    services/items.py save_all_to_tasks)."""
+    return BulkUpdateResponse(
         updated=items_service.save_all_to_tasks(repos.items, user_id)
     )

@@ -1,11 +1,8 @@
 """Endpoint tests against real Postgres — the whole server-side path:
 middleware → route → service → repository → RLS → back out as JSON."""
 
-import pytest
 from app.main import app
 from fastapi.testclient import TestClient
-
-pytestmark = pytest.mark.integration
 
 # FakeVerifier (tests/conftest.py): the bearer token IS the Clerk id.
 ALICE = {"Authorization": "Bearer user_alice|Alice"}
@@ -78,13 +75,11 @@ def test_cross_user_access_is_404_and_invisible():
 def test_save_to_tasks_endpoint_counts():
     client.post("/api/meetings", json=CAPTURE, headers=ALICE)
 
-    first = client.post("/api/items/save-to-tasks", headers=ALICE)
+    first = client.patch("/api/items?view=review", json={"saved": True}, headers=ALICE)
     assert first.status_code == 200
     assert first.json()["updated"] == 2
     # Everything already saved — the second sweep finds nothing.
-    assert client.post(
-        "/api/items/save-to-tasks", headers=ALICE
-    ).json()["updated"] == 0
+    assert client.patch("/api/items?view=review", json={"saved": True}, headers=ALICE).json()["updated"] == 0
 
 
 def test_no_token_is_401():
@@ -106,7 +101,7 @@ def test_tasks_keyset_walk_crosses_dated_undated_boundary():
         ],
     }
     client.post("/api/meetings", json=capture, headers=ALICE)
-    client.post("/api/items/save-to-tasks", headers=ALICE)
+    client.patch("/api/items?view=review", json={"saved": True}, headers=ALICE)
 
     seen: list[str] = []
     cursor = ""
@@ -134,7 +129,7 @@ def test_pagination_views_are_user_scoped():
         ]},
         headers=ALICE,
     )
-    client.post("/api/items/save-to-tasks", headers=ALICE)
+    client.patch("/api/items?view=review", json={"saved": True}, headers=ALICE)
 
     bob_tasks = client.get("/api/items?view=tasks", headers=BOB).json()
     assert bob_tasks == {"items": [], "nextCursor": None}

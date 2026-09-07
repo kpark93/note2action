@@ -4,14 +4,15 @@ import {
   ActionItem as WireActionItem,
   ItemsPage,
   ItemSummary,
-  SaveToTasksResponse,
+  BulkUpdateResponse,
   type ActionItemPatch,
 } from "@note2action/shared";
 import { request } from "@/lib/http";
 import type { ActionItem } from "@/domain/items/items.types";
 
-/** Wire → view-model: `null` becomes "" (due) / undefined (note). */
-function fromWire(item: WireActionItem): ActionItem {
+/** Wire → view-model: `null` becomes "" (due) / undefined (note). Exported
+ * for the capture mutation, which seeds Review from the create response. */
+export function fromWire(item: WireActionItem): ActionItem {
   return { ...item, due: item.due ?? "", note: item.note ?? undefined };
 }
 
@@ -107,11 +108,13 @@ export async function deleteItem(id: number): Promise<void> {
   await request(`/api/items/${id}`, { method: "DELETE" });
 }
 
-/** "Save N to Tasks": one batch call; returns how many items were saved. */
+/** "Save N to Tasks": one bulk PATCH over the review view; returns how
+ * many items were saved. */
 export async function saveAllToTasks(): Promise<number> {
-  const { updated } = await request("/api/items/save-to-tasks", {
-    method: "POST",
-    schema: SaveToTasksResponse,
+  const { updated } = await request("/api/items?view=review", {
+    method: "PATCH",
+    body: { saved: true },
+    schema: BulkUpdateResponse,
   });
   return updated;
 }

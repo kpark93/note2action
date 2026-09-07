@@ -344,8 +344,23 @@
 				{
 					"name": "save-to-tasks — skips Done, saves pending",
 					"request": {
-						"method": "POST",
-						"url": "{{baseUrl}}/api/items/save-to-tasks"
+						"method": "PATCH",
+						"url": "{{baseUrl}}/api/items?view=review",
+						"body": {
+							"mode": "raw",
+							"raw": "{\"saved\": true}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						]
 					},
 					"event": [
 						{
@@ -609,23 +624,41 @@
 				{
 					"name": "promote to tasks — 200",
 					"request": {
-						"method": "POST",
+						"method": "PATCH",
 						"header": [
 							{
 								"key": "Authorization",
 								"value": "Bearer {{tokenA}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
 							}
 						],
 						"url": {
-							"raw": "{{baseUrl}}/api/items/save-to-tasks",
+							"raw": "{{baseUrl}}/api/items?view=review",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"api",
-								"items",
-								"save-to-tasks"
+								"items"
+							],
+							"query": [
+								{
+									"key": "view",
+									"value": "review"
+								}
 							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\"saved\": true}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
 						}
 					},
 					"event": [

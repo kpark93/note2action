@@ -25,7 +25,7 @@ def seed_tasks() -> None:
             ],
         },
     )
-    client.post("/api/items/save-to-tasks")
+    client.patch("/api/items?view=review", json={"saved": True})
 
 
 def walk(view: str, params: str = "") -> list[str]:

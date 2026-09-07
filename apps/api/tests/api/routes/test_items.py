@@ -73,9 +73,21 @@ def test_delete_unknown_id_returns_404() -> None:
     assert response.json()["detail"] == "Item not found"
 
 
+def test_bulk_patch_rejects_anything_but_saving() -> None:
+    # The only supported bulk transition today: {"saved": true} on review.
+    assert (
+        client.patch("/api/items?view=review", json={"saved": False}).status_code
+        == 422
+    )
+    assert (
+        client.patch("/api/items?view=tasks", json={"saved": True}).status_code
+        == 422
+    )
+
+
 def test_save_to_tasks_saves_all_pending_items() -> None:
     # Both seeds start pending (saved=false, not Done).
-    response = client.post("/api/items/save-to-tasks")
+    response = client.patch("/api/items?view=review", json={"saved": True})
     assert response.status_code == 200
     assert response.json() == {"updated": 2}
 
@@ -85,5 +97,5 @@ def test_save_to_tasks_saves_all_pending_items() -> None:
     assert all(item["saved"] for item in items) and len(items) == 2
 
     # Nothing pending anymore — the batch is a valid no-op the second time.
-    response = client.post("/api/items/save-to-tasks")
+    response = client.patch("/api/items?view=review", json={"saved": True})
     assert response.json() == {"updated": 0}

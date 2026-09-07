@@ -12,9 +12,7 @@ from sqlalchemy import create_engine, text
 from sqlalchemy.exc import DataError
 from sqlalchemy.pool import NullPool
 
-from tests.integration.conftest import APP_URL
-
-pytestmark = pytest.mark.integration
+from tests.conftest import APP_URL
 
 
 @pytest.fixture()
