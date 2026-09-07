@@ -25,7 +25,6 @@ interface RequestOptions<T> {
   body?: unknown;
   /** Validates + types the JSON response (e.g. a shared Zod schema). */
   schema?: Parser<T>;
-  signal?: AbortSignal;
 }
 
 /** Sends one request: attaches the Clerk token, throws HttpError on non-2xx,
@@ -48,7 +47,6 @@ export async function request<T = unknown>(
     method,
     headers,
     body: opts.body !== undefined ? JSON.stringify(opts.body) : undefined,
-    signal: opts.signal,
   });
 
   if (!res.ok) {

@@ -15,8 +15,10 @@ import { latestExtractionStatus } from "./extraction.utils";
 import { useActionItems } from "./extraction.store";
 import { createMeeting } from "@/domain/meetings/meetings.api";
 import { summaryAfterCapture } from "@/domain/items/items.cache";
+import { fromWire } from "@/domain/items/items.api";
+import type { ActionItem } from "@/domain/items/items.types";
 import { extractKey, itemsKey, meetingsKey } from "@/lib/query-keys";
-import type { ItemSummary } from "@note2action/shared";
+import type { ItemSummary, Meeting } from "@note2action/shared";
 
 /**
  * The capture mutation: notes in, extracted items persisted as a meeting.
@@ -40,24 +42,37 @@ export function useExtractCapture() {
         items,
       });
     },
-    onSuccess: async (data) => {
+    onSuccess: (data) => {
       useActionItems.getState().clearDraft();
-      // The response tells us the summary delta exactly — no refetch needed.
+      // Seed from the response — the server just told us everything a
+      // capture changes, so nothing here needs a refetch:
+      // counters move by delta…
       queryClient.setQueryData<ItemSummary>(itemsKey.summary, (summary) =>
         summary ? summaryAfterCapture(summary, data.items.length) : summary,
       );
-      // A capture only ADDS rows: lists and pages must refetch, but no
-      // existing detail changed and the summary was just delta'd — exclude
-      // both. Awaited: mutate()-level onSuccess (navigation) fires only
-      // after Review's data is refetched; meetings refresh lazily.
-      await queryClient.invalidateQueries({
+      // …the new items join the Review queue (id-ordered; these are the
+      // newest ids, so append)…
+      queryClient.setQueryData<ActionItem[]>(itemsKey.review, (items) =>
+        items ? [...items, ...data.items.map(fromWire)] : items,
+      );
+      // …and the new meeting tops the RECENT strip (newest-first, cap 3).
+      queryClient.setQueryData<Meeting[]>(meetingsKey.list(3), (meetings) =>
+        meetings ? [data.meeting, ...meetings].slice(0, 3) : meetings,
+      );
+      // What's left: the paginated walks (items pages, meetings infinite) —
+      // their page boundaries are the server's call — all lazily marked;
+      // details unchanged by an ADD, review/summary/strip seeded above.
+      void queryClient.invalidateQueries({
         queryKey: itemsKey.all,
         predicate: (query) =>
-          query.queryKey[1] !== "detail" && query.queryKey[1] !== "summary",
+          query.queryKey[1] !== "detail" &&
+          query.queryKey[1] !== "summary" &&
+          query.queryKey[1] !== "review",
       });
       void queryClient.invalidateQueries({
         queryKey: meetingsKey.all,
-        predicate: (query) => query.queryKey[1] !== "detail",
+        predicate: (query) =>
+          query.queryKey[1] !== "detail" && query.queryKey[1] !== "list",
       });
     },
   });

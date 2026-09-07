@@ -44,6 +44,15 @@ describe("keptOnSettle", () => {
     ).toBe(false);
   });
 
+  it("review flag keeps the review cache and nothing else", () => {
+    const keep = { review: true };
+    expect(keptOnSettle(["items", "review"], keep)).toBe(true);
+    expect(keptOnSettle(["items", "tasks", "All", "All", "All"], keep)).toBe(
+      false,
+    );
+    expect(keptOnSettle(["items", "history", "All"], keep)).toBe(false);
+  });
+
   it("keeps nothing without flags", () => {
     expect(keptOnSettle(["items", "tasks", "All", "All", "All"], {})).toBe(
       false,

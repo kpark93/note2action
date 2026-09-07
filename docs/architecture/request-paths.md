@@ -107,10 +107,12 @@ applyPatch` in three places — the Review list, the item's detail entry,
    itself is the truth for that entry). Then `onSettled` invalidates only
    what the client couldn't make true itself (`items.cache.ts ::
 keptOnSettle` decides): the reconciled detail and delta'd summary are
-   kept, and a status-only change between non-Done states keeps every walk
+   kept; a status-only change between non-Done states keeps every walk
    whose membership can't have moved — only status-_filtered_ tasks caches
-   refetch. Anything touching Done (either direction), or any other field,
-   settles the pages fully: membership and order are the server's call.
+   refetch — and any patch that neither flips `saved` nor crosses Done
+   keeps Review outright (id-ordered, so edits can't move a card).
+   Anything touching Done (either direction), or `saved`, settles the
+   pages fully: membership and order are the server's call.
    Meetings-wise, only `["meetings", "detail"]` invalidates — a patch
    can't change `itemCount`, so lists stay untouched.
 6. **Failure branch:** if the server refuses (or is down),
@@ -158,11 +160,14 @@ appear (and survive a refresh).
 create_meeting`: the meeting row and all its item rows are inserted in
    **one transaction** (all-or-nothing), `user_id` stamped from the
    verified token, never from the request body.
-6. The mutation's `onSuccess` clears the draft, invalidates `["items"]`
-   (awaited — the navigate callback fires only after Review's data is
-   fresh) and `["meetings"]` (fire-and-forget — the RECENT strip refreshes
-   without holding up the navigation). The capture now exists as rows, so
-   the Review queue survives any refresh.
+6. The mutation's `onSuccess` clears the draft, then seeds every cache the
+   response fully describes — the summary moves by delta, the new items
+   append to Review (id-ordered, so newest-last is correct), and the new
+   meeting tops the RECENT strip — no refetches, and navigation to Review
+   is immediate because Review's cache is already truth. Only the
+   paginated walks (items pages, meetings infinite) get lazily marked
+   stale: their page boundaries are the server's call. The capture now
+   exists as rows, so the Review queue survives any refresh.
 
 ---
 

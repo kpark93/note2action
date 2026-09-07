@@ -235,15 +235,20 @@ export function usePatchItem() {
       rollback(queryClient, snapshot, "Couldn't save the change — reverted."),
     // On success the reconciled detail and delta'd summary are already
     // truth — keep both; a status-only change between non-Done states also
-    // keeps every walk it can't have moved the item in or out of. On error
-    // the refetch heals everything.
+    // keeps every walk it can't have moved the item in or out of, and any
+    // patch that neither flips `saved` nor crosses Done keeps Review (its
+    // id-order makes edits position-proof). On error the refetch heals all.
     onSettled: (_data, error, { id, patch }, snapshot) => {
+      const knownNotDone =
+        snapshot?.beforeStatus !== undefined &&
+        snapshot.beforeStatus !== "Done";
       const statusOnly =
         Object.keys(patch).length === 1 &&
         patch.status !== undefined &&
         patch.status !== "Done" &&
-        snapshot?.beforeStatus !== undefined &&
-        snapshot.beforeStatus !== "Done";
+        knownNotDone;
+      const review =
+        !("saved" in patch) && patch.status !== "Done" && knownNotDone;
       settleItems(
         queryClient,
         error
@@ -252,6 +257,7 @@ export function usePatchItem() {
               detailId: id,
               summary: snapshot?.summaryAdjusted,
               statusOnly,
+              review,
             },
       );
       void queryClient.invalidateQueries({ queryKey: meetingsKey.detailAll });
@@ -280,10 +286,19 @@ export function useDeleteItem() {
       rollback(queryClient, snapshot, "Couldn't delete the item — restored."),
     // Deletes change one meeting's itemCount: lists refetch, but only that
     // meeting's detail is dirty — others keep. Unknown meeting = refetch all.
-    onSettled: (_data, error, _id, snapshot) => {
+    onSettled: (_data, error, id, snapshot) => {
+      if (error === null) {
+        // The row is gone for good — drop its detail entry rather than
+        // marking it stale (a refetch would just 404).
+        queryClient.removeQueries({ queryKey: itemsKey.detail(id) });
+      }
+      // Review keeps: the optimistic removal IS the membership change, the
+      // 204 confirmed it, and id-order means positions can't have shifted.
       settleItems(
         queryClient,
-        error ? undefined : { summary: snapshot?.summaryAdjusted },
+        error
+          ? undefined
+          : { summary: snapshot?.summaryAdjusted, review: true },
       );
       const meetingId = snapshot?.meetingId;
       void queryClient.invalidateQueries({

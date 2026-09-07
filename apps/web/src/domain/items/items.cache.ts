@@ -100,6 +100,10 @@ export interface SettleKeep {
    * status-filtered tasks walks. SAFE ONLY while tasks order ignores status
    * (it's due-date order) — revisit if ordering ever becomes status-aware. */
   statusOnly?: boolean;
+  /** Patch that can't move the item in or out of Review: no `saved` change,
+   * no Done crossing. SAFE ONLY while review is id-ordered — no editable
+   * field participates in its sort. */
+  review?: boolean;
 }
 
 /** Whether one item cache key survives a write's settle-time invalidation —
@@ -111,8 +115,11 @@ export function keptOnSettle(
   const kind = key[1];
   if (kind === "detail") return key[2] === keep.detailId;
   if (kind === "summary") return keep.summary === true;
+  if (kind === "review") {
+    return keep.review === true || keep.statusOnly === true;
+  }
   if (!keep.statusOnly) return false;
-  if (kind === "review" || kind === "history") return true;
+  if (kind === "history") return true;
   // ["items", "tasks", owner, status, priority] — key[3] is the status filter.
   return kind === "tasks" && key[3] === "All";
 }
