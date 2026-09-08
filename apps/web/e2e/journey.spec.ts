@@ -34,10 +34,24 @@ test.describe.serial("golden path", () => {
 
   test("save all to Tasks; items appear there", async ({ page }) => {
     await page.goto("/review");
+    // Wait for the bulk PATCH to land before navigating — /tasks reads the
+    // same rows the mutation is still writing.
+    const patched = page.waitForResponse(
+      (r) => r.request().method() === "PATCH" && r.url().includes("/api/items"),
+    );
     await page.getByRole("button", { name: /Save \d+ to Tasks/ }).click();
+    await patched;
     await page.goto("/tasks");
     await expect(page.getByText(STUB_ITEMS[0].title)).toBeVisible();
     await expect(page.getByText(STUB_ITEMS[1].title)).toBeVisible();
+    // Proves the Review edit (Medium, due Dec 31) persisted server-side,
+    // not just in the optimistic cache the review test asserted against.
+    const editedRow = page
+      .getByRole("button")
+      .filter({ hasText: STUB_ITEMS[0].title })
+      .last();
+    await expect(editedRow).toContainText("Medium");
+    await expect(editedRow).toContainText("Dec 31");
   });
 
   test("flip an item to Done; it leaves Tasks for History", async ({
@@ -49,9 +63,16 @@ test.describe.serial("golden path", () => {
       .filter({ hasText: STUB_ITEMS[0].title })
       .last();
     await row.getByRole("combobox").click();
+    // The status PATCH fires from onAnimationEnd, after this click — register
+    // the wait first so the response can't land before we start listening.
+    const patched = page.waitForResponse(
+      (r) => r.request().method() === "PATCH" && r.url().includes("/api/items"),
+    );
     await page.getByRole("option", { name: "Done" }).click();
     // Optimistic: the row leaves the open-tasks walk without a reload.
     await expect(page.getByText(STUB_ITEMS[0].title)).not.toBeVisible();
+    // Don't navigate away until the animation-end PATCH actually lands.
+    await patched;
 
     await page.goto("/history");
     // TODAY in history.utils.ts is pinned for seeded demo data, so a live

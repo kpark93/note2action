@@ -1,9 +1,10 @@
 /** Shared test base: intercepts the browser's /ai-api/extract call with a
  * canned payload — deterministic capture, the AI service never runs. */
 import { test as base, expect } from "@playwright/test";
+import type { ExtractedItem } from "@note2action/shared";
 
 /** What "extraction" returns in every e2e run. */
-export const STUB_ITEMS = [
+export const STUB_ITEMS: ExtractedItem[] = [
   {
     title: "Ship pricing page copy",
     owner: "Kyle",

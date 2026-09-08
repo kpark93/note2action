@@ -21,6 +21,7 @@ export default defineConfig({
   // The journey is stateful; one worker keeps ordering deterministic.
   workers: 1,
   fullyParallel: false,
+  reporter: [["html", { open: "never" }], ["list"]],
   use: {
     baseURL: "http://localhost:4173",
     trace: "retain-on-failure",
