@@ -1,7 +1,7 @@
 """Real-Postgres repository tests — the in-memory fake's blind spots: RLS
 enforcement, commit ordering, SQL truth. Needs Postgres running."""
 
-from datetime import date
+from datetime import datetime, timezone
 
 import app.main as main_module
 import app.repositories.postgres.session as pg_session
@@ -53,14 +53,16 @@ def test_done_patch_survives_commit(repos):
         user_id, item_ids[0], ActionItemPatch(status="Done")
     )
 
+    # No completedOn in the patch — the server stamps its own UTC day.
+    utc_today = datetime.now(timezone.utc).date().isoformat()
     assert result is not None
     assert result.status == "Done"
-    assert result.completed == date.today().isoformat()
+    assert result.completed == utc_today
     # Fresh session: the write really committed, not just the response.
     history, _ = repos.items.list_history_page(user_id, None, 50)
     persisted = {i.id: i for i in history}
     assert persisted[item_ids[0]].status == "Done"
-    assert persisted[item_ids[0]].completed == date.today().isoformat()
+    assert persisted[item_ids[0]].completed == utc_today
 
 
 def test_users_see_only_their_own_items(repos):
@@ -76,9 +78,7 @@ def test_update_foreign_item_returns_none(repos):
     bob, _ = seed(repos, "user_bob", items=1)
 
     assert (
-        repos.items.update_item(
-            bob, alice_items[0], ActionItemPatch(status="Done")
-        )
+        repos.items.update_item(bob, alice_items[0], ActionItemPatch(status="Done"))
         is None
     )
     # Alice's row is untouched by the failed cross-user patch.
@@ -113,9 +113,7 @@ def test_rls_fails_closed_on_fresh_connection(repos):
     fresh = create_engine(APP_URL, poolclass=NullPool)
     try:
         with fresh.connect() as conn:
-            count = conn.execute(
-                text("SELECT count(*) FROM action_items")
-            ).scalar_one()
+            count = conn.execute(text("SELECT count(*) FROM action_items")).scalar_one()
         assert count == 0
     finally:
         fresh.dispose()
@@ -127,9 +125,7 @@ def test_dead_identity_errors_instead_of_leaking(repos):
     seed(repos)
 
     with pg_session.SessionLocal() as session:
-        session.execute(
-            text("SELECT set_config('app.user_id', '999', true)")
-        )
+        session.execute(text("SELECT set_config('app.user_id', '999', true)"))
         session.commit()
         with pytest.raises(DataError):
             session.execute(text("SELECT count(*) FROM action_items"))

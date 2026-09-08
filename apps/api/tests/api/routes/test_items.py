@@ -1,3 +1,5 @@
+from datetime import datetime, timedelta, timezone
+
 from app.main import app
 from fastapi.testclient import TestClient
 
@@ -52,6 +54,46 @@ def test_patch_done_stamps_completed_server_side() -> None:
     assert response.json()["completed"] is None
 
 
+def test_patch_done_honors_client_completed_on_within_skew() -> None:
+    # A viewer west of UTC finishes in the evening: their calendar day is one
+    # behind UTC's. The stamp must be theirs, not the server's.
+    today = datetime.now(timezone.utc).date()
+    yesterday = (today - timedelta(days=1)).isoformat()
+    response = client.patch(
+        "/api/items/1", json={"status": "Done", "completedOn": yesterday}
+    )
+    assert response.status_code == 200
+    assert response.json()["completed"] == yesterday
+
+    # East of UTC the skew points the other way: tomorrow is honored too.
+    tomorrow = (today + timedelta(days=1)).isoformat()
+    response = client.patch(
+        "/api/items/2", json={"status": "Done", "completedOn": tomorrow}
+    )
+    assert response.status_code == 200
+    assert response.json()["completed"] == tomorrow
+
+
+def test_patch_done_clamps_completed_on_beyond_skew() -> None:
+    # More than a day from UTC today can't be timezone skew — backdating is
+    # refused; the server stamps its own day instead.
+    response = client.patch(
+        "/api/items/1", json={"status": "Done", "completedOn": "2020-01-01"}
+    )
+    assert response.status_code == 200
+    expected = datetime.now(timezone.utc).date().isoformat()
+    assert response.json()["completed"] == expected
+
+
+def test_patch_done_with_malformed_completed_on_falls_back() -> None:
+    response = client.patch(
+        "/api/items/1", json={"status": "Done", "completedOn": "next tuesday"}
+    )
+    assert response.status_code == 200
+    expected = datetime.now(timezone.utc).date().isoformat()
+    assert response.json()["completed"] == expected
+
+
 def test_patch_unknown_id_returns_404() -> None:
     response = client.patch("/api/items/999", json={"status": "Done"})
     assert response.status_code == 404
@@ -76,13 +118,9 @@ def test_delete_unknown_id_returns_404() -> None:
 def test_bulk_patch_rejects_anything_but_saving() -> None:
     # The only supported bulk transition today: {"saved": true} on review.
     assert (
-        client.patch("/api/items?view=review", json={"saved": False}).status_code
-        == 422
+        client.patch("/api/items?view=review", json={"saved": False}).status_code == 422
     )
-    assert (
-        client.patch("/api/items?view=tasks", json={"saved": True}).status_code
-        == 422
-    )
+    assert client.patch("/api/items?view=tasks", json={"saved": True}).status_code == 422
 
 
 def test_save_to_tasks_saves_all_pending_items() -> None:

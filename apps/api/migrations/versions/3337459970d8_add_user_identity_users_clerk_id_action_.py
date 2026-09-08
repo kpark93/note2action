@@ -27,9 +27,7 @@ def upgrade() -> None:
     op.create_unique_constraint("uq_users_clerk_id", "users", ["clerk_id"])
 
     # action_items.user_id — step 1: add, nullable for now.
-    op.add_column(
-        "action_items", sa.Column("user_id", sa.Integer(), nullable=True)
-    )
+    op.add_column("action_items", sa.Column("user_id", sa.Integer(), nullable=True))
     # Step 2: backfill from each item's meeting, which already knows its owner.
     op.execute(
         """

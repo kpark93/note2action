@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useMeetingsInfinite } from "@/domain/meetings/meetings.queries";
 import { RecentModal } from "@/components/app/recent-modal";
 import { LoadMoreSentinel } from "@/components/app/load-more-sentinel";
-import { formatDate, timeAgo } from "@/lib/dates";
+import { formatInstantDate, timeAgo } from "@/lib/dates";
 import { ViewShell } from "@/components/app/view-shell";
 import { ViewHeader } from "@/components/app/view-header";
 import { ScrollRegion } from "@/components/app/scroll-region";
@@ -68,7 +68,7 @@ export function MeetingsView() {
                   className="col-start-1 row-start-1 opacity-0 transition-opacity duration-150 group-hover/when:opacity-100"
                   aria-hidden="true"
                 >
-                  {formatDate(meeting.capturedAt.slice(0, 10))}
+                  {formatInstantDate(meeting.capturedAt)}
                 </span>
               </span>
             </button>

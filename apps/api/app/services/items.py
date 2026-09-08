@@ -56,20 +56,14 @@ def list_page(
         return ItemsPage(items=items.list_review(user_id), nextCursor=None)
     if view == "tasks":
         cursor = _tasks_cursor(cursor_raw) if cursor_raw else None
-        rows, nxt = items.list_tasks_page(
-            user_id, status, priority, cursor, limit
-        )
+        rows, nxt = items.list_tasks_page(user_id, status, priority, cursor, limit)
     else:
         cursor = _dated_cursor(cursor_raw, "c") if cursor_raw else None
         rows, nxt = items.list_history_page(user_id, cursor, limit)
-    return ItemsPage(
-        items=rows, nextCursor=encode_cursor(nxt) if nxt else None
-    )
+    return ItemsPage(items=rows, nextCursor=encode_cursor(nxt) if nxt else None)
 
 
-def get_item(
-    items: ItemRepository, user_id: int, item_id: int
-) -> ActionItem | None:
+def get_item(items: ItemRepository, user_id: int, item_id: int) -> ActionItem | None:
     """One item; None → the route's 404-not-403 rule applies."""
     return items.get_item(user_id, item_id)
 

@@ -17,9 +17,7 @@ from app.services import meetings as meetings_service
 router = APIRouter()
 
 
-@router.post(
-    "/api/meetings", status_code=201, response_model=CreateMeetingResponse
-)
+@router.post("/api/meetings", status_code=201, response_model=CreateMeetingResponse)
 def create_meeting(
     request: CreateMeetingRequest,
     user_id: int = Depends(current_user_id),

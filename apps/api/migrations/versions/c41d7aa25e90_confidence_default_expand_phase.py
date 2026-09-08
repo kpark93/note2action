@@ -23,9 +23,7 @@ def upgrade() -> None:
     column must survive one deploy so still-running old tasks stay valid.
     The default lets new confidence-free INSERTs satisfy NOT NULL; a
     follow-up contract migration drops the column once this is deployed."""
-    op.alter_column(
-        "action_items", "confidence", server_default=sa.text("0")
-    )
+    op.alter_column("action_items", "confidence", server_default=sa.text("0"))
 
 
 def downgrade() -> None:

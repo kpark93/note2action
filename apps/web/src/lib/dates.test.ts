@@ -1,5 +1,47 @@
-import { describe, expect, it } from "vitest";
-import { compareDueAsc, formatDate, todayISO, weekOf } from "./dates";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import {
+  compareDueAsc,
+  formatDate,
+  formatInstantDate,
+  todayISO,
+  weekOf,
+} from "./dates";
+
+/** The runner pins TZ=UTC (package.json); these tests move the viewer's
+ * clock off Greenwich to prove day strings follow the local calendar. */
+describe("local calendar across timezones", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+    process.env.TZ = "UTC";
+  });
+
+  it("todayISO returns the local date west of Greenwich", () => {
+    process.env.TZ = "America/Los_Angeles";
+    vi.useFakeTimers();
+    // 9/10 04:00 UTC = 9/9 9pm PDT — UTC has rolled over, the viewer hasn't.
+    vi.setSystemTime(new Date("2026-09-10T04:00:00Z"));
+    expect(todayISO()).toBe("2026-09-09");
+  });
+
+  it("todayISO returns the local date east of Greenwich", () => {
+    process.env.TZ = "Asia/Tokyo";
+    vi.useFakeTimers();
+    // 9/9 20:00 UTC = 9/10 5am JST — the viewer has rolled over, UTC hasn't.
+    vi.setSystemTime(new Date("2026-09-09T20:00:00Z"));
+    expect(todayISO()).toBe("2026-09-10");
+  });
+
+  it("weekOf keeps the Monday date east of Greenwich", () => {
+    process.env.TZ = "Asia/Tokyo";
+    expect(weekOf("2026-08-10")).toBe("2026-08-10");
+  });
+
+  it("formatInstantDate renders an instant's day on the viewer's calendar", () => {
+    process.env.TZ = "America/Los_Angeles";
+    // 9/10 04:00 UTC is still 9/9 for a PDT viewer.
+    expect(formatInstantDate("2026-09-10T04:00:00+00:00")).toBe("Sep 9");
+  });
+});
 
 describe("formatDate", () => {
   it("formats an ISO day as a short US date", () => {

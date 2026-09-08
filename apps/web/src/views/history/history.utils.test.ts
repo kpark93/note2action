@@ -1,9 +1,22 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { historyGroups, historyStats } from "./history.utils";
 import { makeItem } from "@/test/fixtures";
 
 describe("historyGroups", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("labels the current week from the clock, not a pinned date", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-09-09T12:00:00Z"));
+    const justDone = makeItem({ status: "Done", completed: "2026-09-08" });
+    expect(historyGroups([justDone])[0].label).toBe("This week");
+  });
+
   it("buckets by week, newest bucket first, preserving arrival order inside", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-08-11T12:00:00Z"));
     const thisWeekA = makeItem({ status: "Done", completed: "2026-08-11" });
     const thisWeekB = makeItem({ status: "Done", completed: "2026-08-10" });
     const older = makeItem({ status: "Done", completed: "2026-07-28" });

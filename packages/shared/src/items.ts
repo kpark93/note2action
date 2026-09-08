@@ -59,7 +59,14 @@ export const ActionItemPatch = ActionItem.pick({
   status: true,
   saved: true,
   note: true,
-}).partial();
+})
+  .partial()
+  .extend({
+    /** The client's local "YYYY-MM-DD", sent with a flip to Done so the
+     * `completed` stamp lands on the user's calendar, not the server's.
+     * The server clamps it to ±1 day of UTC today (no backdating). */
+    completedOn: z.string().optional(),
+  });
 export type ActionItemPatch = z.infer<typeof ActionItemPatch>;
 
 /** PATCH /api/items?view=review — how many rows the bulk patch changed. */

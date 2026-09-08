@@ -8,6 +8,7 @@ import {
   type ActionItemPatch,
 } from "@note2action/shared";
 import { request } from "@/lib/http";
+import { todayISO } from "@/lib/dates";
 import type { ActionItem } from "@/domain/items/items.types";
 
 /** Wire → view-model: `null` becomes "" (due) / undefined (note). Exported
@@ -16,13 +17,19 @@ export function fromWire(item: WireActionItem): ActionItem {
   return { ...item, due: item.due ?? "", note: item.note ?? undefined };
 }
 
-/** View-model patch: `due: ""` means "clear the date" (wire: `null`). */
-export type ItemPatch = Omit<ActionItemPatch, "due"> & { due?: string };
+/** View-model patch: `due: ""` means "clear the date" (wire: `null`).
+ * `completedOn` is excluded — only toWirePatch derives it, from the clock. */
+export type ItemPatch = Omit<ActionItemPatch, "due" | "completedOn"> & {
+  due?: string;
+};
 
-/** View-model patch → wire: `due: ""` goes out as `null`. */
-function toWirePatch(patch: ItemPatch): ActionItemPatch {
+/** View-model patch → wire: `due: ""` goes out as `null`; a flip to Done
+ * carries the viewer's calendar day for the server's `completed` stamp. */
+export function toWirePatch(patch: ItemPatch): ActionItemPatch {
   const { due, ...rest } = patch;
-  return due === undefined ? rest : { ...rest, due: due || null };
+  const stamped =
+    rest.status === "Done" ? { ...rest, completedOn: todayISO() } : rest;
+  return due === undefined ? stamped : { ...stamped, due: due || null };
 }
 
 /** How many rows each infinite-scroll page asks the API for. */

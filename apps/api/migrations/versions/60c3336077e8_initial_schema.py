@@ -71,9 +71,7 @@ def upgrade() -> None:
             "status IN ('Not started', 'In progress', 'Blocked', 'Done')",
             name="ck_action_items_status",
         ),
-        sa.ForeignKeyConstraint(
-            ["meeting_id"], ["meetings.id"], ondelete="CASCADE"
-        ),
+        sa.ForeignKeyConstraint(["meeting_id"], ["meetings.id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("id"),
     )
     # ### end Alembic commands ###

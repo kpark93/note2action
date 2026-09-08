@@ -2,10 +2,7 @@
  * moved server-side (view=history keyset); grouping and stat tiles live here. */
 import type { ItemSummary } from "@note2action/shared";
 import type { ActionItem } from "@/domain/items/items.types";
-import { formatDate, weekOf } from "@/lib/dates";
-
-/** "Today" is pinned so the seeded due/completed dates stay meaningful. */
-const TODAY = "2026-08-11";
+import { formatDate, todayISO, weekOf } from "@/lib/dates";
 
 export interface HistoryGroupVM {
   key: string;
@@ -18,9 +15,10 @@ export interface HistoryGroupVM {
  * carries a pre-formatted completedLabel. Arrival order is preserved inside
  * a bucket — the server already sorted by completion. */
 export function historyGroups(items: ActionItem[]): HistoryGroupVM[] {
+  const today = todayISO();
   const groupMap: Record<string, ActionItem[]> = {};
   for (const it of items) {
-    const k = weekOf(it.completed || TODAY);
+    const k = weekOf(it.completed || today);
     (groupMap[k] ||= []).push(it);
   }
 
@@ -29,7 +27,7 @@ export function historyGroups(items: ActionItem[]): HistoryGroupVM[] {
     .reverse()
     .map((k) => ({
       key: k,
-      label: k === weekOf(TODAY) ? "This week" : "Week of " + formatDate(k),
+      label: k === weekOf(today) ? "This week" : "Week of " + formatDate(k),
       count:
         groupMap[k].length + (groupMap[k].length === 1 ? " item" : " items"),
       items: groupMap[k].map((it) => ({
