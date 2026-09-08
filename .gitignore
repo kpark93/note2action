@@ -49,4 +49,9 @@ infra/terraform.tfvars
 .claude/
 .cursor/
 
+# Playwright E2E: local auth state + generated reports
+apps/web/e2e/.auth/
+apps/web/playwright-report/
+apps/web/test-results/
+
  
