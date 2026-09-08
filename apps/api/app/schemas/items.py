@@ -38,6 +38,9 @@ class ActionItemPatch(BaseModel):
     status: Status | None = None
     saved: bool | None = None
     note: str | None = None
+    # The client's local "YYYY-MM-DD" on a flip to Done — advisory input to
+    # the `completed` stamp, clamped to ±1 day of UTC today (no backdating).
+    completedOn: str | None = None
 
 
 class ItemsBulkPatch(BaseModel):

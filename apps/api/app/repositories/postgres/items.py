@@ -1,7 +1,7 @@
 """The real ItemRepository — backed by meetings and action_items. Path §1
 [hop 11/15]: services/items.py → here → session.py → Postgres → to_wire."""
 
-from datetime import date
+from datetime import date, datetime, timezone
 
 from sqlalchemy import and_, func, or_, select
 from sqlalchemy import delete as sql_delete
@@ -13,6 +13,19 @@ from app.schemas.items import ActionItem, ActionItemPatch, ItemSummary
 
 from ..mappers import to_wire
 from .session import rls_session
+
+
+def _stamp_completed(client_day: str | None) -> date:
+    """Done stamp: the client's calendar day when within ±1 of UTC today —
+    real timezone skew is at most a day; anything else falls back to UTC."""
+    today = datetime.now(timezone.utc).date()
+    if client_day is None:
+        return today
+    try:
+        day = date.fromisoformat(client_day)
+    except ValueError:
+        return today
+    return day if abs((day - today).days) <= 1 else today
 
 
 class PostgresItemRepository:
@@ -202,13 +215,17 @@ class PostgresItemRepository:
                 return None
             row, meeting_title = hit
             changes = patch.model_dump(exclude_unset=True)
+            # completedOn feeds the stamp below — it's not a column.
+            completed_on = changes.pop("completedOn", None)
             # The wire speaks "YYYY-MM-DD" strings; the due column holds dates.
             if changes.get("due") is not None:
                 changes["due"] = date.fromisoformat(changes["due"])
             for field, value in changes.items():
                 setattr(row, field, value)
             if "status" in changes:
-                row.completed = date.today() if row.status == "Done" else None
+                row.completed = (
+                    _stamp_completed(completed_on) if row.status == "Done" else None
+                )
             # Before commit(): SET LOCAL identity dies at commit, so a
             # later read here would re-SELECT under no identity → RLS-denied.
             result = to_wire(row, meeting_title)

@@ -10,9 +10,22 @@ export function formatDate(d: string): string {
   });
 }
 
-/** Today's date as an ISO day string, e.g. "2026-08-14". */
+/** A Date's local calendar day as "YYYY-MM-DD" — never toISOString, which
+ * answers with UTC's calendar, a day off near midnight for non-UTC viewers. */
+function localDayISO(d: Date): string {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
+/** "Aug 14" for an ISO timestamp — the instant's day on the viewer's
+ * calendar, not UTC's (which slice(0, 10) on the raw string would give). */
+export function formatInstantDate(iso: string): string {
+  return formatDate(localDayISO(new Date(iso)));
+}
+
+/** Today's date as an ISO day string in the viewer's timezone. */
 export function todayISO(): string {
-  return new Date().toISOString().slice(0, 10);
+  return localDayISO(new Date());
 }
 
 /** ISO date of the Monday that starts the week containing `d`. */
@@ -20,7 +33,7 @@ export function weekOf(d: string): string {
   const t = new Date(d + "T00:00:00");
   const monday = new Date(t);
   monday.setDate(t.getDate() - ((t.getDay() + 6) % 7));
-  return monday.toISOString().slice(0, 10);
+  return localDayISO(monday);
 }
 
 /** Relative day label for an ISO timestamp: "today", "1d ago", "12d ago". */

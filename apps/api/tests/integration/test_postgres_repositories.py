@@ -1,7 +1,7 @@
 """Real-Postgres repository tests — the in-memory fake's blind spots: RLS
 enforcement, commit ordering, SQL truth. Needs Postgres running."""
 
-from datetime import date
+from datetime import datetime, timezone
 
 import app.main as main_module
 import app.repositories.postgres.session as pg_session
@@ -53,14 +53,16 @@ def test_done_patch_survives_commit(repos):
         user_id, item_ids[0], ActionItemPatch(status="Done")
     )
 
+    # No completedOn in the patch — the server stamps its own UTC day.
+    utc_today = datetime.now(timezone.utc).date().isoformat()
     assert result is not None
     assert result.status == "Done"
-    assert result.completed == date.today().isoformat()
+    assert result.completed == utc_today
     # Fresh session: the write really committed, not just the response.
     history, _ = repos.items.list_history_page(user_id, None, 50)
     persisted = {i.id: i for i in history}
     assert persisted[item_ids[0]].status == "Done"
-    assert persisted[item_ids[0]].completed == date.today().isoformat()
+    assert persisted[item_ids[0]].completed == utc_today
 
 
 def test_users_see_only_their_own_items(repos):
