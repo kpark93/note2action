@@ -54,10 +54,8 @@ test.describe.serial("golden path", () => {
     await expect(page.getByText(STUB_ITEMS[0].title)).not.toBeVisible();
 
     await page.goto("/history");
-    // historyGroups' "This week" label compares against a TODAY pinned in
-    // history.utils.ts for seeded demo data, not the real clock — a live
-    // completion lands under "Week of <date>" instead. Assert the section
-    // heading renders rather than hard-coding the pinned-vs-real label.
+    // TODAY in history.utils.ts is pinned for seeded demo data, so a live
+    // completion may land under "Week of <date>" instead of "This week".
     await expect(page.getByRole("heading", { level: 2 })).toContainText(
       /This week|Week of/,
     );
@@ -66,9 +64,8 @@ test.describe.serial("golden path", () => {
 
   test("summary stats reflect the completion", async ({ page }) => {
     await page.goto("/history");
-    // ItemSummary-backed tiles (history.utils.ts historyStats labels). The
-    // shared Card's data-slot="card" scopes to one tile — a bare "div"
-    // filter's deepest match is the label-only <div>, missing the value.
+    // data-slot="card" scopes to one tile — a bare "div" filter's deepest
+    // match is the label-only <div>, missing the value.
     const completed = page
       .locator('[data-slot="card"]')
       .filter({ hasText: "Completed all time" });
