@@ -14,7 +14,7 @@ export const ExtractedItem = z.object({
   owner: z
     .string()
     .describe(
-      "Person responsible — one of the provided owners, or 'Unassigned' if unclear.",
+      "Person responsible, exactly as the notes name them — or 'Unassigned' if unclear.",
     ),
   priority: Priority.describe(
     "High, Medium, or Low, based on urgency and importance.",
@@ -37,7 +37,6 @@ export const ExtractRequest = z.object({
   meetingTitle: z.string(),
   /** Caller's current date (YYYY-MM-DD) so relative dates resolve correctly. */
   today: z.string(),
-  owners: z.array(z.string()),
 });
 export type ExtractRequest = z.infer<typeof ExtractRequest>;
 

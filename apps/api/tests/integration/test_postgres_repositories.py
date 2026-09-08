@@ -57,7 +57,7 @@ def test_done_patch_survives_commit(repos):
     assert result.status == "Done"
     assert result.completed == date.today().isoformat()
     # Fresh session: the write really committed, not just the response.
-    history, _ = repos.items.list_history_page(user_id, None, None, 50)
+    history, _ = repos.items.list_history_page(user_id, None, 50)
     persisted = {i.id: i for i in history}
     assert persisted[item_ids[0]].status == "Done"
     assert persisted[item_ids[0]].completed == date.today().isoformat()

@@ -22,7 +22,6 @@ class PostgresItemRepository:
     def list_tasks_page(
         self,
         user_id: int,
-        owner: str | None,
         status: str | None,
         priority: str | None,
         cursor: dict | None,
@@ -40,8 +39,6 @@ class PostgresItemRepository:
                     ActionItemRow.status != "Done",
                 )
             )
-            if owner is not None:
-                q = q.where(ActionItemRow.owner == owner)
             if status is not None:
                 q = q.where(ActionItemRow.status == status)
             if priority is not None:
@@ -83,7 +80,6 @@ class PostgresItemRepository:
     def list_history_page(
         self,
         user_id: int,
-        owner: str | None,
         cursor: dict | None,
         limit: int,
     ) -> tuple[list[ActionItem], dict | None]:
@@ -98,8 +94,6 @@ class PostgresItemRepository:
                     ActionItemRow.status == "Done",
                 )
             )
-            if owner is not None:
-                q = q.where(ActionItemRow.owner == owner)
             if cursor is not None:
                 c = date.fromisoformat(cursor["c"])
                 q = q.where(

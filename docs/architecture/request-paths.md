@@ -21,14 +21,15 @@ in the code itself:
    `TasksView`. The layout route above it already passed `RequireAuth`
    (`components/app/require-auth.tsx`), so a Clerk session exists.
 2. `views/tasks/tasks.view.tsx :: TasksView` — calls
-   `useTasksInfinite(owner, status, priority)`. The filters live in the
+   `useTasksInfinite(status, priority)`. The filters live in the
    cache key, so each combination is its own paged walk. **If that walk's
-   pages are already cached** and fresh (younger than `staleTime`, 60s —
-   set in `lib/query-client.ts`), the table renders with no fetch and the
+   pages are already cached** and fresh (younger than `staleTime`, 5 min —
+   set in `lib/query-client.ts`; freshness comes from invalidation, not
+   the clock), the table renders with no fetch and the
    rest of this journey doesn't run.
 3. `domain/items/items.queries.ts :: useTasksInfinite` — a TanStack
-   `useInfiniteQuery` under the key `["items", "tasks", owner, status,
-priority]`; each page's `nextCursor` is the `pageParam` for the next.
+   `useInfiniteQuery` under the key `["items", "tasks", status, priority]`;
+   each page's `nextCursor` is the `pageParam` for the next.
 4. `domain/items/items.api.ts :: fetchTasksPage` — builds
    `/api/items?view=tasks` plus the filter params and cursor.
 5. `lib/http.ts :: request` — asks `lib/auth-token.ts` for a fresh Clerk
@@ -123,9 +124,11 @@ keptOnSettle` decides): the reconciled detail and delta'd summary are
 
 Delete and Save-to-Tasks follow the same shape with their own transforms
 (`removeItem`, `markAllSaved`). Their settle scopes differ on purpose:
-delete invalidates **all** meetings shapes (`itemCount`s changed);
-save-to-tasks, like patch, touches only meeting details (a `saved` flag
-changes item state, not counts).
+delete keeps Review (its own removal is the whole change), drops the dead
+detail entry outright, and refetches meetings lists plus only the affected
+meeting's detail (`itemCount` changed there); save-to-tasks, like patch,
+touches only meeting details (a `saved` flag changes item state, not
+counts).
 
 ---
 
@@ -161,13 +164,12 @@ create_meeting`: the meeting row and all its item rows are inserted in
    **one transaction** (all-or-nothing), `user_id` stamped from the
    verified token, never from the request body.
 6. The mutation's `onSuccess` clears the draft, then seeds every cache the
-   response fully describes — the summary moves by delta, the new items
-   append to Review (id-ordered, so newest-last is correct), and the new
-   meeting tops the RECENT strip — no refetches, and navigation to Review
-   is immediate because Review's cache is already truth. Only the
-   paginated walks (items pages, meetings infinite) get lazily marked
-   stale: their page boundaries are the server's call. The capture now
-   exists as rows, so the Review queue survives any refresh.
+   response fully describes — the summary moves by delta and the new items
+   append to Review (id-ordered, so newest-last is correct) — no refetches,
+   and navigation to Review is immediate because Review's cache is already
+   truth. Only the paginated walks (items pages, meetings infinite) get
+   lazily marked stale: their page boundaries are the server's call. The
+   capture now exists as rows, so the Review queue survives any refresh.
 
 ---
 

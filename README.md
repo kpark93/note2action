@@ -196,7 +196,7 @@ runs it against a service container on every push.
   view-shell).
 - **`apps/web/src/lib/`** — the shared kernel: `http.ts` (fetch + zod
   validation + bearer token), `query-client.ts`, `auth-token.ts`,
-  `theme.store.ts`, `dates.ts`, `sound.ts`, `utils.ts` (`cn()`).
+  `theme.store.ts`, `dates.ts`, `utils.ts` (`cn()`).
 - **`apps/api/app/api/routes/`** — one file per resource (`health.py`,
   `items.py`, `meetings.py`) plus `deps.py` (repositories accessor,
   current-user resolution); `app/core/` holds config/db/security/middleware

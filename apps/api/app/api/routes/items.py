@@ -24,7 +24,6 @@ router = APIRouter()
 @router.get("/api/items", response_model=ItemsPage)
 def list_items(
     view: Literal["tasks", "history", "review"],
-    owner: str | None = None,
     status: str | None = None,
     priority: str | None = None,
     cursor: str | None = None,
@@ -36,7 +35,7 @@ def list_items(
     (services/items.py list_page). A cursor we didn't mint is a 422."""
     try:
         return items_service.list_page(
-            repos.items, user_id, view, owner, status, priority, cursor, limit
+            repos.items, user_id, view, status, priority, cursor, limit
         )
     except CursorError as exc:
         raise HTTPException(status_code=422, detail="Invalid cursor") from exc

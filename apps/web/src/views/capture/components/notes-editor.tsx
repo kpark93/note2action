@@ -7,7 +7,6 @@ import {
   useExtractCapture,
   useExtractionStatus,
 } from "@/domain/extraction/extraction.queries";
-import { OWNERS } from "@/domain/items/items.constants";
 import { todayISO } from "@/lib/dates";
 import {
   isTxtFilename,
@@ -70,7 +69,6 @@ export function NotesEditor() {
         notes: raw,
         meetingTitle,
         today: todayISO(),
-        owners: [...OWNERS],
       },
       // mutate-level callback: skipped if the user already left Capture,
       // so the save always lands but the redirect only fires when relevant.

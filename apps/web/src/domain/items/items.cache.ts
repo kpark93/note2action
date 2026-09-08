@@ -120,8 +120,8 @@ export function keptOnSettle(
   }
   if (!keep.statusOnly) return false;
   if (kind === "history") return true;
-  // ["items", "tasks", owner, status, priority] — key[3] is the status filter.
-  return kind === "tasks" && key[3] === "All";
+  // ["items", "tasks", status, priority] — key[2] is the status filter.
+  return kind === "tasks" && key[2] === "All";
 }
 
 /** First copy of an item found across a pages structure, or undefined —

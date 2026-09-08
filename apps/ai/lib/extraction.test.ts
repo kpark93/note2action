@@ -15,7 +15,6 @@ const REQUEST = {
   notes: "Kyle to ship the API by Friday",
   meetingTitle: "Sprint planning",
   today: "2026-08-23",
-  owners: ["Kyle", "Priya"],
 };
 
 const mocked = vi.mocked(generateText);
@@ -32,7 +31,9 @@ describe("extractItems", () => {
     const call = mocked.mock.calls[0][0] as { prompt: string };
     expect(call.prompt).toContain("2026-08-23");
     expect(call.prompt).toContain('"Sprint planning"');
-    expect(call.prompt).toContain("Kyle, Priya");
+    // Owners are inferred from the notes now — no roster in the prompt.
+    expect(call.prompt).not.toContain("Known owners");
+    expect(call.prompt).toContain("exactly as the notes name them");
     expect(call.prompt).toContain(REQUEST.notes);
   });
 

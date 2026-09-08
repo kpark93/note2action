@@ -21,7 +21,7 @@ describe("taskRows", () => {
   it("staggers entrance delays but caps them for deep pages", () => {
     const rows = taskRows(Array.from({ length: 40 }, () => makeItem({})));
     expect(rows[0].delay).toBe("0ms");
-    expect(rows[1].delay).toBe("35ms");
+    expect(rows[1].delay).toBe("30ms");
     expect(rows[39].delay).toBe(rows[12].delay);
   });
 });

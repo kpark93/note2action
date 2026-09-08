@@ -2,7 +2,7 @@
  * write. Next hop: usePatchItem / useDeleteItem. */
 import type { CSSProperties } from "react";
 import { useDeleteItem, usePatchItem } from "@/domain/items/items.queries";
-import { OWNERS, PRIORITY_STYLE } from "@/domain/items/items.constants";
+import { PRIORITY_STYLE } from "@/domain/items/items.constants";
 import type { Priority } from "@/domain/items/items.types";
 import type { ReviewItemVM } from "@/views/review/review.utils";
 import { Button } from "@/components/ui/button";
@@ -59,18 +59,15 @@ export function ReviewCard({ item }: { item: ReviewItemVM }) {
           <span className="text-[11px] font-medium text-muted-foreground">
             Owner
           </span>
-          <Select value={item.owner} onValueChange={(v) => patch({ owner: v })}>
-            <SelectTrigger className="w-full rounded-[10px] border-border bg-secondary px-2 text-[12.5px] text-foreground data-[size=default]:h-8">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {OWNERS.map((o) => (
-                <SelectItem key={o} value={o}>
-                  {o}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          {/* Free text — the AI infers names from the notes; fix them here. */}
+          <Input
+            defaultValue={item.owner}
+            onBlur={(e) => {
+              const owner = e.target.value.trim() || "Unassigned";
+              if (owner !== item.owner) patch({ owner });
+            }}
+            className="h-8 w-full rounded-[10px] border-border bg-secondary px-2 text-[12.5px] text-foreground shadow-none md:text-[12.5px] dark:bg-secondary"
+          />
         </label>
         <div className="grid grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] gap-[9px]">
           <label className="flex min-w-0 flex-col gap-[6px]">

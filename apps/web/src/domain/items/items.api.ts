@@ -41,7 +41,6 @@ function filterParam(params: URLSearchParams, key: string, value: string) {
 
 /** GET /api/items?view=tasks — one page of saved open items, due-date order. */
 export async function fetchTasksPage(
-  owner: string,
   status: string,
   priority: string,
   cursor: string | null,
@@ -50,7 +49,6 @@ export async function fetchTasksPage(
     view: "tasks",
     limit: String(PAGE_LIMIT),
   });
-  filterParam(params, "owner", owner);
   filterParam(params, "status", status);
   filterParam(params, "priority", priority);
   if (cursor) params.set("cursor", cursor);
@@ -60,14 +58,12 @@ export async function fetchTasksPage(
 
 /** GET /api/items?view=history — one page of Done items, newest-closed first. */
 export async function fetchHistoryPage(
-  owner: string,
   cursor: string | null,
 ): Promise<ItemsPageVM> {
   const params = new URLSearchParams({
     view: "history",
     limit: String(PAGE_LIMIT),
   });
-  filterParam(params, "owner", owner);
   if (cursor) params.set("cursor", cursor);
   const page = await request(`/api/items?${params}`, { schema: ItemsPage });
   return { items: page.items.map(fromWire), nextCursor: page.nextCursor };

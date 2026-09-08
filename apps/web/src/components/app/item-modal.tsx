@@ -1,7 +1,8 @@
 /** Detail dialog for one action item, opened by clicking a Tasks row —
  * every edit is an optimistic write. Next hop: usePatchItem. */
+import { useRef } from "react";
 import { useItemQuery, usePatchItem } from "@/domain/items/items.queries";
-import { OWNERS, PRIORITIES, STATUSES } from "@/domain/items/items.constants";
+import { PRIORITIES, STATUSES } from "@/domain/items/items.constants";
 import { formatDate } from "@/lib/dates";
 import type { Priority, Status } from "@/domain/items/items.types";
 import { Input } from "@/components/ui/input";
@@ -31,10 +32,27 @@ const FIELD_LABEL = "text-[11px] font-medium text-muted-foreground";
 const FIELD_TRIGGER =
   "w-full rounded-[10px] border-border bg-secondary px-2 text-[12.5px] text-foreground data-[size=default]:h-8";
 
-/** Title, owner/due/priority/status fields, and the editable AI rationale. */
+/** Shell: owns the Dialog. The body (and its query) mounts only while open —
+ * no parked null query. The ref keeps the last id through the exit
+ * animation; Radix unmounts the whole subtree once the fade finishes. */
 export function ItemModal({ itemId, onClose }: ItemModalProps) {
+  const lastId = useRef<number | null>(null);
+  if (itemId !== null) lastId.current = itemId;
+  const shownId = itemId ?? lastId.current;
+
+  return (
+    <Dialog open={itemId !== null} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="rounded-[18px] border-border bg-card">
+        {shownId !== null && <ItemModalBody id={shownId} />}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/** Title, owner/due/priority/status fields, and the editable AI rationale. */
+function ItemModalBody({ id }: { id: number }) {
   const patchItem = usePatchItem();
-  const item = useItemQuery(itemId).data ?? null;
+  const item = useItemQuery(id).data ?? null;
 
   // Text fields save on blur (one PATCH per edit, not per keystroke);
   // selects and the date input save immediately — same optimistic write
@@ -45,127 +63,110 @@ export function ItemModal({ itemId, onClose }: ItemModalProps) {
     if (item) patchItem.mutate({ id: item.id, patch: patchBody });
   };
 
+  if (!item) return null;
+
   return (
-    <Dialog open={item !== null} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="rounded-[18px] border-border bg-card">
-        {item && (
-          // Keyed so defaultValue fields reset when a different item opens.
-          <div key={item.id} className="flex flex-col gap-4">
-            <DialogHeader>
-              <DialogTitle className="text-[15px]">
-                Edit action item
-              </DialogTitle>
-              <DialogDescription className="text-[12.5px]">
-                From “{item.meeting}”
-                {item.completed
-                  ? ` · completed ${formatDate(item.completed)}`
-                  : ""}
-              </DialogDescription>
-            </DialogHeader>
+    // Keyed so defaultValue fields reset when a different item opens.
+    <div key={item.id} className="flex flex-col gap-4">
+      <DialogHeader>
+        <DialogTitle className="text-[15px]">Edit action item</DialogTitle>
+        <DialogDescription className="text-[12.5px]">
+          From “{item.meeting}”
+          {item.completed ? ` · completed ${formatDate(item.completed)}` : ""}
+        </DialogDescription>
+      </DialogHeader>
 
-            <label className="flex flex-col gap-[6px]">
-              <span className={FIELD_LABEL}>Title</span>
-              <Textarea
-                defaultValue={item.title}
-                onBlur={(e) => {
-                  if (e.target.value !== item.title)
-                    patch({ title: e.target.value });
-                }}
-                rows={2}
-                className="block field-sizing-fixed min-h-[38px] w-full resize-none rounded-[11px] border-border bg-secondary px-[9px] py-[6px] text-[14px] leading-[1.35] font-semibold tracking-[-0.02em] text-foreground shadow-none md:text-[14px] dark:bg-secondary"
-              />
-            </label>
+      <label className="flex flex-col gap-[6px]">
+        <span className={FIELD_LABEL}>Title</span>
+        <Textarea
+          defaultValue={item.title}
+          onBlur={(e) => {
+            if (e.target.value !== item.title) patch({ title: e.target.value });
+          }}
+          rows={2}
+          className="block field-sizing-fixed min-h-[38px] w-full resize-none rounded-[11px] border-border bg-secondary px-[9px] py-[6px] text-[14px] leading-[1.35] font-semibold tracking-[-0.02em] text-foreground shadow-none md:text-[14px] dark:bg-secondary"
+        />
+      </label>
 
-            <div className="grid grid-cols-2 gap-[10px]">
-              <label className="flex min-w-0 flex-col gap-[6px]">
-                <span className={FIELD_LABEL}>Owner</span>
-                <Select
-                  value={item.owner}
-                  onValueChange={(v) => patch({ owner: v })}
-                >
-                  <SelectTrigger className={FIELD_TRIGGER}>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {OWNERS.map((o) => (
-                      <SelectItem key={o} value={o}>
-                        {o}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </label>
-              <label className="flex min-w-0 flex-col gap-[6px]">
-                <span className={FIELD_LABEL}>Due</span>
-                <Input
-                  type="date"
-                  defaultValue={item.due}
-                  onBlur={(e) => {
-                    if (e.target.value !== item.due)
-                      patch({ due: e.target.value });
-                  }}
-                  className="h-8 rounded-[10px] border-border bg-secondary px-2 text-[12.5px] text-foreground shadow-none md:text-[12.5px] dark:bg-secondary"
-                />
-              </label>
-              <label className="flex min-w-0 flex-col gap-[6px]">
-                <span className={FIELD_LABEL}>Priority</span>
-                <Select
-                  value={item.priority}
-                  onValueChange={(v) => patch({ priority: v as Priority })}
-                >
-                  <SelectTrigger className={FIELD_TRIGGER}>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {PRIORITIES.map((p) => (
-                      <SelectItem key={p} value={p}>
-                        {p}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </label>
-              <label className="flex min-w-0 flex-col gap-[6px]">
-                <span className={FIELD_LABEL}>Status</span>
-                <Select
-                  value={item.status}
-                  onValueChange={(v) => patch({ status: v as Status })}
-                >
-                  <SelectTrigger className={FIELD_TRIGGER}>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {STATUSES.map((s) => (
-                      <SelectItem key={s} value={s}>
-                        {s}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </label>
-            </div>
+      <div className="grid grid-cols-2 gap-[10px]">
+        <label className="flex min-w-0 flex-col gap-[6px]">
+          <span className={FIELD_LABEL}>Owner</span>
+          <Input
+            defaultValue={item.owner}
+            onBlur={(e) => {
+              const owner = e.target.value.trim() || "Unassigned";
+              if (owner !== item.owner) patch({ owner });
+            }}
+            className="h-8 rounded-[10px] border-border bg-secondary px-2 text-[12.5px] text-foreground shadow-none md:text-[12.5px] dark:bg-secondary"
+          />
+        </label>
+        <label className="flex min-w-0 flex-col gap-[6px]">
+          <span className={FIELD_LABEL}>Due</span>
+          <Input
+            type="date"
+            defaultValue={item.due}
+            onBlur={(e) => {
+              if (e.target.value !== item.due) patch({ due: e.target.value });
+            }}
+            className="h-8 rounded-[10px] border-border bg-secondary px-2 text-[12.5px] text-foreground shadow-none md:text-[12.5px] dark:bg-secondary"
+          />
+        </label>
+        <label className="flex min-w-0 flex-col gap-[6px]">
+          <span className={FIELD_LABEL}>Priority</span>
+          <Select
+            value={item.priority}
+            onValueChange={(v) => patch({ priority: v as Priority })}
+          >
+            <SelectTrigger className={FIELD_TRIGGER}>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {PRIORITIES.map((p) => (
+                <SelectItem key={p} value={p}>
+                  {p}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </label>
+        <label className="flex min-w-0 flex-col gap-[6px]">
+          <span className={FIELD_LABEL}>Status</span>
+          <Select
+            value={item.status}
+            onValueChange={(v) => patch({ status: v as Status })}
+          >
+            <SelectTrigger className={FIELD_TRIGGER}>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {STATUSES.map((s) => (
+                <SelectItem key={s} value={s}>
+                  {s}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </label>
+      </div>
 
-            <label className="flex flex-col gap-[6px]">
-              <span className={FIELD_LABEL}>
-                AI rationale — what the item was modeled after
-              </span>
-              <Textarea
-                defaultValue={item.note ?? ""}
-                onBlur={(e) => {
-                  if (e.target.value !== (item.note ?? ""))
-                    patch({ note: e.target.value });
-                }}
-                rows={3}
-                className="block field-sizing-fixed w-full resize-none rounded-[11px] border-border bg-secondary px-[9px] py-[6px] text-[12.5px] leading-[1.5] text-foreground shadow-none md:text-[12.5px] dark:bg-secondary"
-              />
-            </label>
+      <label className="flex flex-col gap-[6px]">
+        <span className={FIELD_LABEL}>
+          AI rationale — what the item was modeled after
+        </span>
+        <Textarea
+          defaultValue={item.note ?? ""}
+          onBlur={(e) => {
+            if (e.target.value !== (item.note ?? ""))
+              patch({ note: e.target.value });
+          }}
+          rows={3}
+          className="block field-sizing-fixed w-full resize-none rounded-[11px] border-border bg-secondary px-[9px] py-[6px] text-[12.5px] leading-[1.5] text-foreground shadow-none md:text-[12.5px] dark:bg-secondary"
+        />
+      </label>
 
-            <p className="text-[11.5px] text-muted-foreground">
-              Edits save when you leave a field.
-            </p>
-          </div>
-        )}
-      </DialogContent>
-    </Dialog>
+      <p className="text-[11.5px] text-muted-foreground">
+        Edits save when you leave a field.
+      </p>
+    </div>
   );
 }

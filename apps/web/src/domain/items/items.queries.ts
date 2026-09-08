@@ -4,7 +4,6 @@
 // invalidating the paginated lists — pages refetch instead of being
 // surgically patched. Path §1 [hop 3/15]: → items.api.ts (hop 4).
 import {
-  skipToken,
   useInfiniteQuery,
   useMutation,
   useQuery,
@@ -45,25 +44,20 @@ export function useReviewQuery() {
 }
 
 /** Tasks pages. Filters live in the key: changing one starts a fresh walk. */
-export function useTasksInfinite(
-  owner: string,
-  status: string,
-  priority: string,
-) {
+export function useTasksInfinite(status: string, priority: string) {
   return useInfiniteQuery({
-    queryKey: itemsKey.tasks(owner, status, priority),
-    queryFn: ({ pageParam }) =>
-      fetchTasksPage(owner, status, priority, pageParam),
+    queryKey: itemsKey.tasks(status, priority),
+    queryFn: ({ pageParam }) => fetchTasksPage(status, priority, pageParam),
     initialPageParam: null as string | null,
     getNextPageParam: (last) => last.nextCursor,
   });
 }
 
 /** History pages — Done items, newest-closed first. */
-export function useHistoryInfinite(owner: string) {
+export function useHistoryInfinite() {
   return useInfiniteQuery({
-    queryKey: itemsKey.history(owner),
-    queryFn: ({ pageParam }) => fetchHistoryPage(owner, pageParam),
+    queryKey: itemsKey.history,
+    queryFn: ({ pageParam }) => fetchHistoryPage(pageParam),
     initialPageParam: null as string | null,
     getNextPageParam: (last) => last.nextCursor,
   });
@@ -88,7 +82,7 @@ function findCachedItem(
       updatedAt: queryClient.getQueryState(itemsKey.review)?.dataUpdatedAt ?? 0,
     };
   }
-  for (const prefix of [itemsKey.tasksAll, itemsKey.historyAll]) {
+  for (const prefix of [itemsKey.tasksAll, itemsKey.history]) {
     for (const [key, data] of queryClient.getQueriesData<
       InfiniteData<ItemsPageVM>
     >({ queryKey: prefix })) {
@@ -106,17 +100,14 @@ function findCachedItem(
 
 /** One item for the detail modal; starts from the row's cached copy (a fresh
  * page means zero fetches on open) and only hits the API once that's stale.
- * skipToken (docs: disabling-queries) parks the query type-safely when no
- * item is open — no sentinel id, no `id as number`. */
-export function useItemQuery(id: number | null) {
+ * Only mounted while a modal is open, so the id is always real. */
+export function useItemQuery(id: number) {
   const queryClient = useQueryClient();
   return useQuery({
     queryKey: itemsKey.detail(id),
-    queryFn: id === null ? skipToken : () => fetchItem(id),
-    initialData: () =>
-      id === null ? undefined : findCachedItem(queryClient, id)?.item,
-    initialDataUpdatedAt: () =>
-      id === null ? undefined : findCachedItem(queryClient, id)?.updatedAt,
+    queryFn: () => fetchItem(id),
+    initialData: () => findCachedItem(queryClient, id)?.item,
+    initialDataUpdatedAt: () => findCachedItem(queryClient, id)?.updatedAt,
   });
 }
 
@@ -188,7 +179,7 @@ function patchPageCaches(
   id: number,
   patch: ItemPatch,
 ) {
-  for (const prefix of [itemsKey.tasksAll, itemsKey.historyAll]) {
+  for (const prefix of [itemsKey.tasksAll, itemsKey.history]) {
     queryClient.setQueriesData<InfiniteData<ItemsPageVM>>(
       { queryKey: prefix },
       (data) => (data ? patchPages(data, id, patch) : data),

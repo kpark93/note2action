@@ -26,19 +26,15 @@ describe("keptOnSettle", () => {
 
   it("statusOnly keeps walks whose membership cannot change", () => {
     const keep = { statusOnly: true };
-    expect(keptOnSettle(["items", "tasks", "All", "All", "All"], keep)).toBe(
-      true,
-    );
-    expect(
-      keptOnSettle(["items", "tasks", "Kyle Park", "All", "High"], keep),
-    ).toBe(true);
+    expect(keptOnSettle(["items", "tasks", "All", "All"], keep)).toBe(true);
+    expect(keptOnSettle(["items", "tasks", "All", "High"], keep)).toBe(true);
     expect(keptOnSettle(["items", "review"], keep)).toBe(true);
-    expect(keptOnSettle(["items", "history", "All"], keep)).toBe(true);
+    expect(keptOnSettle(["items", "history"], keep)).toBe(true);
   });
 
   it("statusOnly still invalidates status-filtered tasks walks", () => {
     expect(
-      keptOnSettle(["items", "tasks", "All", "Blocked", "All"], {
+      keptOnSettle(["items", "tasks", "Blocked", "All"], {
         statusOnly: true,
       }),
     ).toBe(false);
@@ -47,16 +43,12 @@ describe("keptOnSettle", () => {
   it("review flag keeps the review cache and nothing else", () => {
     const keep = { review: true };
     expect(keptOnSettle(["items", "review"], keep)).toBe(true);
-    expect(keptOnSettle(["items", "tasks", "All", "All", "All"], keep)).toBe(
-      false,
-    );
-    expect(keptOnSettle(["items", "history", "All"], keep)).toBe(false);
+    expect(keptOnSettle(["items", "tasks", "All", "All"], keep)).toBe(false);
+    expect(keptOnSettle(["items", "history"], keep)).toBe(false);
   });
 
   it("keeps nothing without flags", () => {
-    expect(keptOnSettle(["items", "tasks", "All", "All", "All"], {})).toBe(
-      false,
-    );
+    expect(keptOnSettle(["items", "tasks", "All", "All"], {})).toBe(false);
     expect(keptOnSettle(["items", "review"], {})).toBe(false);
   });
 });

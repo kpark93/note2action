@@ -73,12 +73,6 @@ def test_tasks_pages_never_overlap_and_respect_limit() -> None:
     assert first_ids.isdisjoint(second_ids)
 
 
-def test_tasks_view_filters_by_owner_server_side() -> None:
-    seed_tasks()
-    titles = walk("tasks", "&owner=Dana")
-    assert titles == ["a-later", "z-undated-2"]
-
-
 def test_history_view_returns_done_newest_completed_first() -> None:
     seed_tasks()
     # Close two items; both stamp today, so DESC falls back to id DESC.

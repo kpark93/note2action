@@ -1,12 +1,10 @@
-/** History screen: completed items grouped by week, plus summary stats. Read
- * only — data from the TanStack cache; the owner filter is view-local state. */
+/** History screen: completed items grouped by week, plus summary stats.
+ * Read only — data from the TanStack cache. */
 import {
   useHistoryInfinite,
   useSummaryQuery,
 } from "@/domain/items/items.queries";
 import { LoadMoreSentinel } from "@/components/app/load-more-sentinel";
-import { useHistoryStore } from "./history.store";
-import { OWNERS } from "@/domain/items/items.constants";
 import { historyGroups, historyStats } from "./history.utils";
 import { HistoryRow } from "./components/history-row";
 import { ViewHeader } from "@/components/app/view-header";
@@ -15,14 +13,9 @@ import { ScrollRegion } from "@/components/app/scroll-region";
 import { SectionHeading } from "@/components/app/section-heading";
 import { EmptyState } from "@/components/app/empty-state";
 import { StatCard } from "./components/stat-card";
-import { FilterSelect } from "@/components/app/filter-select";
 
 export function HistoryView() {
-  const historyOwner = useHistoryStore((s) => s.historyOwner);
-  const setHistoryOwner = useHistoryStore((s) => s.setHistoryOwner);
-
-  // Owner filter rides in the query key — a change starts a fresh walk.
-  const historyQuery = useHistoryInfinite(historyOwner);
+  const historyQuery = useHistoryInfinite();
   const groups = historyGroups(
     historyQuery.data?.pages.flatMap((page) => page.items) ?? [],
   );
@@ -36,15 +29,6 @@ export function HistoryView() {
       <ViewHeader
         title="History"
         description="Completed action items, newest first. Nothing is deleted — reopen anything that comes back."
-        actions={
-          <FilterSelect
-            value={historyOwner}
-            onValueChange={setHistoryOwner}
-            allLabel="All owners"
-            options={OWNERS}
-            className="flex-none"
-          />
-        }
       />
 
       <div className="my-4 grid flex-none grid-cols-3 gap-3">

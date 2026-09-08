@@ -18,7 +18,7 @@ import { summaryAfterCapture } from "@/domain/items/items.cache";
 import { fromWire } from "@/domain/items/items.api";
 import type { ActionItem } from "@/domain/items/items.types";
 import { extractKey, itemsKey, meetingsKey } from "@/lib/query-keys";
-import type { ItemSummary, Meeting } from "@note2action/shared";
+import type { ItemSummary } from "@note2action/shared";
 
 /**
  * The capture mutation: notes in, extracted items persisted as a meeting.
@@ -55,10 +55,6 @@ export function useExtractCapture() {
       queryClient.setQueryData<ActionItem[]>(itemsKey.review, (items) =>
         items ? [...items, ...data.items.map(fromWire)] : items,
       );
-      // …and the new meeting tops the RECENT strip (newest-first, cap 3).
-      queryClient.setQueryData<Meeting[]>(meetingsKey.list(3), (meetings) =>
-        meetings ? [data.meeting, ...meetings].slice(0, 3) : meetings,
-      );
       // What's left: the paginated walks (items pages, meetings infinite) —
       // their page boundaries are the server's call — all lazily marked;
       // details unchanged by an ADD, review/summary/strip seeded above.
@@ -71,8 +67,7 @@ export function useExtractCapture() {
       });
       void queryClient.invalidateQueries({
         queryKey: meetingsKey.all,
-        predicate: (query) =>
-          query.queryKey[1] !== "detail" && query.queryKey[1] !== "list",
+        predicate: (query) => query.queryKey[1] !== "detail",
       });
     },
   });

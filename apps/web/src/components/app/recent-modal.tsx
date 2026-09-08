@@ -21,25 +21,17 @@ interface RecentModalProps {
   onClose: () => void;
 }
 
-/** Transcript plus this meeting's extracted items with read-only status
- * pills, both from GET /api/meetings/{id}. */
+/** Shell: owns the Dialog. The body (and its query) mounts only while open —
+ * no parked null query. The ref keeps the last id through the exit
+ * animation; Radix unmounts the whole subtree once the fade finishes. */
 export function RecentModal({ meetingId, onClose }: RecentModalProps) {
-  const open = meetingId !== null;
-  // Transcript + items arrive together on the detail; only runs while open.
-  const current = useMeetingQuery(meetingId).data ?? null;
-  // Keep the last capture rendered through the close animation so the exit
-  // fade doesn't flash an empty modal.
-  const lastRef = useRef(current);
-  if (current) lastRef.current = current;
-  const meeting = current ?? lastRef.current;
-  const items = meeting?.items ?? [];
-  const words = meeting?.rawNotes.trim()
-    ? meeting.rawNotes.trim().split(/\s+/).length
-    : 0;
+  const lastId = useRef<number | null>(null);
+  if (meetingId !== null) lastId.current = meetingId;
+  const shownId = meetingId ?? lastId.current;
 
   return (
     <Dialog
-      open={open}
+      open={meetingId !== null}
       onOpenChange={(next) => {
         if (!next) onClose();
       }}
@@ -49,63 +41,73 @@ export function RecentModal({ meetingId, onClose }: RecentModalProps) {
         className="flex max-h-[calc(100vh-4rem)] w-full max-w-[660px] flex-col gap-0 overflow-hidden rounded-[20px] border-border bg-card p-0 sm:max-w-[660px]"
         style={{ boxShadow: "0 30px 80px rgba(0,0,0,.5)" }}
       >
-        {meeting && (
-          <>
-            <DialogHeader className="flex flex-row items-start gap-4 space-y-0 border-b border-border px-5 pt-[18px] pb-[14px] text-left">
-              <div className="min-w-0">
-                <DialogTitle className="text-[17px] font-bold tracking-[-0.02em]">
-                  {meeting.title}
-                </DialogTitle>
-                <DialogDescription className="mt-[5px] text-[12px] text-muted-foreground">
-                  {meeting.itemCount} extracted · captured{" "}
-                  {timeAgo(meeting.capturedAt)}
-                </DialogDescription>
-              </div>
-              <DialogClose className="ml-auto flex h-[30px] w-[30px] flex-none items-center justify-center rounded-[9px] border border-border bg-transparent text-[15px] leading-none text-muted-foreground">
-                ×
-              </DialogClose>
-            </DialogHeader>
-            <div className="min-h-0 flex-1 overflow-y-auto px-5 py-[18px]">
-              <p className="text-[13.5px] leading-[1.75] whitespace-pre-wrap text-foreground">
-                {meeting.rawNotes}
-              </p>
-              <h3 className="mt-[22px] mb-[10px] text-[11px] font-semibold tracking-[0.08em] text-muted-foreground uppercase">
-                Extracted items
-              </h3>
-              {items.length === 0 ? (
-                <p className="text-[12.5px] text-muted-foreground">
-                  No items from this meeting are still around.
-                </p>
-              ) : (
-                <ul className="flex flex-col gap-[6px]">
-                  {items.map((item) => (
-                    <ItemRow
-                      key={item.id}
-                      title={item.title}
-                      status={item.status}
-                    />
-                  ))}
-                </ul>
-              )}
-            </div>
-            <DialogFooter className="flex flex-row items-center gap-[10px] border-t border-border px-5 py-[14px] sm:justify-start">
-              <span className="text-[12px] text-muted-foreground">
-                {words} words
-              </span>
-              <span className="flex-1" />
-              <DialogClose asChild>
-                <Button
-                  variant="outline"
-                  className="h-9 rounded-[11px] border-border bg-transparent px-[15px] text-[13px] font-medium text-muted-foreground shadow-none dark:border-border dark:bg-transparent"
-                >
-                  Close
-                </Button>
-              </DialogClose>
-            </DialogFooter>
-          </>
-        )}
+        {shownId !== null && <RecentModalBody meetingId={shownId} />}
       </DialogContent>
     </Dialog>
+  );
+}
+
+/** Transcript plus this meeting's extracted items with read-only status
+ * pills, both from GET /api/meetings/{id}. */
+function RecentModalBody({ meetingId }: { meetingId: number }) {
+  // placeholderData paints the header from the clicked row's cached summary
+  // while the transcript + items fetch.
+  const meeting = useMeetingQuery(meetingId).data ?? null;
+  const items = meeting?.items ?? [];
+  const words = meeting?.rawNotes.trim()
+    ? meeting.rawNotes.trim().split(/\s+/).length
+    : 0;
+
+  if (!meeting) return null;
+
+  return (
+    <>
+      <DialogHeader className="flex flex-row items-start gap-4 space-y-0 border-b border-border px-5 pt-[18px] pb-[14px] text-left">
+        <div className="min-w-0">
+          <DialogTitle className="text-[17px] font-bold tracking-[-0.02em]">
+            {meeting.title}
+          </DialogTitle>
+          <DialogDescription className="mt-[5px] text-[12px] text-muted-foreground">
+            {meeting.itemCount} extracted · captured{" "}
+            {timeAgo(meeting.capturedAt)}
+          </DialogDescription>
+        </div>
+        <DialogClose className="ml-auto flex h-[30px] w-[30px] flex-none items-center justify-center rounded-[9px] border border-border bg-transparent text-[15px] leading-none text-muted-foreground">
+          ×
+        </DialogClose>
+      </DialogHeader>
+      <div className="min-h-0 flex-1 overflow-y-auto px-5 py-[18px]">
+        <p className="text-[13.5px] leading-[1.75] whitespace-pre-wrap text-foreground">
+          {meeting.rawNotes}
+        </p>
+        <h3 className="mt-[22px] mb-[10px] text-[11px] font-semibold tracking-[0.08em] text-muted-foreground uppercase">
+          Extracted items
+        </h3>
+        {items.length === 0 ? (
+          <p className="text-[12.5px] text-muted-foreground">
+            No items from this meeting are still around.
+          </p>
+        ) : (
+          <ul className="flex flex-col gap-[6px]">
+            {items.map((item) => (
+              <ItemRow key={item.id} title={item.title} status={item.status} />
+            ))}
+          </ul>
+        )}
+      </div>
+      <DialogFooter className="flex flex-row items-center gap-[10px] border-t border-border px-5 py-[14px] sm:justify-start">
+        <span className="text-[12px] text-muted-foreground">{words} words</span>
+        <span className="flex-1" />
+        <DialogClose asChild>
+          <Button
+            variant="outline"
+            className="h-9 rounded-[11px] border-border bg-transparent px-[15px] text-[13px] font-medium text-muted-foreground shadow-none dark:border-border dark:bg-transparent"
+          >
+            Close
+          </Button>
+        </DialogClose>
+      </DialogFooter>
+    </>
   );
 }
 

@@ -25,7 +25,7 @@ export function MeetingsView() {
     <ViewShell>
       <ViewHeader
         title="Meetings"
-        description="Every capture you've saved, newest first. Click one to read the transcript or load it back into Capture."
+        description="Every capture you've saved, newest first. Click one to read the transcript and its items."
       />
 
       {isPending ? (
@@ -45,7 +45,9 @@ export function MeetingsView() {
               key={meeting.id}
               onClick={() => setOpenMeetingId(meeting.id)}
               className="n2a-row recent-btn flex w-full cursor-pointer items-center gap-4 rounded-[14px] border border-border bg-card px-4 py-[13px] text-left text-foreground"
-              style={{ animationDelay: idx * 35 + "ms" }}
+              // Capped: idx spans every loaded page — uncapped, deep rows
+              // of the infinite walk would wait seconds to appear.
+              style={{ animationDelay: Math.min(idx, 8) * 30 + "ms" }}
             >
               <span className="flex min-w-0 flex-1 flex-col gap-[3px]">
                 <span className="overflow-hidden text-[14.5px] font-semibold tracking-[-0.015em] text-ellipsis whitespace-nowrap">
