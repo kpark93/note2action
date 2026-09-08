@@ -1,5 +1,6 @@
-/** Once per run: create → migrate → truncate the e2e database via the
- * API's venv (mirrors apps/api/tests/conftest.py). Clerk setup: Task 2. */
+/** Once per run: load Clerk's testing token, then create → migrate →
+ * truncate the e2e database via the API's venv (mirrors conftest.py). */
+import { clerkSetup } from "@clerk/testing/playwright";
 import { test as setup } from "@playwright/test";
 import { execFileSync } from "node:child_process";
 import path from "node:path";
@@ -20,6 +21,7 @@ function py(code: string) {
 }
 
 setup("prepare the e2e database", async () => {
+  await clerkSetup();
   py(`
 import psycopg
 with psycopg.connect("${ADMIN}/postgres", autocommit=True) as conn:

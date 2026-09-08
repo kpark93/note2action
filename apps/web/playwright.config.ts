@@ -2,6 +2,16 @@
  * Postgres must already be running (docker compose up -d postgres). */
 import { defineConfig } from "@playwright/test";
 
+// Local env files (gitignored); CI provides the same values as real env.
+for (const f of [".env", ".env.e2e", "../api/.env"]) {
+  try {
+    process.loadEnvFile(f);
+  } catch {
+    /* absent in CI */
+  }
+}
+process.env.CLERK_PUBLISHABLE_KEY ??= process.env.VITE_CLERK_PUBLISHABLE_KEY;
+
 /** App-role URL for the dedicated e2e database (never the dev DB). */
 export const E2E_DB_URL =
   "postgresql+psycopg://note2action_app:note2action_app_dev@localhost:5432/note2action_e2e";
@@ -16,7 +26,7 @@ export default defineConfig({
     trace: "retain-on-failure",
   },
   projects: [
-    { name: "setup", testMatch: /global\.setup\.ts/ },
+    { name: "setup", testMatch: /(global|auth)\.setup\.ts/ },
     {
       name: "chromium",
       use: {
