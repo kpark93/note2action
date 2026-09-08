@@ -48,9 +48,7 @@ def test_create_meeting_persists_meeting_and_items() -> None:
     assert second["due"] is None
     assert second["note"] is None
     # Every created item belongs to the created meeting.
-    assert {item["meetingId"] for item in body["items"]} == {
-        body["meeting"]["id"]
-    }
+    assert {item["meetingId"] for item in body["items"]} == {body["meeting"]["id"]}
 
     # The new items land in the Review queue (unsaved on arrival).
     items = client.get("/api/items?view=review").json()["items"]
@@ -58,9 +56,7 @@ def test_create_meeting_persists_meeting_and_items() -> None:
 
 
 def test_create_meeting_invalid_body_returns_422() -> None:
-    response = client.post(
-        "/api/meetings", json={"title": "no rawNotes or items"}
-    )
+    response = client.post("/api/meetings", json={"title": "no rawNotes or items"})
     assert response.status_code == 422
 
 

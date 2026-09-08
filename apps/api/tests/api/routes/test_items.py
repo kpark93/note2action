@@ -76,13 +76,9 @@ def test_delete_unknown_id_returns_404() -> None:
 def test_bulk_patch_rejects_anything_but_saving() -> None:
     # The only supported bulk transition today: {"saved": true} on review.
     assert (
-        client.patch("/api/items?view=review", json={"saved": False}).status_code
-        == 422
+        client.patch("/api/items?view=review", json={"saved": False}).status_code == 422
     )
-    assert (
-        client.patch("/api/items?view=tasks", json={"saved": True}).status_code
-        == 422
-    )
+    assert client.patch("/api/items?view=tasks", json={"saved": True}).status_code == 422
 
 
 def test_save_to_tasks_saves_all_pending_items() -> None:

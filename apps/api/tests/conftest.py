@@ -25,10 +25,7 @@ TEST_DB = "note2action_test"
 # Admin role: DDL powers, BYPASSES RLS — used only to create/migrate/wipe.
 ADMIN_URL = f"postgresql+psycopg://postgres:postgres@{SERVER}"
 # App role: what production connects as — RLS applies (owners bypass it).
-APP_URL = (
-    f"postgresql+psycopg://note2action_app:note2action_app_dev"
-    f"@{SERVER}/{TEST_DB}"
-)
+APP_URL = f"postgresql+psycopg://note2action_app:note2action_app_dev@{SERVER}/{TEST_DB}"
 
 # The seeded account every plain-AUTH test acts as. With the fake verifier
 # below, the bearer token simply IS the Clerk user id — no crypto involved.
@@ -68,15 +65,11 @@ class FakeVerifier:
 def test_db():
     """Once per run: rebuild note2action_test and migrate it; yields the
     app-role sessionmaker + an admin engine for truncation."""
-    admin = create_engine(
-        f"{ADMIN_URL}/postgres", isolation_level="AUTOCOMMIT"
-    )
+    admin = create_engine(f"{ADMIN_URL}/postgres", isolation_level="AUTOCOMMIT")
     try:
         with admin.connect() as conn:
             # FORCE kicks any lingering connections from a previous run.
-            conn.execute(
-                text(f"DROP DATABASE IF EXISTS {TEST_DB} WITH (FORCE)")
-            )
+            conn.execute(text(f"DROP DATABASE IF EXISTS {TEST_DB} WITH (FORCE)"))
             conn.execute(text(f"CREATE DATABASE {TEST_DB}"))
     except OperationalError:
         pytest.fail(
@@ -100,9 +93,7 @@ def test_db():
     )
 
     app_engine = create_engine(APP_URL)
-    admin_test = create_engine(
-        f"{ADMIN_URL}/{TEST_DB}", isolation_level="AUTOCOMMIT"
-    )
+    admin_test = create_engine(f"{ADMIN_URL}/{TEST_DB}", isolation_level="AUTOCOMMIT")
     yield sessionmaker(bind=app_engine), admin_test
     app_engine.dispose()
     admin_test.dispose()
@@ -125,10 +116,7 @@ def fresh_database(test_db, monkeypatch):
     # ids deterministic (1, 2, …) in every test.
     with admin.connect() as conn:
         conn.execute(
-            text(
-                "TRUNCATE action_items, meetings, users "
-                "RESTART IDENTITY CASCADE"
-            )
+            text("TRUNCATE action_items, meetings, users RESTART IDENTITY CASCADE")
         )
         conn.execute(text(SEED_SQL))
     yield

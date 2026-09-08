@@ -39,9 +39,7 @@ def test_capture_then_done_full_path():
     assert created.status_code == 201
     item_id = created.json()["items"][0]["id"]
 
-    done = client.patch(
-        f"/api/items/{item_id}", json={"status": "Done"}, headers=ALICE
-    )
+    done = client.patch(f"/api/items/{item_id}", json={"status": "Done"}, headers=ALICE)
     assert done.status_code == 200
     assert done.json()["status"] == "Done"
     # Not in the request body — the server stamps it.
@@ -60,15 +58,10 @@ def test_cross_user_access_is_404_and_invisible():
     item_id = created.json()["items"][0]["id"]
     meeting_id = created.json()["meeting"]["id"]
 
-    patched = client.patch(
-        f"/api/items/{item_id}", json={"status": "Done"}, headers=BOB
-    )
+    patched = client.patch(f"/api/items/{item_id}", json={"status": "Done"}, headers=BOB)
     assert patched.status_code == 404
     assert client.delete(f"/api/items/{item_id}", headers=BOB).status_code == 404
-    assert (
-        client.get(f"/api/meetings/{meeting_id}", headers=BOB).status_code
-        == 404
-    )
+    assert client.get(f"/api/meetings/{meeting_id}", headers=BOB).status_code == 404
     assert client.get("/api/items?view=review", headers=BOB).json()["items"] == []
 
 
@@ -79,7 +72,12 @@ def test_save_to_tasks_endpoint_counts():
     assert first.status_code == 200
     assert first.json()["updated"] == 2
     # Everything already saved — the second sweep finds nothing.
-    assert client.patch("/api/items?view=review", json={"saved": True}, headers=ALICE).json()["updated"] == 0
+    assert (
+        client.patch(
+            "/api/items?view=review", json={"saved": True}, headers=ALICE
+        ).json()["updated"]
+        == 0
+    )
 
 
 def test_no_token_is_401():
@@ -93,11 +91,14 @@ def test_tasks_keyset_walk_crosses_dated_undated_boundary():
         "title": "Pagination capture",
         "rawNotes": "notes",
         "items": [
-            {"title": f"t{n}", "owner": "Kyle", "priority": "Low",
-             "due": due, "note": ""}
-            for n, due in enumerate(
-                ["2026-09-12", "", "2026-09-02", "", "2026-09-22"]
-            )
+            {
+                "title": f"t{n}",
+                "owner": "Kyle",
+                "priority": "Low",
+                "due": due,
+                "note": "",
+            }
+            for n, due in enumerate(["2026-09-12", "", "2026-09-02", "", "2026-09-22"])
         ],
     }
     client.post("/api/meetings", json=capture, headers=ALICE)
@@ -123,10 +124,19 @@ def test_pagination_views_are_user_scoped():
     keyset queries ride the same RLS + user_id filters as everything else."""
     client.post(
         "/api/meetings",
-        json={"title": "Alice only", "rawNotes": "x", "items": [
-            {"title": "secret", "owner": "Kyle", "priority": "Low",
-             "due": "", "note": ""}
-        ]},
+        json={
+            "title": "Alice only",
+            "rawNotes": "x",
+            "items": [
+                {
+                    "title": "secret",
+                    "owner": "Kyle",
+                    "priority": "Low",
+                    "due": "",
+                    "note": "",
+                }
+            ],
+        },
         headers=ALICE,
     )
     client.patch("/api/items?view=review", json={"saved": True}, headers=ALICE)
@@ -134,6 +144,10 @@ def test_pagination_views_are_user_scoped():
     bob_tasks = client.get("/api/items?view=tasks", headers=BOB).json()
     assert bob_tasks == {"items": [], "nextCursor": None}
     assert client.get("/api/items/summary", headers=BOB).json() == {
-        "done": 0, "open": 0, "review": 0, "total": 0,
-        "onTime": 0, "meetings": 0,
+        "done": 0,
+        "open": 0,
+        "review": 0,
+        "total": 0,
+        "onTime": 0,
+        "meetings": 0,
     }

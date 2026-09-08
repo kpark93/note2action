@@ -71,9 +71,7 @@ class PostgresItemRepository:
             has_more = len(rows) > limit
             page = [to_wire(row, title) for row, title in rows[:limit]]
             next_cursor = (
-                {"d": page[-1].due, "i": page[-1].id}
-                if has_more and page
-                else None
+                {"d": page[-1].due, "i": page[-1].id} if has_more and page else None
             )
             return page, next_cursor
 
@@ -163,9 +161,7 @@ class PostgresItemRepository:
                 select(
                     func.count(),
                     func.count().filter(done_f),
-                    func.count().filter(
-                        and_(~done_f, ActionItemRow.saved.is_(False))
-                    ),
+                    func.count().filter(and_(~done_f, ActionItemRow.saved.is_(False))),
                     func.count().filter(
                         and_(
                             done_f,

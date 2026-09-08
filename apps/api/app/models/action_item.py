@@ -41,8 +41,6 @@ class ActionItem(Base):
     due: Mapped[date | None]
     priority: Mapped[str]
     status: Mapped[str]
-    saved: Mapped[bool] = mapped_column(
-        default=False, server_default=text("false")
-    )
+    saved: Mapped[bool] = mapped_column(default=False, server_default=text("false"))
     note: Mapped[str | None]
     completed: Mapped[date | None]

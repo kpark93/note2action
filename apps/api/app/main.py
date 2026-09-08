@@ -19,9 +19,7 @@ app.state.repositories = build_postgres_repositories()
 # The verifier lives on app.state (not a global) so tests can swap in a fake,
 # mirroring the repository seam. None = CLERK_JWKS_URL missing → loud 500s.
 app.state.token_verifier = (
-    ClerkJWKSVerifier(settings.clerk_jwks_url)
-    if settings.clerk_jwks_url
-    else None
+    ClerkJWKSVerifier(settings.clerk_jwks_url) if settings.clerk_jwks_url else None
 )
 app.middleware("http")(require_verified_user)
 # Registered after auth = runs OUTSIDE it, so 401s also get ids + log lines.

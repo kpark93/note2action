@@ -26,7 +26,6 @@ class ItemRepository(Protocol):
     """Persistence boundary for action items; someone else's row looks
     like a missing one (None/False → 404) — never leaking existence."""
 
-
     def list_tasks_page(
         self,
         user_id: int,
@@ -79,9 +78,7 @@ class MeetingRepository(Protocol):
         """Newest first by (captured_at DESC, id DESC); keyset payloads."""
         ...
 
-    def get_meeting(
-        self, user_id: int, meeting_id: int
-    ) -> MeetingDetail | None: ...
+    def get_meeting(self, user_id: int, meeting_id: int) -> MeetingDetail | None: ...
 
 
 @dataclass(frozen=True)

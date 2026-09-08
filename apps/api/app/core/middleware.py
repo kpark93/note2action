@@ -29,9 +29,7 @@ async def require_verified_user(request: Request, call_next):
     verifier: TokenVerifier | None = request.app.state.token_verifier
     if verifier is None:
         return JSONResponse(
-            {
-                "detail": "Auth is not configured — set CLERK_JWKS_URL in apps/api/.env"
-            },
+            {"detail": "Auth is not configured — set CLERK_JWKS_URL in apps/api/.env"},
             status_code=500,
         )
 

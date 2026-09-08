@@ -17,6 +17,4 @@ def current_user_id(request: Request) -> int:
     """Calls services/users.py resolve_user_id with the verified
     identity — never anything the client typed into a body."""
     identity = request.state.identity
-    return users_service.resolve_user_id(
-        get_repositories(request).users, identity
-    )
+    return users_service.resolve_user_id(get_repositories(request).users, identity)

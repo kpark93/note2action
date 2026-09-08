@@ -58,26 +58,19 @@ def test_missing_token_is_401() -> None:
 
 
 def test_garbage_token_is_401() -> None:
-    response = client.get(
-        "/api/items", headers={"Authorization": "Bearer nonsense"}
-    )
+    response = client.get("/api/items", headers={"Authorization": "Bearer nonsense"})
     assert response.status_code == 401
 
 
 def test_users_only_see_their_own_items() -> None:
     # The seeded user owns the two seed items; a stranger owns nothing.
     assert len(client.get("/api/items?view=review").json()["items"]) == 2
-    assert (
-        client.get("/api/items?view=review", headers=STRANGER).json()["items"]
-        == []
-    )
+    assert client.get("/api/items?view=review", headers=STRANGER).json()["items"] == []
 
 
 def test_strangers_cannot_touch_someone_elses_item() -> None:
     # Same status as a nonexistent row — existence itself is private.
-    patch = client.patch(
-        "/api/items/1", json={"status": "Done"}, headers=STRANGER
-    )
+    patch = client.patch("/api/items/1", json={"status": "Done"}, headers=STRANGER)
     assert patch.status_code == 404
     assert client.delete("/api/items/1", headers=STRANGER).status_code == 404
 
@@ -92,9 +85,7 @@ def test_strangers_cannot_touch_someone_elses_item() -> None:
 
 
 def test_meetings_are_scoped_per_user() -> None:
-    assert (
-        client.get("/api/meetings", headers=STRANGER).json()["meetings"] == []
-    )
+    assert client.get("/api/meetings", headers=STRANGER).json()["meetings"] == []
     assert client.get("/api/meetings/1", headers=STRANGER).status_code == 404
 
 
@@ -120,14 +111,12 @@ def test_created_data_belongs_to_its_creator() -> None:
 
     # The stranger sees exactly their capture; the seeded user still sees
     # exactly the seeds. Neither list leaks into the other.
-    stranger_items = client.get(
-        "/api/items?view=review", headers=STRANGER
-    ).json()["items"]
+    stranger_items = client.get("/api/items?view=review", headers=STRANGER).json()[
+        "items"
+    ]
     assert [item["title"] for item in stranger_items] == ["Stranger's task"]
     assert len(client.get("/api/items?view=review").json()["items"]) == 2
     assert [
         m["title"]
-        for m in client.get("/api/meetings", headers=STRANGER).json()[
-            "meetings"
-        ]
+        for m in client.get("/api/meetings", headers=STRANGER).json()["meetings"]
     ] == ["Stranger's sync"]

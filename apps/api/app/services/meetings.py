@@ -40,9 +40,7 @@ def list_meetings_page(
             raise CursorError("bad cursor timestamp") from exc
         cursor = {"t": t, "i": i}
     page, nxt = meetings.list_meetings_page(user_id, cursor, limit)
-    return MeetingsPage(
-        meetings=page, nextCursor=encode_cursor(nxt) if nxt else None
-    )
+    return MeetingsPage(meetings=page, nextCursor=encode_cursor(nxt) if nxt else None)
 
 
 def get_meeting(

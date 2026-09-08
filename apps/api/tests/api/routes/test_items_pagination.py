@@ -17,11 +17,41 @@ def seed_tasks() -> None:
             "title": "Pagination seed",
             "rawNotes": "many items",
             "items": [
-                {"title": "c-early", "owner": "Kyle", "priority": "High", "due": "2126-09-05", "note": ""},
-                {"title": "a-later", "owner": "Dana", "priority": "Low", "due": "2126-09-20", "note": ""},
-                {"title": "b-mid", "owner": "Kyle", "priority": "Medium", "due": "2126-09-10", "note": ""},
-                {"title": "z-undated-1", "owner": "Kyle", "priority": "Low", "due": "", "note": ""},
-                {"title": "z-undated-2", "owner": "Dana", "priority": "Low", "due": "", "note": ""},
+                {
+                    "title": "c-early",
+                    "owner": "Kyle",
+                    "priority": "High",
+                    "due": "2126-09-05",
+                    "note": "",
+                },
+                {
+                    "title": "a-later",
+                    "owner": "Dana",
+                    "priority": "Low",
+                    "due": "2126-09-20",
+                    "note": "",
+                },
+                {
+                    "title": "b-mid",
+                    "owner": "Kyle",
+                    "priority": "Medium",
+                    "due": "2126-09-10",
+                    "note": "",
+                },
+                {
+                    "title": "z-undated-1",
+                    "owner": "Kyle",
+                    "priority": "Low",
+                    "due": "",
+                    "note": "",
+                },
+                {
+                    "title": "z-undated-2",
+                    "owner": "Dana",
+                    "priority": "Low",
+                    "due": "",
+                    "note": "",
+                },
             ],
         },
     )
@@ -124,8 +154,6 @@ def test_meetings_paginate_newest_first() -> None:
     first = client.get("/api/meetings?limit=2&cursor=").json()
     assert len(first["meetings"]) == 2
     assert first["nextCursor"] is not None
-    second = client.get(
-        f"/api/meetings?limit=2&cursor={first['nextCursor']}"
-    ).json()
+    second = client.get(f"/api/meetings?limit=2&cursor={first['nextCursor']}").json()
     ids = [m["id"] for m in first["meetings"] + second["meetings"]]
     assert ids == sorted(ids, reverse=True)

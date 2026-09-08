@@ -62,10 +62,6 @@ def downgrade() -> None:
     for table in ("action_items", "meetings"):
         op.execute(f"DROP POLICY {table}_owner_only ON {table}")
         op.execute(f"ALTER TABLE {table} DISABLE ROW LEVEL SECURITY")
-    op.execute(
-        "REVOKE ALL ON users, meetings, action_items FROM note2action_app"
-    )
-    op.execute(
-        "REVOKE ALL ON ALL SEQUENCES IN SCHEMA public FROM note2action_app"
-    )
+    op.execute("REVOKE ALL ON users, meetings, action_items FROM note2action_app")
+    op.execute("REVOKE ALL ON ALL SEQUENCES IN SCHEMA public FROM note2action_app")
     op.execute("DROP ROLE IF EXISTS note2action_app")

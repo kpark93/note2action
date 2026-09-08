@@ -81,9 +81,7 @@ class PostgresMeetingRepository:
         with rls_session(user_id) as session:
             q = (
                 select(MeetingRow, func.count(ActionItemRow.id))
-                .outerjoin(
-                    ActionItemRow, ActionItemRow.meeting_id == MeetingRow.id
-                )
+                .outerjoin(ActionItemRow, ActionItemRow.meeting_id == MeetingRow.id)
                 .where(MeetingRow.user_id == user_id)
                 .group_by(MeetingRow.id)
             )
@@ -98,9 +96,9 @@ class PostgresMeetingRepository:
                         ),
                     )
                 )
-            q = q.order_by(
-                MeetingRow.captured_at.desc(), MeetingRow.id.desc()
-            ).limit(limit + 1)
+            q = q.order_by(MeetingRow.captured_at.desc(), MeetingRow.id.desc()).limit(
+                limit + 1
+            )
             rows = session.execute(q).all()
             has_more = len(rows) > limit
             page = [
@@ -119,9 +117,7 @@ class PostgresMeetingRepository:
             )
             return page, next_cursor
 
-    def get_meeting(
-        self, user_id: int, meeting_id: int
-    ) -> MeetingDetail | None:
+    def get_meeting(self, user_id: int, meeting_id: int) -> MeetingDetail | None:
         """One full meeting, transcript included; None if missing or
         not the caller's."""
         with rls_session(user_id) as session:

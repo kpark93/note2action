@@ -13,7 +13,7 @@ dev = [
 ]
 
 [tool.ruff]
-line-length = 79
+line-length = 89
 target-version = "py310"
 
 [tool.ruff.lint]

@@ -76,9 +76,7 @@ def test_update_foreign_item_returns_none(repos):
     bob, _ = seed(repos, "user_bob", items=1)
 
     assert (
-        repos.items.update_item(
-            bob, alice_items[0], ActionItemPatch(status="Done")
-        )
+        repos.items.update_item(bob, alice_items[0], ActionItemPatch(status="Done"))
         is None
     )
     # Alice's row is untouched by the failed cross-user patch.
@@ -113,9 +111,7 @@ def test_rls_fails_closed_on_fresh_connection(repos):
     fresh = create_engine(APP_URL, poolclass=NullPool)
     try:
         with fresh.connect() as conn:
-            count = conn.execute(
-                text("SELECT count(*) FROM action_items")
-            ).scalar_one()
+            count = conn.execute(text("SELECT count(*) FROM action_items")).scalar_one()
         assert count == 0
     finally:
         fresh.dispose()
@@ -127,9 +123,7 @@ def test_dead_identity_errors_instead_of_leaking(repos):
     seed(repos)
 
     with pg_session.SessionLocal() as session:
-        session.execute(
-            text("SELECT set_config('app.user_id', '999', true)")
-        )
+        session.execute(text("SELECT set_config('app.user_id', '999', true)"))
         session.commit()
         with pytest.raises(DataError):
             session.execute(text("SELECT count(*) FROM action_items"))
