@@ -45,7 +45,6 @@ def list_page(
     items: ItemRepository,
     user_id: int,
     view: str,
-    owner: str | None,
     status: str | None,
     priority: str | None,
     cursor_raw: str | None,
@@ -58,11 +57,11 @@ def list_page(
     if view == "tasks":
         cursor = _tasks_cursor(cursor_raw) if cursor_raw else None
         rows, nxt = items.list_tasks_page(
-            user_id, owner, status, priority, cursor, limit
+            user_id, status, priority, cursor, limit
         )
     else:
         cursor = _dated_cursor(cursor_raw, "c") if cursor_raw else None
-        rows, nxt = items.list_history_page(user_id, owner, cursor, limit)
+        rows, nxt = items.list_history_page(user_id, cursor, limit)
     return ItemsPage(
         items=rows, nextCursor=encode_cursor(nxt) if nxt else None
     )

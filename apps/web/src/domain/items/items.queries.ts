@@ -44,25 +44,20 @@ export function useReviewQuery() {
 }
 
 /** Tasks pages. Filters live in the key: changing one starts a fresh walk. */
-export function useTasksInfinite(
-  owner: string,
-  status: string,
-  priority: string,
-) {
+export function useTasksInfinite(status: string, priority: string) {
   return useInfiniteQuery({
-    queryKey: itemsKey.tasks(owner, status, priority),
-    queryFn: ({ pageParam }) =>
-      fetchTasksPage(owner, status, priority, pageParam),
+    queryKey: itemsKey.tasks(status, priority),
+    queryFn: ({ pageParam }) => fetchTasksPage(status, priority, pageParam),
     initialPageParam: null as string | null,
     getNextPageParam: (last) => last.nextCursor,
   });
 }
 
 /** History pages — Done items, newest-closed first. */
-export function useHistoryInfinite(owner: string) {
+export function useHistoryInfinite() {
   return useInfiniteQuery({
-    queryKey: itemsKey.history(owner),
-    queryFn: ({ pageParam }) => fetchHistoryPage(owner, pageParam),
+    queryKey: itemsKey.history,
+    queryFn: ({ pageParam }) => fetchHistoryPage(pageParam),
     initialPageParam: null as string | null,
     getNextPageParam: (last) => last.nextCursor,
   });
@@ -87,7 +82,7 @@ function findCachedItem(
       updatedAt: queryClient.getQueryState(itemsKey.review)?.dataUpdatedAt ?? 0,
     };
   }
-  for (const prefix of [itemsKey.tasksAll, itemsKey.historyAll]) {
+  for (const prefix of [itemsKey.tasksAll, itemsKey.history]) {
     for (const [key, data] of queryClient.getQueriesData<
       InfiniteData<ItemsPageVM>
     >({ queryKey: prefix })) {
@@ -104,17 +99,15 @@ function findCachedItem(
 }
 
 /** One item for the detail modal; starts from the row's cached copy (a fresh
- * page means zero fetches on open) and only hits the API once that's stale. */
-export function useItemQuery(id: number | null) {
+ * page means zero fetches on open) and only hits the API once that's stale.
+ * Only mounted while a modal is open, so the id is always real. */
+export function useItemQuery(id: number) {
   const queryClient = useQueryClient();
   return useQuery({
-    queryKey: itemsKey.detail(id ?? -1),
-    queryFn: () => fetchItem(id as number),
-    enabled: id !== null,
-    initialData: () =>
-      id === null ? undefined : findCachedItem(queryClient, id)?.item,
-    initialDataUpdatedAt: () =>
-      id === null ? undefined : findCachedItem(queryClient, id)?.updatedAt,
+    queryKey: itemsKey.detail(id),
+    queryFn: () => fetchItem(id),
+    initialData: () => findCachedItem(queryClient, id)?.item,
+    initialDataUpdatedAt: () => findCachedItem(queryClient, id)?.updatedAt,
   });
 }
 
@@ -124,6 +117,8 @@ interface Snapshot {
   summaryAdjusted?: boolean;
   /** The item's status before the patch; undefined = wasn't cached. */
   beforeStatus?: ActionItem["status"];
+  /** Deleted item's meeting — only that meeting's detail goes stale. */
+  meetingId?: number;
 }
 
 /** Cancel in-flight item fetches (so they can't overwrite the optimistic
@@ -184,7 +179,7 @@ function patchPageCaches(
   id: number,
   patch: ItemPatch,
 ) {
-  for (const prefix of [itemsKey.tasksAll, itemsKey.historyAll]) {
+  for (const prefix of [itemsKey.tasksAll, itemsKey.history]) {
     queryClient.setQueriesData<InfiniteData<ItemsPageVM>>(
       { queryKey: prefix },
       (data) => (data ? patchPages(data, id, patch) : data),
@@ -200,6 +195,10 @@ function patchPageCaches(
 export function usePatchItem() {
   const queryClient = useQueryClient();
   return useMutation({
+    // Same-scope mutations run in serial (docs: mutation scopes) — two fast
+    // edits can't reconcile out of order, where a slow older response would
+    // overwrite the detail cache after a newer one landed.
+    scope: { id: "item-patch" },
     mutationFn: ({ id, patch }: { id: number; patch: ItemPatch }) =>
       patchItem(id, patch),
     onMutate: async ({ id, patch }) => {
@@ -227,15 +226,20 @@ export function usePatchItem() {
       rollback(queryClient, snapshot, "Couldn't save the change — reverted."),
     // On success the reconciled detail and delta'd summary are already
     // truth — keep both; a status-only change between non-Done states also
-    // keeps every walk it can't have moved the item in or out of. On error
-    // the refetch heals everything.
+    // keeps every walk it can't have moved the item in or out of, and any
+    // patch that neither flips `saved` nor crosses Done keeps Review (its
+    // id-order makes edits position-proof). On error the refetch heals all.
     onSettled: (_data, error, { id, patch }, snapshot) => {
+      const knownNotDone =
+        snapshot?.beforeStatus !== undefined &&
+        snapshot.beforeStatus !== "Done";
       const statusOnly =
         Object.keys(patch).length === 1 &&
         patch.status !== undefined &&
         patch.status !== "Done" &&
-        snapshot?.beforeStatus !== undefined &&
-        snapshot.beforeStatus !== "Done";
+        knownNotDone;
+      const review =
+        !("saved" in patch) && patch.status !== "Done" && knownNotDone;
       settleItems(
         queryClient,
         error
@@ -244,6 +248,7 @@ export function usePatchItem() {
               detailId: id,
               summary: snapshot?.summaryAdjusted,
               statusOnly,
+              review,
             },
       );
       void queryClient.invalidateQueries({ queryKey: meetingsKey.detailAll });
@@ -265,17 +270,36 @@ export function useDeleteItem() {
         removeItem(items, id),
       );
       snapshot.summaryAdjusted = adjustSummary(queryClient, before, () => null);
+      snapshot.meetingId = before?.meetingId;
       return snapshot;
     },
     onError: (_error, _id, snapshot) =>
       rollback(queryClient, snapshot, "Couldn't delete the item — restored."),
-    // Deletes change Meeting.itemCount, so every meetings shape refetches.
-    onSettled: (_data, error, _id, snapshot) => {
+    // Deletes change one meeting's itemCount: lists refetch, but only that
+    // meeting's detail is dirty — others keep. Unknown meeting = refetch all.
+    onSettled: (_data, error, id, snapshot) => {
+      if (error === null) {
+        // The row is gone for good — drop its detail entry rather than
+        // marking it stale (a refetch would just 404).
+        queryClient.removeQueries({ queryKey: itemsKey.detail(id) });
+      }
+      // Review keeps: the optimistic removal IS the membership change, the
+      // 204 confirmed it, and id-order means positions can't have shifted.
       settleItems(
         queryClient,
-        error ? undefined : { summary: snapshot?.summaryAdjusted },
+        error
+          ? undefined
+          : { summary: snapshot?.summaryAdjusted, review: true },
       );
-      void queryClient.invalidateQueries({ queryKey: meetingsKey.all });
+      const meetingId = snapshot?.meetingId;
+      void queryClient.invalidateQueries({
+        queryKey: meetingsKey.all,
+        predicate: (query) =>
+          error !== null ||
+          meetingId === undefined ||
+          query.queryKey[1] !== "detail" ||
+          query.queryKey[2] === meetingId,
+      });
     },
   });
 }

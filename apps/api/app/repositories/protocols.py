@@ -30,7 +30,6 @@ class ItemRepository(Protocol):
     def list_tasks_page(
         self,
         user_id: int,
-        owner: str | None,
         status: str | None,
         priority: str | None,
         cursor: dict | None,
@@ -43,7 +42,6 @@ class ItemRepository(Protocol):
     def list_history_page(
         self,
         user_id: int,
-        owner: str | None,
         cursor: dict | None,
         limit: int,
     ) -> tuple[list[ActionItem], dict | None]:

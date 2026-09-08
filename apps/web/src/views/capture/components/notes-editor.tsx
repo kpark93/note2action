@@ -1,8 +1,12 @@
 /** The title + textarea card on Capture, plus its Extract button. Next hop:
- * extraction.store's extractNotes() → POST /ai-api/extract, then /api/meetings. */
+ * useExtractCapture() → POST /ai-api/extract, then /api/meetings. */
 import { useRef, useState, type ChangeEvent } from "react";
+import { useNavigate } from "react-router-dom";
 import { useActionItems } from "@/domain/extraction/extraction.store";
-import { OWNERS } from "@/domain/items/items.constants";
+import {
+  useExtractCapture,
+  useExtractionStatus,
+} from "@/domain/extraction/extraction.queries";
 import { todayISO } from "@/lib/dates";
 import {
   isTxtFilename,
@@ -19,9 +23,11 @@ export function NotesEditor() {
   const meetingTitle = useActionItems((s) => s.meetingTitle);
   const setRaw = useActionItems((s) => s.setRaw);
   const setMeetingTitle = useActionItems((s) => s.setMeetingTitle);
-  const extractNotes = useActionItems((s) => s.extractNotes);
-  const busy = useActionItems((s) => s.extracting);
-  const extractError = useActionItems((s) => s.extractError);
+  const extract = useExtractCapture();
+  // Cache-wide status, not extract.isPending — survives leaving and
+  // returning to Capture mid-extraction.
+  const { extracting: busy, extractError } = useExtractionStatus();
+  const navigate = useNavigate();
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
@@ -58,12 +64,16 @@ export function NotesEditor() {
   };
 
   const onExtract = () =>
-    extractNotes({
-      notes: raw,
-      meetingTitle,
-      today: todayISO(),
-      owners: [...OWNERS],
-    });
+    extract.mutate(
+      {
+        notes: raw,
+        meetingTitle,
+        today: todayISO(),
+      },
+      // mutate-level callback: skipped if the user already left Capture,
+      // so the save always lands but the redirect only fires when relevant.
+      { onSuccess: () => navigate("/review") },
+    );
 
   return (
     <div className="mt-4 flex min-h-0 flex-1 flex-col overflow-hidden rounded-[18px] border border-border bg-card">

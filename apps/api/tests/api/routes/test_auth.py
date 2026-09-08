@@ -5,10 +5,13 @@ import app.main as main_module
 import pytest
 from app.core.security import VerifiedUser, identity_from_claims
 from app.main import app
+from app.models import User as UserRow
 from fastapi.testclient import TestClient
 from jwt.exceptions import InvalidTokenError
+from sqlalchemy import create_engine, select
+from sqlalchemy.orm import Session
 
-from tests.conftest import AUTH
+from tests.conftest import APP_URL, AUTH
 
 client = TestClient(app, headers=AUTH)
 
@@ -33,9 +36,14 @@ def test_name_claim_flows_from_token_to_user_record() -> None:
     named = {"Authorization": "Bearer user_named|Priya Shah"}
     assert client.get("/api/items?view=review", headers=named).status_code == 200
 
+    # Same clerk id, no claim — the stored name must survive.
     users = main_module.app.state.repositories.users
-    user_id = users.get_or_create_user("user_named", None)
-    assert users.state.user_names[user_id] == "Priya Shah"
+    users.get_or_create_user("user_named", None)
+    with Session(create_engine(APP_URL)) as session:
+        name = session.execute(
+            select(UserRow.name).where(UserRow.clerk_id == "user_named")
+        ).scalar_one()
+    assert name == "Priya Shah"
 
 
 def test_health_is_public() -> None:
@@ -74,7 +82,7 @@ def test_strangers_cannot_touch_someone_elses_item() -> None:
     assert client.delete("/api/items/1", headers=STRANGER).status_code == 404
 
     # And the batch save touches nothing of theirs.
-    save = client.post("/api/items/save-to-tasks", headers=STRANGER)
+    save = client.patch("/api/items?view=review", json={"saved": True}, headers=STRANGER)
     assert save.json() == {"updated": 0}
 
     # The rightful owner's item is untouched by all of the above.

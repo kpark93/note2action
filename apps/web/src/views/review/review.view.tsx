@@ -87,7 +87,9 @@ export function ReviewView() {
           </EmptyState>
         </div>
       ) : (
-        <ScrollRegion className="grid auto-rows-min grid-cols-[repeat(auto-fill,minmax(252px,1fr))] content-start gap-[10px]">
+        // Rows size to the tallest card; siblings stretch to match, so every
+        // card's pinned footer lands at the same height.
+        <ScrollRegion className="grid grid-cols-[repeat(auto-fill,minmax(300px,1fr))] content-start gap-[10px]">
           {all.map((item) => (
             <ReviewCard key={item.id} item={item} />
           ))}

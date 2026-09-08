@@ -21,7 +21,6 @@ const VALID = {
   notes: "Ship it",
   meetingTitle: "Standup",
   today: "2026-08-23",
-  owners: ["Kyle"],
 };
 
 function post(body: unknown): Request {

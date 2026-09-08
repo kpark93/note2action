@@ -2,17 +2,25 @@
  * the zod contract — one source of truth, no drift. */
 import { Priority, Status } from "@note2action/shared";
 
-export const OWNERS = [
-  "Rachel Ng",
-  "Kyle Park",
-  "Marcus Hale",
-  "Priya Shah",
-  "Unassigned",
-] as const;
-export type Owner = (typeof OWNERS)[number];
-
 export const STATUSES: Status[] = [...Status.options];
 export const PRIORITIES: Priority[] = [...Priority.options];
+
+/** Colors for each priority, shared by the PriorityBadge pill and Review's
+ * priority Select trigger. */
+export const PRIORITY_STYLE: Record<Priority, { bg: string; fg: string }> = {
+  High: {
+    bg: "hsl(var(--magenta) / 0.16)",
+    fg: "hsl(var(--pill-magenta))",
+  },
+  Medium: {
+    bg: "hsl(var(--primary) / 0.22)",
+    fg: "hsl(var(--pill-blue))",
+  },
+  Low: {
+    bg: "hsl(var(--foreground) / 0.07)",
+    fg: "hsl(var(--muted-foreground))",
+  },
+};
 
 /** Colors for each status pill, shared by Tasks' Select and RecentModal. */
 export const STATUS_STYLE: Record<

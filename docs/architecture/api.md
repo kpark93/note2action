@@ -2,7 +2,8 @@
 
 Layered: middleware verifies identity, routes answer HTTP, services hold the
 business rules, and the repository seam hides persistence — Postgres for
-real, in-memory fakes for tests, swapped in one place (`app/main.py`).
+real — the only implementation since ADR-0004; tests point the same seam at
+a throwaway Postgres.
 
 ```mermaid
 flowchart LR
@@ -11,7 +12,6 @@ flowchart LR
     Router --> Schemas["schemas/*<br/>pydantic request/response shapes"]
     Router --> Svc["services/*<br/>business rules"]
     Svc --> Seam["repositories/protocols.py<br/>(the persistence seam)"]
-    Seam --> Mem["memory.py<br/>(tests)"]
     Seam --> PG["postgres/*"]
     PG --> DB[("PostgreSQL<br/>RLS: owner-only policies")]
 ```
@@ -25,7 +25,8 @@ Notes:
 - **Routes never hold data or rules.** They validate shapes and delegate to
   `services/`, the only layer allowed between routes and repositories.
 - **The seam is the point.** `repositories/protocols.py` types the contract;
-  `memory.py` (fakes) and `postgres/` (real) both satisfy it, so the whole
+  `postgres/` implements it, and tests swap in repositories bound to a
+  scratch database (tests/conftest.py), so the whole
   API suite runs with zero infrastructure.
 - **RLS is the last line**: the app connects as the low-privilege
   `note2action_app` role and announces the user per transaction; owner-only

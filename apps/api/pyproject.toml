@@ -28,9 +28,3 @@ package = false
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["."]
-markers = [
-    "integration: hits a real Postgres — run with: pytest -m integration",
-]
-# Plain `pytest` runs only the fast in-memory suite; integration tests are
-# opt-in (`pytest -m integration`) because they need Postgres running.
-addopts = "-m 'not integration'"

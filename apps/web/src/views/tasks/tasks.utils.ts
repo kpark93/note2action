@@ -8,8 +8,8 @@ export interface TaskRowVM extends ActionItem {
   initials: string;
   /** Formatted due date, e.g. "Aug 14", or "—" when none. */
   dueLabel: string;
-  /** Staggered entrance delay, e.g. "105ms" — capped so late pages of an
-   * infinite scroll don't wait seconds to appear. */
+  /** Staggered entrance delay, e.g. "90ms" — capped (~240ms span) so the
+   * cascade stays visible but never grows with list length. */
   delay: string;
 }
 
@@ -19,6 +19,6 @@ export function taskRows(items: ActionItem[]): TaskRowVM[] {
     ...it,
     initials: initials(it.owner),
     dueLabel: formatDate(it.due),
-    delay: Math.min(idx, 12) * 35 + "ms",
+    delay: Math.min(idx, 8) * 30 + "ms",
   }));
 }

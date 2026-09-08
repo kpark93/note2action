@@ -25,7 +25,7 @@ def seed_tasks() -> None:
             ],
         },
     )
-    client.post("/api/items/save-to-tasks")
+    client.patch("/api/items?view=review", json={"saved": True})
 
 
 def walk(view: str, params: str = "") -> list[str]:
@@ -71,12 +71,6 @@ def test_tasks_pages_never_overlap_and_respect_limit() -> None:
     first_ids = {item["id"] for item in first["items"]}
     second_ids = {item["id"] for item in second["items"]}
     assert first_ids.isdisjoint(second_ids)
-
-
-def test_tasks_view_filters_by_owner_server_side() -> None:
-    seed_tasks()
-    titles = walk("tasks", "&owner=Dana")
-    assert titles == ["a-later", "z-undated-2"]
 
 
 def test_history_view_returns_done_newest_completed_first() -> None:

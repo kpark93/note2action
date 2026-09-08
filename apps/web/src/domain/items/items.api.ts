@@ -4,14 +4,15 @@ import {
   ActionItem as WireActionItem,
   ItemsPage,
   ItemSummary,
-  SaveToTasksResponse,
+  BulkUpdateResponse,
   type ActionItemPatch,
 } from "@note2action/shared";
 import { request } from "@/lib/http";
 import type { ActionItem } from "@/domain/items/items.types";
 
-/** Wire → view-model: `null` becomes "" (due) / undefined (note). */
-function fromWire(item: WireActionItem): ActionItem {
+/** Wire → view-model: `null` becomes "" (due) / undefined (note). Exported
+ * for the capture mutation, which seeds Review from the create response. */
+export function fromWire(item: WireActionItem): ActionItem {
   return { ...item, due: item.due ?? "", note: item.note ?? undefined };
 }
 
@@ -40,7 +41,6 @@ function filterParam(params: URLSearchParams, key: string, value: string) {
 
 /** GET /api/items?view=tasks — one page of saved open items, due-date order. */
 export async function fetchTasksPage(
-  owner: string,
   status: string,
   priority: string,
   cursor: string | null,
@@ -49,7 +49,6 @@ export async function fetchTasksPage(
     view: "tasks",
     limit: String(PAGE_LIMIT),
   });
-  filterParam(params, "owner", owner);
   filterParam(params, "status", status);
   filterParam(params, "priority", priority);
   if (cursor) params.set("cursor", cursor);
@@ -59,14 +58,12 @@ export async function fetchTasksPage(
 
 /** GET /api/items?view=history — one page of Done items, newest-closed first. */
 export async function fetchHistoryPage(
-  owner: string,
   cursor: string | null,
 ): Promise<ItemsPageVM> {
   const params = new URLSearchParams({
     view: "history",
     limit: String(PAGE_LIMIT),
   });
-  filterParam(params, "owner", owner);
   if (cursor) params.set("cursor", cursor);
   const page = await request(`/api/items?${params}`, { schema: ItemsPage });
   return { items: page.items.map(fromWire), nextCursor: page.nextCursor };
@@ -107,11 +104,13 @@ export async function deleteItem(id: number): Promise<void> {
   await request(`/api/items/${id}`, { method: "DELETE" });
 }
 
-/** "Save N to Tasks": one batch call; returns how many items were saved. */
+/** "Save N to Tasks": one bulk PATCH over the review view; returns how
+ * many items were saved. */
 export async function saveAllToTasks(): Promise<number> {
-  const { updated } = await request("/api/items/save-to-tasks", {
-    method: "POST",
-    schema: SaveToTasksResponse,
+  const { updated } = await request("/api/items?view=review", {
+    method: "PATCH",
+    body: { saved: true },
+    schema: BulkUpdateResponse,
   });
   return updated;
 }

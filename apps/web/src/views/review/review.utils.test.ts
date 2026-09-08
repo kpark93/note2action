@@ -16,7 +16,7 @@ describe("reviewItems", () => {
       makeItem({ saved: false }),
       makeItem({ saved: false }),
     ]);
-    expect(vms.map((v) => v.delay)).toEqual(["0ms", "40ms"]);
+    expect(vms.map((v) => v.delay)).toEqual(["0ms", "30ms"]);
   });
 });
 

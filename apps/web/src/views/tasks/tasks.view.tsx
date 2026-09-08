@@ -8,12 +8,11 @@ import {
   useTasksInfinite,
 } from "@/domain/items/items.queries";
 import { useTasksStore } from "./tasks.store";
-import { OWNERS, PRIORITIES, STATUSES } from "@/domain/items/items.constants";
+import { PRIORITIES, STATUSES } from "@/domain/items/items.constants";
 import { taskRows } from "./tasks.utils";
 import { TaskRow } from "./components/task-row";
 import { ItemModal } from "@/components/app/item-modal";
 import { LoadMoreSentinel } from "@/components/app/load-more-sentinel";
-import { playPop } from "@/lib/sound";
 import type { Status } from "@/domain/items/items.types";
 import { Button } from "@/components/ui/button";
 import { StepLabel } from "@/components/app/step-label";
@@ -29,10 +28,8 @@ const OPEN_STATUSES = STATUSES.slice(0, 3);
 const STATUS_SECTIONS: Status[] = ["In progress", "Blocked", "Not started"];
 
 export function TasksView() {
-  const filterOwner = useTasksStore((s) => s.filterOwner);
   const filterStatus = useTasksStore((s) => s.filterStatus);
   const filterPriority = useTasksStore((s) => s.filterPriority);
-  const setFilterOwner = useTasksStore((s) => s.setFilterOwner);
   const setFilterStatus = useTasksStore((s) => s.setFilterStatus);
   const setFilterPriority = useTasksStore((s) => s.setFilterPriority);
   const clearFilters = useTasksStore((s) => s.clearFilters);
@@ -50,7 +47,6 @@ export function TasksView() {
   // (optimistic); "Done" starts the pop animation and defers to handleCompleted.
   const handleStatus = (id: number, value: Status) => {
     if (value === "Done") {
-      playPop();
       setCompletingId(id);
     } else {
       patchItem.mutate({ id, patch: { status: value } });
@@ -65,11 +61,7 @@ export function TasksView() {
   };
 
   // Filters ride in the query key — changing one starts a fresh server walk.
-  const tasksQuery = useTasksInfinite(
-    filterOwner,
-    filterStatus,
-    filterPriority,
-  );
+  const tasksQuery = useTasksInfinite(filterStatus, filterPriority);
   const rows = taskRows(
     tasksQuery.data?.pages.flatMap((page) => page.items) ?? [],
   );
@@ -110,12 +102,6 @@ export function TasksView() {
       />
 
       <Toolbar className="gap-[9px]">
-        <FilterSelect
-          value={filterOwner}
-          onValueChange={setFilterOwner}
-          allLabel="All owners"
-          options={OWNERS}
-        />
         <FilterSelect
           value={filterStatus}
           onValueChange={setFilterStatus}

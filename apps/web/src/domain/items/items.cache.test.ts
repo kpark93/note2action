@@ -9,6 +9,7 @@ import {
   markAllSaved,
   patchPages,
   removeItem,
+  summaryAfterCapture,
   summaryAfterSaveAll,
 } from "./items.cache";
 
@@ -25,28 +26,29 @@ describe("keptOnSettle", () => {
 
   it("statusOnly keeps walks whose membership cannot change", () => {
     const keep = { statusOnly: true };
-    expect(keptOnSettle(["items", "tasks", "All", "All", "All"], keep)).toBe(
-      true,
-    );
-    expect(
-      keptOnSettle(["items", "tasks", "Kyle Park", "All", "High"], keep),
-    ).toBe(true);
+    expect(keptOnSettle(["items", "tasks", "All", "All"], keep)).toBe(true);
+    expect(keptOnSettle(["items", "tasks", "All", "High"], keep)).toBe(true);
     expect(keptOnSettle(["items", "review"], keep)).toBe(true);
-    expect(keptOnSettle(["items", "history", "All"], keep)).toBe(true);
+    expect(keptOnSettle(["items", "history"], keep)).toBe(true);
   });
 
   it("statusOnly still invalidates status-filtered tasks walks", () => {
     expect(
-      keptOnSettle(["items", "tasks", "All", "Blocked", "All"], {
+      keptOnSettle(["items", "tasks", "Blocked", "All"], {
         statusOnly: true,
       }),
     ).toBe(false);
   });
 
+  it("review flag keeps the review cache and nothing else", () => {
+    const keep = { review: true };
+    expect(keptOnSettle(["items", "review"], keep)).toBe(true);
+    expect(keptOnSettle(["items", "tasks", "All", "All"], keep)).toBe(false);
+    expect(keptOnSettle(["items", "history"], keep)).toBe(false);
+  });
+
   it("keeps nothing without flags", () => {
-    expect(keptOnSettle(["items", "tasks", "All", "All", "All"], {})).toBe(
-      false,
-    );
+    expect(keptOnSettle(["items", "tasks", "All", "All"], {})).toBe(false);
     expect(keptOnSettle(["items", "review"], {})).toBe(false);
   });
 });
@@ -113,6 +115,24 @@ describe("applySummaryDelta", () => {
     const before = makeItem({ status: "Not started", saved: true });
     const next = applySummaryDelta(SUMMARY, before, null);
     expect(next.meetings).toBe(SUMMARY.meetings);
+  });
+});
+
+describe("summaryAfterCapture", () => {
+  it("adds the new items to total/open/review and counts the meeting", () => {
+    expect(summaryAfterCapture(SUMMARY, 3)).toEqual({
+      ...SUMMARY,
+      total: 11,
+      open: 8,
+      review: 5,
+      meetings: 5,
+    });
+  });
+
+  it("leaves done and onTime untouched — new items are never Done", () => {
+    const next = summaryAfterCapture(SUMMARY, 2);
+    expect(next.done).toBe(SUMMARY.done);
+    expect(next.onTime).toBe(SUMMARY.onTime);
   });
 });
 

@@ -3,7 +3,7 @@
 import type { ActionItem } from "@/domain/items/items.types";
 
 export interface ReviewItemVM extends ActionItem {
-  /** Staggered entrance delay, e.g. "120ms". */
+  /** Staggered entrance delay, e.g. "90ms" — capped so it never grows. */
   delay: string;
 }
 
@@ -11,7 +11,7 @@ export interface ReviewItemVM extends ActionItem {
 export function reviewItems(items: ActionItem[]): ReviewItemVM[] {
   return items.map((it, idx) => ({
     ...it,
-    delay: idx * 40 + "ms",
+    delay: Math.min(idx, 8) * 30 + "ms",
   }));
 }
 

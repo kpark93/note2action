@@ -62,8 +62,8 @@ export const ActionItemPatch = ActionItem.pick({
 }).partial();
 export type ActionItemPatch = z.infer<typeof ActionItemPatch>;
 
-/** POST /api/items/save-to-tasks — batch-save every pending Review item. */
-export const SaveToTasksResponse = z.object({
+/** PATCH /api/items?view=review — how many rows the bulk patch changed. */
+export const BulkUpdateResponse = z.object({
   updated: z.number(),
 });
-export type SaveToTasksResponse = z.infer<typeof SaveToTasksResponse>;
+export type BulkUpdateResponse = z.infer<typeof BulkUpdateResponse>;

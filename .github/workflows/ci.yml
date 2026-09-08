@@ -52,17 +52,15 @@ jobs:
           --health-timeout 5s
           --health-retries 10
     env:
-      # Settings validate at import; unit tests swap in fakes and never
-      # connect, integration tests build their own URLs in conftest.
+      # Settings validate at import; engines connect lazily, and the test
+      # conftest builds its own scratch-database URLs.
       DATABASE_URL: postgresql+psycopg://unused:unused@localhost:5432/unused
-      REPOSITORY: memory
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5
       - run: uv sync
       - run: uv run ruff check .
       - run: uv run pytest -q
-      - run: uv run pytest -m integration -q
 
   postman:
     name: Postman E2E (newman)

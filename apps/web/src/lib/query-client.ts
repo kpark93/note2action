@@ -1,13 +1,17 @@
-/** The app-wide QueryClient, created once at module load — providers.tsx mounts
- * it; extraction.store.ts (non-component code) invalidates it after a capture. */
+/** The app-wide QueryClient, created once at module load; providers.tsx
+ * mounts it. */
 import { QueryClient } from "@tanstack/react-query";
 
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      // Serve cached data for 60s before refetching, so remounting a view
-      // (e.g. the sidebar health dot) doesn't refire the request each time.
-      staleTime: 60_000,
+      // Freshness here comes from invalidation, not the clock: every write
+      // invalidates exactly what it changed, so timers only cover edits from
+      // another device. Long windows + no focus refetch = navigation and tab
+      // switches serve pure cache.
+      staleTime: 5 * 60_000,
+      gcTime: 30 * 60_000,
+      refetchOnWindowFocus: false,
       retry: 1,
     },
   },

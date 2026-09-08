@@ -21,14 +21,15 @@ in the code itself:
    `TasksView`. The layout route above it already passed `RequireAuth`
    (`components/app/require-auth.tsx`), so a Clerk session exists.
 2. `views/tasks/tasks.view.tsx :: TasksView` — calls
-   `useTasksInfinite(owner, status, priority)`. The filters live in the
+   `useTasksInfinite(status, priority)`. The filters live in the
    cache key, so each combination is its own paged walk. **If that walk's
-   pages are already cached** and fresh (younger than `staleTime`, 60s —
-   set in `lib/query-client.ts`), the table renders with no fetch and the
+   pages are already cached** and fresh (younger than `staleTime`, 5 min —
+   set in `lib/query-client.ts`; freshness comes from invalidation, not
+   the clock), the table renders with no fetch and the
    rest of this journey doesn't run.
 3. `domain/items/items.queries.ts :: useTasksInfinite` — a TanStack
-   `useInfiniteQuery` under the key `["items", "tasks", owner, status,
-priority]`; each page's `nextCursor` is the `pageParam` for the next.
+   `useInfiniteQuery` under the key `["items", "tasks", status, priority]`;
+   each page's `nextCursor` is the `pageParam` for the next.
 4. `domain/items/items.api.ts :: fetchTasksPage` — builds
    `/api/items?view=tasks` plus the filter params and cursor.
 5. `lib/http.ts :: request` — asks `lib/auth-token.ts` for a fresh Clerk
@@ -107,10 +108,12 @@ applyPatch` in three places — the Review list, the item's detail entry,
    itself is the truth for that entry). Then `onSettled` invalidates only
    what the client couldn't make true itself (`items.cache.ts ::
 keptOnSettle` decides): the reconciled detail and delta'd summary are
-   kept, and a status-only change between non-Done states keeps every walk
+   kept; a status-only change between non-Done states keeps every walk
    whose membership can't have moved — only status-_filtered_ tasks caches
-   refetch. Anything touching Done (either direction), or any other field,
-   settles the pages fully: membership and order are the server's call.
+   refetch — and any patch that neither flips `saved` nor crosses Done
+   keeps Review outright (id-ordered, so edits can't move a card).
+   Anything touching Done (either direction), or `saved`, settles the
+   pages fully: membership and order are the server's call.
    Meetings-wise, only `["meetings", "detail"]` invalidates — a patch
    can't change `itemCount`, so lists stay untouched.
 6. **Failure branch:** if the server refuses (or is down),
@@ -121,9 +124,11 @@ keptOnSettle` decides): the reconciled detail and delta'd summary are
 
 Delete and Save-to-Tasks follow the same shape with their own transforms
 (`removeItem`, `markAllSaved`). Their settle scopes differ on purpose:
-delete invalidates **all** meetings shapes (`itemCount`s changed);
-save-to-tasks, like patch, touches only meeting details (a `saved` flag
-changes item state, not counts).
+delete keeps Review (its own removal is the whole change), drops the dead
+detail entry outright, and refetches meetings lists plus only the affected
+meeting's detail (`itemCount` changed there); save-to-tasks, like patch,
+touches only meeting details (a `saved` flag changes item state, not
+counts).
 
 ---
 
@@ -132,11 +137,14 @@ changes item state, not counts).
 What it feels like: paste notes, click **Extract**, and reviewable items
 appear (and survive a refresh).
 
-1. `views/capture/capture.view.tsx` — Extract button calls
-   `useActionItems().extractNotes(payload)` on the extraction store.
-2. `domain/extraction/extraction.store.ts :: extractNotes` — a zustand
-   store, not a component, so the flow keeps running even if you switch
-   tabs. Sets `extracting: true`, then:
+1. `views/capture/components/notes-editor.tsx` — the Extract button calls
+   `useExtractCapture().mutate(payload, { onSuccess: navigate })`. The
+   draft text/title live in `extraction.store.ts` (client state only).
+2. `domain/extraction/extraction.queries.ts :: useExtractCapture` — a
+   TanStack **mutation**, so the flow keeps running even if you leave
+   Capture (hook-level callbacks fire regardless of unmount; the
+   navigate callback correctly skips). `useExtractionStatus` reads the
+   shared mutation cache, so the spinner survives remounts. Then:
 3. `domain/extraction/extraction.api.ts :: extractActionItems` →
    `lib/http.ts` → `fetch("/ai-api/extract")`. The vite proxy rewrites
    `/ai-api/*` to the **Next.js AI app** on :3000 (a separate service, so
@@ -148,17 +156,20 @@ appear (and survive a refresh).
    the `.describe()` strings on `ExtractedItem`
    (`packages/shared/src/extraction.ts`) are literally instructions sent to
    the model.
-5. Back in the store: the extracted items are **immediately persisted** —
+5. Back in the mutation: the extracted items are **immediately persisted** —
    `domain/meetings/meetings.api.ts :: createMeeting` → POST
    `/api/meetings` → middleware → `routes/meetings.py` →
    `services/meetings.py` → `repositories/postgres/meetings.py ::
 create_meeting`: the meeting row and all its item rows are inserted in
    **one transaction** (all-or-nothing), `user_id` stamped from the
    verified token, never from the request body.
-6. The store then invalidates `["items"]` (awaited — Review renders these
-   rows next) and `["meetings"]` (fire-and-forget — the RECENT strip
-   refreshes without holding up the navigation). The capture now exists as
-   rows, so the Review queue survives any refresh.
+6. The mutation's `onSuccess` clears the draft, then seeds every cache the
+   response fully describes — the summary moves by delta and the new items
+   append to Review (id-ordered, so newest-last is correct) — no refetches,
+   and navigation to Review is immediate because Review's cache is already
+   truth. Only the paginated walks (items pages, meetings infinite) get
+   lazily marked stale: their page boundaries are the server's call. The
+   capture now exists as rows, so the Review queue survives any refresh.
 
 ---
 

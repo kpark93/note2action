@@ -23,7 +23,7 @@ A full-stack monorepo: three apps and one shared package.
 - **`apps/api`** — FastAPI backend (Python + uv). Clerk JWT verification in
   middleware, SQLAlchemy 2 + Alembic on Postgres, and Row-Level Security so the
   database enforces per-user isolation. Persistence sits behind a repository
-  seam (`postgres` for real, `memory` for tests).
+  seam — Postgres only since ADR-0004; tests run on a scratch database.
 - **`apps/ai`** — Next.js (App Router) + Vercel AI SDK **v6**. `/api/extract`
   turns raw notes into structured action items and verifies Clerk JWTs
   (same JWKS pattern as the API). Defaults to Anthropic `claude-haiku-4-5`.
@@ -54,7 +54,7 @@ pnpm install                            # JS/TS workspace deps
 # 1. Environment files
 cp apps/web/.env.example apps/web/.env  # VITE_CLERK_PUBLISHABLE_KEY
 cp apps/api/.env.example apps/api/.env  # DATABASE_URL, MIGRATIONS_DATABASE_URL,
-                                        #   REPOSITORY, CLERK_JWKS_URL
+                                        #   CLERK_JWKS_URL
 cp apps/ai/.env.example apps/ai/.env    # ANTHROPIC_API_KEY
 
 # 2. Postgres (Docker), then migrations
@@ -196,7 +196,7 @@ runs it against a service container on every push.
   view-shell).
 - **`apps/web/src/lib/`** — the shared kernel: `http.ts` (fetch + zod
   validation + bearer token), `query-client.ts`, `auth-token.ts`,
-  `theme.store.ts`, `dates.ts`, `sound.ts`, `utils.ts` (`cn()`).
+  `theme.store.ts`, `dates.ts`, `utils.ts` (`cn()`).
 - **`apps/api/app/api/routes/`** — one file per resource (`health.py`,
   `items.py`, `meetings.py`) plus `deps.py` (repositories accessor,
   current-user resolution); `app/core/` holds config/db/security/middleware
@@ -206,13 +206,14 @@ runs it against a service container on every push.
   layer routes call, and the only layer allowed to sit between routes and
   repositories.
 - **`apps/api/app/repositories/`** — the seam: `protocols.py` (the typed
-  contracts), `memory.py` (in-memory fakes for tests), `postgres/` (the real
+  contracts), `postgres/` (the real
   implementations, split per domain).
 - **`apps/api/app/models/`** and **`apps/api/app/schemas/`** — SQLAlchemy
   tables and pydantic request/response models, each split one file per domain.
 - **`apps/api/tests/`** — pytest suite mirroring `app/`'s structure; runs
-  against the in-memory repository and a fake token verifier, so no database
-  or Clerk account is needed.
+  against a throwaway Postgres (created + migrated per run, reseeded per
+  test) and a fake token verifier, so no Clerk account is needed — just the
+  compose Postgres.
 - **`apps/ai/lib/`** — `provider.ts` (model/provider config) and
   `extraction.ts` (extract prompt + schema handling); `app/api/` routes stay
   thin wrappers around these.
@@ -269,7 +270,7 @@ Full decision records live in [`docs/adr/`](docs/adr/). The short version:
 - **AI is its own Next.js app** (ADR 0002) — isolates the Vercel AI SDK and
   its keys; both AI routes verify Clerk JWTs themselves.
 - **The repository seam keeps tests fast and honest** (ADR 0003): Postgres
-  and in-memory fakes behind one protocol.
+  behind one typed protocol (Postgres its only implementation).
 - **RLS is the last line of defense** (ADR 0004) — the database enforces
   per-user isolation even if an application filter is forgotten.
 - **The server stamps facts.** `completed` dates, capture timestamps, and
