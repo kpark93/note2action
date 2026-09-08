@@ -75,4 +75,25 @@ test.describe.serial("golden path", () => {
       .filter({ hasText: "Still open" });
     await expect(open).toContainText("1");
   });
+
+  test("a failed PATCH rolls the UI back and toasts", async ({ page }) => {
+    await page.goto("/tasks");
+    // Fail every item PATCH after this point — the optimistic flip must revert.
+    await page.route("**/api/items/*", (route) =>
+      route.request().method() === "PATCH"
+        ? route.fulfill({ status: 500, json: { detail: "boom" } })
+        : route.fallback(),
+    );
+    const row = page
+      .getByRole("button")
+      .filter({ hasText: STUB_ITEMS[1].title })
+      .last();
+    await row.getByRole("combobox").click();
+    await page.getByRole("option", { name: "Done" }).click();
+    await expect(
+      page.getByText("Couldn't save the change — reverted."),
+    ).toBeVisible();
+    // The row is still here, still open — the rollback restored it.
+    await expect(page.getByText(STUB_ITEMS[1].title)).toBeVisible();
+  });
 });
