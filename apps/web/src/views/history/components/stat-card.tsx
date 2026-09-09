@@ -24,8 +24,8 @@ export function StatCard({
   delta,
 }: StatCardProps) {
   return (
-    <Card className="gap-0 rounded-[16px] border-0 px-4 py-[13px] shadow-none">
-      <div className="text-[12.5px] text-muted-foreground">{label}</div>
+    <Card className="gap-0 rounded-card border-0 px-4 py-[13px] shadow-none">
+      <div className="text-body text-muted-foreground">{label}</div>
       <div className="mt-[6px] text-[23px] font-bold tracking-[-0.035em] tabular-nums">
         {value}
       </div>
@@ -35,7 +35,7 @@ export function StatCard({
         indicatorClassName="n2a-bar"
         indicatorStyle={{ background: barColor }}
       />
-      <div className="mt-[7px] text-[11px] text-muted-foreground">{delta}</div>
+      <div className="mt-[7px] text-label text-muted-foreground">{delta}</div>
     </Card>
   );
 }

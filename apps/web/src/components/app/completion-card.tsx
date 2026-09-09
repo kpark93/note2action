@@ -10,7 +10,7 @@ export function CompletionCard() {
   const pct = s && s.total ? Math.round((s.done / s.total) * 100) : 0;
 
   return (
-    <div className="rounded-[16px] bg-secondary p-[14px]">
+    <div className="rounded-card bg-secondary p-[14px]">
       <div className="text-[11.5px] text-muted-foreground">
         Completion this month
       </div>

@@ -50,17 +50,17 @@ export function MeetingsView() {
               style={{ animationDelay: Math.min(idx, 8) * 30 + "ms" }}
             >
               <span className="flex min-w-0 flex-1 flex-col gap-[3px]">
-                <span className="overflow-hidden text-[14.5px] font-semibold tracking-[-0.015em] text-ellipsis whitespace-nowrap">
+                <span className="overflow-hidden text-title font-semibold tracking-[-0.015em] text-ellipsis whitespace-nowrap">
                   {meeting.title}
                 </span>
-                <span className="text-[12px] text-muted-foreground">
+                <span className="text-meta text-muted-foreground">
                   {meeting.itemCount}{" "}
                   {meeting.itemCount === 1 ? "item" : "items"} extracted
                 </span>
               </span>
               {/* Hover swaps "1d ago" for the date; both labels share one
                   grid cell so the hover target never moves (no flicker). */}
-              <span className="group/when grid flex-none text-right text-[12px] tabular-nums text-muted-foreground">
+              <span className="group/when grid flex-none text-right text-meta tabular-nums text-muted-foreground">
                 <span className="col-start-1 row-start-1 transition-opacity duration-150 group-hover/when:opacity-0">
                   {timeAgo(meeting.capturedAt)}
                 </span>

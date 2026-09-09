@@ -32,7 +32,7 @@ export function FilterSelect<T extends string>({
     <Select value={value} onValueChange={(v) => onValueChange(v as T | "All")}>
       <SelectTrigger
         className={cn(
-          "min-w-[164px] rounded-[12px] border-border bg-card px-[13px] text-[13px] text-foreground data-[size=default]:h-[38px]",
+          "min-w-[164px] rounded-[12px] border-border bg-card px-[13px] text-body-lg text-foreground data-[size=default]:h-[38px]",
           className,
         )}
       >

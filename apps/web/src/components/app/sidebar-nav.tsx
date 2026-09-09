@@ -39,7 +39,7 @@ export function SidebarNav() {
           >
             {label}
             {to === "/review" && reviewCount > 0 && (
-              <Badge className="px-[7px] py-px text-[11px] font-semibold">
+              <Badge className="px-[7px] py-px text-label font-semibold">
                 {reviewCount}
               </Badge>
             )}

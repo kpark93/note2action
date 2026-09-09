@@ -28,7 +28,7 @@ export function ViewHeader({
           {title}
         </h1>
         {description && (
-          <p className="mt-[7px] max-w-[70ch] text-[13px] leading-[1.5] text-muted-foreground">
+          <p className="mt-[7px] max-w-[70ch] text-body-lg leading-[1.5] text-muted-foreground">
             {description}
           </p>
         )}

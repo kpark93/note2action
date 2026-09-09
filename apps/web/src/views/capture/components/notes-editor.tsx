@@ -84,7 +84,7 @@ export function NotesEditor() {
           onChange={(e) => setMeetingTitle(e.target.value)}
           className="-ml-2 h-auto w-[320px] rounded-[9px] border-transparent bg-transparent px-2 py-[5px] text-[14px] font-semibold text-foreground shadow-none md:text-[14px] dark:bg-transparent"
         />
-        <span className="text-[12px] tabular-nums text-muted-foreground">
+        <span className="text-meta tabular-nums text-muted-foreground">
           {words} words
         </span>
       </div>
@@ -95,7 +95,7 @@ export function NotesEditor() {
           setRaw(e.target.value);
         }}
         placeholder="Paste your meeting notes here…"
-        className="field-sizing-fixed block min-h-0 w-full flex-1 resize-none rounded-none border-0 bg-card px-[18px] py-4 text-[13.5px] leading-[1.7] text-foreground shadow-none focus-visible:ring-0 md:text-[13.5px] dark:bg-card"
+        className="field-sizing-fixed block min-h-0 w-full flex-1 resize-none rounded-none border-0 bg-card px-[18px] py-4 text-subtitle leading-[1.7] text-foreground shadow-none focus-visible:ring-0 md:text-subtitle dark:bg-card"
       />
       <div className="flex items-center justify-between gap-4 border-t border-border px-[18px] py-[15px]">
         <input
@@ -108,13 +108,13 @@ export function NotesEditor() {
         <Button
           variant="outline"
           onClick={() => fileInputRef.current?.click()}
-          className="h-[38px] rounded-[12px] border-border bg-transparent px-[14px] text-[13px] font-medium text-muted-foreground shadow-none dark:border-border dark:bg-transparent"
+          className="h-[38px] rounded-[12px] border-border bg-transparent px-[14px] text-body-lg font-medium text-muted-foreground shadow-none dark:border-border dark:bg-transparent"
         >
           Upload notes (.txt)
         </Button>
         <div className="flex items-center gap-[14px]">
           <span
-            className="text-[12.5px]"
+            className="text-body"
             style={{
               color: shownError
                 ? "hsl(var(--destructive))"
