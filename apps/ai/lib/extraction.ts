@@ -12,6 +12,8 @@ export async function extractItems(
   const { notes, meetingTitle, today } = request;
   const { output } = await generateText({
     model: extractModel(),
+    // Input is capped at 20k chars (schema); this bounds the spend side.
+    maxOutputTokens: 4096,
     output: Output.object({ schema: ExtractResponse }),
     system:
       "You are note2action's extraction engine. Read raw meeting notes and " +

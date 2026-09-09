@@ -37,6 +37,13 @@ describe("extractItems", () => {
     expect(call.prompt).toContain(REQUEST.notes);
   });
 
+  it("caps the model's output tokens", async () => {
+    await extractItems(REQUEST);
+
+    const call = mocked.mock.calls[0][0] as { maxOutputTokens?: number };
+    expect(call.maxOutputTokens).toBe(4096);
+  });
+
   it("returns the model's output untouched", async () => {
     const items = [{ title: "Ship the API" }];
     mocked.mockResolvedValue({ output: { items } } as never);
