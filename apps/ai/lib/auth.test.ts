@@ -23,6 +23,12 @@ describe("verifyRequest", () => {
     });
   });
 
+  it("fails closed in production when CLERK_JWKS_URL is unset", async () => {
+    vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("CLERK_JWKS_URL", "");
+    await expect(verifyRequest(req())).resolves.toBeNull();
+  });
+
   it("returns null with auth enabled and no Authorization header", async () => {
     vi.stubEnv(
       "CLERK_JWKS_URL",
