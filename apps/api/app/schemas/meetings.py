@@ -1,6 +1,9 @@
 """Pydantic schemas for meetings — the wire contract, mirrored in
 packages/shared (TS). Next hop: api/routes/meetings.py → JSON response."""
 
+from datetime import date
+from typing import Literal
+
 from pydantic import BaseModel
 
 from .items import ActionItem, Priority
@@ -13,7 +16,8 @@ class ExtractedItem(BaseModel):
     title: str
     owner: str
     priority: Priority
-    due: str
+    # "YYYY-MM-DD" parses to a date; "" means none; garbage 422s here.
+    due: date | Literal[""]
     note: str
 
 

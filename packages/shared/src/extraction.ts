@@ -3,7 +3,7 @@
 
 import { z } from "zod";
 
-import { Priority } from "./items";
+import { IsoDay, Priority } from "./items";
 
 /** One extracted action item. The `.describe()` calls below are sent to the
  * model as instructions — keep them accurate. */
@@ -19,11 +19,9 @@ export const ExtractedItem = z.object({
   priority: Priority.describe(
     "High, Medium, or Low, based on urgency and importance.",
   ),
-  due: z
-    .string()
-    .describe(
-      "Due date as YYYY-MM-DD, inferred relative to today; '' if none was implied.",
-    ),
+  due: IsoDay.or(z.literal("")).describe(
+    "Due date as YYYY-MM-DD, inferred relative to today; '' if none was implied.",
+  ),
   note: z
     .string()
     .describe("Short rationale or a supporting quote from the notes."),

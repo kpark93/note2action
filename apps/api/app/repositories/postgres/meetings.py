@@ -1,7 +1,7 @@
 """The real MeetingRepository — backed by meetings and action_items.
 Next hop: services/meetings.py → here → session.py → Postgres."""
 
-from datetime import date, datetime, timezone
+from datetime import datetime, timezone
 
 from sqlalchemy import and_, func, or_, select
 
@@ -49,7 +49,7 @@ class PostgresMeetingRepository:
                     user_id=user_id,
                     title=item.title,
                     owner=item.owner,
-                    due=date.fromisoformat(item.due) if item.due else None,
+                    due=item.due or None,
                     priority=item.priority,
                     saved=False,
                     note=item.note or None,

@@ -217,9 +217,6 @@ class PostgresItemRepository:
             changes = patch.model_dump(exclude_unset=True)
             # completedOn feeds the stamp below — it's not a column.
             completed_on = changes.pop("completedOn", None)
-            # The wire speaks "YYYY-MM-DD" strings; the due column holds dates.
-            if changes.get("due") is not None:
-                changes["due"] = date.fromisoformat(changes["due"])
             for field, value in changes.items():
                 setattr(row, field, value)
             if "status" in changes:

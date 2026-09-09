@@ -127,3 +127,25 @@ def test_get_unknown_meeting_returns_404() -> None:
     response = client.get("/api/meetings/999")
     assert response.status_code == 404
     assert response.json()["detail"] == "Meeting not found"
+
+
+def test_create_meeting_malformed_item_due_returns_422() -> None:
+    # The extractor promises YYYY-MM-DD or "" — anything else dies at
+    # validation, not as a 500 in the repository's fromisoformat.
+    response = client.post(
+        "/api/meetings",
+        json={
+            "title": "Sprint sync",
+            "rawNotes": "notes",
+            "items": [
+                {
+                    "title": "X",
+                    "owner": "A",
+                    "priority": "Low",
+                    "due": "banana",
+                    "note": "",
+                }
+            ],
+        },
+    )
+    assert response.status_code == 422

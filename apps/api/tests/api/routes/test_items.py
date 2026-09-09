@@ -94,6 +94,12 @@ def test_patch_done_with_malformed_completed_on_falls_back() -> None:
     assert response.json()["completed"] == expected
 
 
+def test_patch_malformed_due_returns_422() -> None:
+    # A garbage date must die at validation, not as a 500 in the repository.
+    response = client.patch("/api/items/1", json={"due": "banana"})
+    assert response.status_code == 422
+
+
 def test_patch_unknown_id_returns_404() -> None:
     response = client.patch("/api/items/999", json={"status": "Done"})
     assert response.status_code == 404

@@ -1,5 +1,36 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { ActionItem as WireActionItem } from "@note2action/shared";
 import { toWirePatch } from "./items.api";
+
+/** A complete, valid wire item — the base each contract case mutates. */
+const WIRE_ITEM = {
+  id: 1,
+  meetingId: 1,
+  meeting: "Sprint sync",
+  title: "Ship it",
+  owner: "Kyle",
+  due: "2026-09-08",
+  priority: "High",
+  saved: false,
+  note: null,
+  status: "Not started",
+  completed: null,
+};
+
+describe("wire ActionItem due contract", () => {
+  it("accepts an ISO day and null", () => {
+    expect(WireActionItem.safeParse(WIRE_ITEM).success).toBe(true);
+    expect(WireActionItem.safeParse({ ...WIRE_ITEM, due: null }).success).toBe(
+      true,
+    );
+  });
+
+  it("rejects a malformed due date", () => {
+    expect(
+      WireActionItem.safeParse({ ...WIRE_ITEM, due: "banana" }).success,
+    ).toBe(false);
+  });
+});
 
 describe("toWirePatch", () => {
   afterEach(() => {
