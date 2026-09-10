@@ -27,10 +27,12 @@ import {
 import {
   applyPatch,
   applySummaryDelta,
+  clearPending,
   findInPages,
+  insertByIdOrder,
   keptOnSettle,
-  markAllSaved,
   patchPages,
+  removeFromPages,
   removeItem,
   summaryAfterSaveAll,
   type SettleKeep,
@@ -117,6 +119,14 @@ interface Snapshot {
   summaryAdjusted?: boolean;
   /** The item's status before the patch; undefined = wasn't cached. */
   beforeStatus?: ActionItem["status"];
+  /** The item's saved flag before the patch; undefined = wasn't cached. */
+  beforeSaved?: boolean;
+  /** True when a send-back's Review insert was applied — settle keeps Review. */
+  reviewAdjusted?: boolean;
+  /** True when a reopen's History removal was applied — settle keeps History. */
+  historyAdjusted?: boolean;
+  /** True when a send-back's tasks removal was applied — settle keeps tasks. */
+  tasksAdjusted?: boolean;
   /** Deleted item's meeting — only that meeting's detail goes stale. */
   meetingId?: number;
 }
@@ -189,7 +199,8 @@ function patchPageCaches(
 
 /**
  * PATCH one item. Optimistic on the Review cache, the modal's detail cache,
- * and in place across tasks/history pages; membership/order settle by refetch.
+ * and across tasks/history pages — exits (send-back, Done, reopen) remove
+ * rows in place; entries into paginated walks settle by refetch.
  * Meetings: only detail payloads carry item state, so only those invalidate.
  */
 export function usePatchItem() {
@@ -206,29 +217,66 @@ export function usePatchItem() {
       const snapshot = await optimistically(queryClient, (items) =>
         applyPatch(items, id, patch),
       );
+      // A send-back and a Done both exit every tasks walk — the patch alone
+      // dictates the exit, so the rows leave here instead of via refetch.
+      if (patch.saved === false || patch.status === "Done") {
+        queryClient.setQueriesData<InfiniteData<ItemsPageVM>>(
+          { queryKey: itemsKey.tasksAll },
+          (data) => (data ? removeFromPages(data, id) : data),
+        );
+        snapshot.tasksAdjusted = true;
+      }
+      // Send-back only: the patched copy joins Review at its id-order slot,
+      // when the before-state is cached to build it from.
+      if (patch.saved === false && before && snapshot.previous) {
+        const patched = applyPatch([before], id, patch)[0];
+        queryClient.setQueryData<ActionItem[]>(itemsKey.review, (items) =>
+          items ? insertByIdOrder(items, patched) : items,
+        );
+        snapshot.reviewAdjusted = true;
+      }
       queryClient.setQueryData<ActionItem>(itemsKey.detail(id), (item) =>
         item ? applyPatch([item], id, patch)[0] : item,
       );
       patchPageCaches(queryClient, id, patch);
+      // Reopen (Done → open): the row exits History here — removal leaves the
+      // remaining pages ordered and every stored cursor valid (anchor-free).
+      if (
+        before?.status === "Done" &&
+        patch.status !== undefined &&
+        patch.status !== "Done"
+      ) {
+        queryClient.setQueryData<InfiniteData<ItemsPageVM>>(
+          itemsKey.history,
+          (data) => (data ? removeFromPages(data, id) : data),
+        );
+        snapshot.historyAdjusted = true;
+      }
       snapshot.summaryAdjusted = adjustSummary(
         queryClient,
         before,
         (b) => applyPatch([b], id, patch)[0],
       );
       snapshot.beforeStatus = before?.status;
+      snapshot.beforeSaved = before?.saved;
       return snapshot;
     },
     onSuccess: (serverItem) => {
       // The server's copy is the truth (it stamps `completed`).
       queryClient.setQueryData(itemsKey.detail(serverItem.id), serverItem);
+      // Its Review row (optimistic insert included) gets the same truth;
+      // an undefined updater result is a no-op.
+      queryClient.setQueryData<ActionItem[]>(itemsKey.review, (items) =>
+        items?.map((item) => (item.id === serverItem.id ? serverItem : item)),
+      );
     },
     onError: (_error, _vars, snapshot) =>
       rollback(queryClient, snapshot, "Couldn't save the change — reverted."),
     // On success the reconciled detail and delta'd summary are already
     // truth — keep both; a status-only change between non-Done states also
-    // keeps every walk it can't have moved the item in or out of, and any
-    // patch that neither flips `saved` nor crosses Done keeps Review (its
-    // id-order makes edits position-proof). On error the refetch heals all.
+    // keeps every walk it can't have moved the item in or out of; a reopen's
+    // History removal and a send-back's tasks removal each keep the walks
+    // whose exit already happened client-side. On error the refetch heals all.
     onSettled: (_data, error, { id, patch }, snapshot) => {
       const knownNotDone =
         snapshot?.beforeStatus !== undefined &&
@@ -238,8 +286,14 @@ export function usePatchItem() {
         patch.status !== undefined &&
         patch.status !== "Done" &&
         knownNotDone;
+      // Review keeps when the send-back insert already did the move, or when
+      // the patch can't move the item in or out: a still-saved item is never
+      // in Review; an unsaved item's membership only changes on Done crossing.
       const review =
-        !("saved" in patch) && patch.status !== "Done" && knownNotDone;
+        snapshot?.reviewAdjusted === true ||
+        (!("saved" in patch) &&
+          (snapshot?.beforeSaved === true ||
+            (patch.status !== "Done" && knownNotDone)));
       settleItems(
         queryClient,
         error
@@ -249,6 +303,8 @@ export function usePatchItem() {
               summary: snapshot?.summaryAdjusted,
               statusOnly,
               review,
+              history: snapshot?.historyAdjusted,
+              tasks: snapshot?.tasksAdjusted,
             },
       );
       void queryClient.invalidateQueries({ queryKey: meetingsKey.detailAll });
@@ -305,15 +361,16 @@ export function useDeleteItem() {
 }
 
 /**
- * "Save N to Tasks": optimistic flip of the Review cache; the settle-time
- * invalidate brings the promoted rows into the Tasks pages.
+ * "Save N to Tasks": the Review cache empties optimistically (the batch
+ * rule's exact result); the settle-time invalidate brings the promoted rows
+ * into the Tasks pages.
  */
 export function useSaveToTasks() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: saveAllToTasks,
     onMutate: async () => {
-      const snapshot = await optimistically(queryClient, markAllSaved);
+      const snapshot = await optimistically(queryClient, clearPending);
       // The batch rule needs no per-item lookup: Review always empties.
       queryClient.setQueryData<ItemSummary>(itemsKey.summary, (summary) =>
         summary ? summaryAfterSaveAll(summary) : summary,
@@ -323,11 +380,14 @@ export function useSaveToTasks() {
     },
     onError: (_error, _vars, snapshot) =>
       rollback(queryClient, snapshot, "Couldn't save to Tasks — reverted."),
-    // Saved flags change item state, not counts: meetings detail only.
+    // Review keeps: the optimistic clear IS the exit — a fresh view=review
+    // fetch returns []. Tasks refetch (the entry); meetings detail refreshes.
     onSettled: (_data, error, _vars, snapshot) => {
       settleItems(
         queryClient,
-        error ? undefined : { summary: snapshot?.summaryAdjusted },
+        error
+          ? undefined
+          : { summary: snapshot?.summaryAdjusted, review: true },
       );
       void queryClient.invalidateQueries({ queryKey: meetingsKey.detailAll });
     },
