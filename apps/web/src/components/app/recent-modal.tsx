@@ -1,5 +1,5 @@
-/** Capture-detail dialog, mounted by the views that can open it (Capture's
- * RECENT strip, the Meetings screen) — same prop shape as ItemModal. */
+/** Capture-detail dialog, mounted by the Meetings screen — same prop shape
+ * as ItemModal. */
 import { useRef } from "react";
 import { useMeetingQuery } from "@/domain/meetings/meetings.queries";
 import { STATUS_STYLE } from "@/domain/items/items.constants";
