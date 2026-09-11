@@ -5,8 +5,7 @@ interface MutationSnapshot {
   error: unknown;
 }
 
-/** Flow status from the extract mutations' cache states, newest attempt
- * last — an old failure never outranks a fresh pending or success. */
+/** Flow status, newest attempt last — an old failure never outranks a fresh one. */
 export function latestExtractionStatus(states: MutationSnapshot[]): {
   extracting: boolean;
   extractError: string | null;

@@ -1,5 +1,4 @@
-/** Shared Zod contract: each export is a schema + same-named type via z.infer.
- * Mirrored by hand in the API's schemas (app/schemas/items.py). */
+/** Shared Zod contract; mirrored by hand in the API's app/schemas/items.py. */
 
 import { z } from "zod";
 
@@ -33,16 +32,14 @@ export const ActionItem = z.object({
 });
 export type ActionItem = z.infer<typeof ActionItem>;
 
-/** GET /api/items?view=tasks|history|review — one keyset page. nextCursor is
- * opaque (base64 of the last row's sort key + id); null = no more pages. */
+/** GET /api/items?view=… — one keyset page; opaque nextCursor, null = no more pages. */
 export const ItemsPage = z.object({
   items: z.array(ActionItem),
   nextCursor: z.string().nullable(),
 });
 export type ItemsPage = z.infer<typeof ItemsPage>;
 
-/** GET /api/items/summary — the counts the sidebar and History stats need,
- * computed in SQL so no view ever fetches all rows just to count them. */
+/** GET /api/items/summary — sidebar/History counts, computed in SQL, no rows fetched. */
 export const ItemSummary = z.object({
   done: z.number().int(),
   open: z.number().int(),
@@ -54,8 +51,7 @@ export const ItemSummary = z.object({
 });
 export type ItemSummary = z.infer<typeof ItemSummary>;
 
-/** PATCH /api/items/{id} body — ActionItem's editable fields, all optional.
- * `completed` is deliberately absent: the server stamps it from `status`. */
+/** PATCH /api/items/{id} body — editable fields; `completed` is server-stamped. */
 export const ActionItemPatch = ActionItem.pick({
   title: true,
   owner: true,
@@ -67,9 +63,7 @@ export const ActionItemPatch = ActionItem.pick({
 })
   .partial()
   .extend({
-    /** The client's local "YYYY-MM-DD", sent with a flip to Done so the
-     * `completed` stamp lands on the user's calendar, not the server's.
-     * The server clamps it to ±1 day of UTC today (no backdating). */
+    /** Client's local day for the Done stamp; server clamps to ±1 day of UTC today. */
     completedOn: z.string().optional(),
   });
 export type ActionItemPatch = z.infer<typeof ActionItemPatch>;

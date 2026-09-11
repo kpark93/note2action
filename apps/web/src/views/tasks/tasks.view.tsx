@@ -1,5 +1,4 @@
-/** Step 3 of the flow: saved tasks grouped by status, filters, a status
- * dropdown per row (optimistic writes). Path §1 [hop 2/15]: → items.queries. */
+/** Step 3: saved tasks grouped by status, filters, per-row status dropdown. */
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -36,15 +35,13 @@ export function TasksView() {
   const patchItem = usePatchItem();
   const navigate = useNavigate();
 
-  // Track the row being completed so it stays mounted long enough to play the
-  // pop animation before it leaves the list for History.
+  // The completing row stays mounted long enough to play the pop animation.
   const [completingId, setCompletingId] = useState<number | null>(null);
 
   /** Item shown in the detail modal, or null when closed. */
   const [openItemId, setOpenItemId] = useState<number | null>(null);
 
-  // Wired to TaskRow's onStatusChange: non-"Done" patches immediately
-  // (optimistic); "Done" starts the pop animation and defers to handleCompleted.
+  // Non-"Done" patches immediately; "Done" animates first, then handleCompleted.
   const handleStatus = (id: number, value: Status) => {
     if (value === "Done") {
       setCompletingId(id);
@@ -53,8 +50,7 @@ export function TasksView() {
     }
   };
 
-  // Fired by TaskRow when its taskComplete animation ends — the patch waits
-  // for the animation itself, not a timer, so CSS owns the duration.
+  // Fires on animation end — the patch waits for the animation, not a timer.
   const handleCompleted = (id: number) => {
     patchItem.mutate({ id, patch: { status: "Done" } });
     setCompletingId((cur) => (cur === id ? null : cur));
@@ -65,8 +61,7 @@ export function TasksView() {
   const rows = taskRows(
     tasksQuery.data?.pages.flatMap((page) => page.items) ?? [],
   );
-  // Total saved-open count comes from the summary — the loaded pages can't
-  // know it. (summary.open includes Review items; subtract them.)
+  // Saved-open total comes from the summary (minus Review); pages can't know it.
   const summary = useSummaryQuery().data;
   const savedCount = summary ? summary.open - summary.review : 0;
 
@@ -139,8 +134,7 @@ export function TasksView() {
             return (
               <section key={status}>
                 <SectionHeading label={status} count={sectionRows.length} />
-                {/* 2-up at xl; narrower viewports keep the single column —
-                    the row's fixed cells need ~440px before the title. */}
+                {/* 2-up at xl; narrower viewports keep the single column. */}
                 <div className="grid grid-cols-1 gap-[7px] xl:grid-cols-2 xl:gap-x-[10px]">
                   {sectionRows.map((row) => (
                     <TaskRow

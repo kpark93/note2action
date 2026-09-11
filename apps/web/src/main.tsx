@@ -1,5 +1,4 @@
-/** App entry point: mounts the React tree into index.html's #root div.
- * Path: index.html → here → providers.tsx → app.tsx → views/*. */
+/** App entry point: mounts the React tree into index.html's #root div. */
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { App } from "./app";

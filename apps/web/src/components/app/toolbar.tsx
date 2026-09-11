@@ -1,5 +1,4 @@
-/** Layout-only row for filters/actions, used below ViewHeader on Review and
- * Tasks. Leaf — no further calls. */
+/** Layout-only filters/actions row below ViewHeader. Leaf. */
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 

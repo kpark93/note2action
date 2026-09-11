@@ -7,8 +7,7 @@ import {
   weekOf,
 } from "./dates";
 
-/** The runner pins TZ=UTC (package.json); these tests move the viewer's
- * clock off Greenwich to prove day strings follow the local calendar. */
+/** Runner pins TZ=UTC; these tests move the clock to prove local-calendar days. */
 describe("local calendar across timezones", () => {
   afterEach(() => {
     vi.useRealTimers();

@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
-# Run alembic upgrade head as a one-off Fargate task, then rotate the
-# note2action_app password from SSM. Fails loudly on non-zero exit.
+# One-off Fargate task: alembic upgrade head, then rotate the app password from SSM.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 

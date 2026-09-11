@@ -1,5 +1,4 @@
-/** Shared context providers: Clerk (auth), TanStack Query (server cache), toast
- * host. AuthTokenBridge runs first so lib/http.ts can attach session tokens. */
+/** Shared providers: Clerk, TanStack Query, toast host, and the auth-token bridge. */
 import { useEffect, type ReactNode } from "react";
 import { ClerkProvider, useAuth } from "@clerk/clerk-react";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -8,8 +7,7 @@ import { Toaster } from "@/components/app/toaster";
 import { setAuthTokenGetter } from "@/lib/auth-token";
 import { queryClient } from "@/lib/query-client";
 
-/** Registers Clerk's getToken with the auth-token bridge so http.ts (no hooks)
- * can attach it to each request. Renders nothing. */
+/** Registers Clerk's getToken so hook-free http.ts can attach it; renders nothing. */
 function AuthTokenBridge() {
   const { getToken } = useAuth();
   useEffect(() => {
@@ -21,8 +19,7 @@ function AuthTokenBridge() {
 
 /** Wraps the app in shared context providers (Clerk auth + TanStack Query). */
 export function AppProviders({ children }: { children: ReactNode }) {
-  // Read inside the component (not module scope) so importing this file
-  // never requires a key; only rendering AppProviders does.
+  // Read inside the component so importing this file never requires a key.
   const publishableKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 
   if (!publishableKey) {
@@ -38,8 +35,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
   return (
     <ClerkProvider
       publishableKey={publishableKey}
-      // Where Clerk sends the browser after auth events; our router owns
-      // these paths (see App.tsx).
+      // Where Clerk sends the browser after auth events; our router owns these paths.
       signInFallbackRedirectUrl="/"
       signUpFallbackRedirectUrl="/"
       afterSignOutUrl="/sign-in"

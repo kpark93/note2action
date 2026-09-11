@@ -16,6 +16,7 @@
     "typecheck": "pnpm -r --if-present typecheck",
     "test": "pnpm -r --if-present test && pnpm run test:api",
     "test:api": "cd apps/api && uv run pytest -q",
+    "test:api:coverage": "cd apps/api && uv run pytest --cov=app --cov-report=term-missing",
     "test:postman": "bash scripts/postman-test.sh",
     "prepare": "husky"
   },

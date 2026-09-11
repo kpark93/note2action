@@ -1,12 +1,10 @@
-/** Item option lists shared across features; STATUSES/PRIORITIES derive from
- * the zod contract — one source of truth, no drift. */
+/** Item option lists; STATUSES/PRIORITIES derive from the zod contract — no drift. */
 import { Priority, Status } from "@note2action/shared";
 
 export const STATUSES: Status[] = [...Status.options];
 export const PRIORITIES: Priority[] = [...Priority.options];
 
-/** Colors for each priority, shared by the PriorityBadge pill and Review's
- * priority Select trigger. */
+/** Colors per priority, shared by PriorityBadge and Review's priority Select. */
 export const PRIORITY_STYLE: Record<Priority, { bg: string; fg: string }> = {
   High: {
     bg: "hsl(var(--magenta) / 0.16)",

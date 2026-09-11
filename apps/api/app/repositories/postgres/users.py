@@ -1,5 +1,4 @@
-"""The real UserRepository — backed by the `users` table via plain SessionLocal,
-not rls_session: `users` has no RLS (it's the identity bootstrap table)."""
+"""The real UserRepository — plain SessionLocal; `users` has no RLS (bootstrap table)."""
 
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
@@ -12,15 +11,13 @@ class PostgresUserRepository:
     """Store backed by the real users table."""
 
     def get_or_create_user(self, clerk_id: str, name: str | None) -> int:
-        """Maps Clerk id to users.id; name set at creation ("New user"
-        if absent) and refreshed on change; None never erases it."""
+        """Clerk id → users.id; name refreshed on change, None never erases it."""
         with SessionLocal() as session:
             existing = session.execute(
                 select(User).where(User.clerk_id == clerk_id)
             ).scalar_one_or_none()
             if existing is not None:
-                # Clerk is the source of truth; None means the token
-                # carries no name claim, so keep what we have.
+                # Clerk is the source of truth; a claimless token keeps what we have.
                 if name and existing.name != name:
                     existing.name = name
                     session.commit()
@@ -30,8 +27,7 @@ class PostgresUserRepository:
             try:
                 session.commit()
             except IntegrityError:
-                # Two first-requests raced to create the same user; the unique
-                # constraint let exactly one win — read the winner's row.
+                # Two first-requests raced; the unique constraint picked one winner.
                 session.rollback()
                 return session.execute(
                     select(User.id).where(User.clerk_id == clerk_id)

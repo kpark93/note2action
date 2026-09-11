@@ -1,10 +1,4 @@
-"""add user identity: users.clerk_id + action_items.user_id
-
-Revision ID: 3337459970d8
-Revises: 60c3336077e8
-Create Date: 2026-08-19 17:36:23.126198
-
-"""
+"""add user identity: users.clerk_id + action_items.user_id"""
 
 from collections.abc import Sequence
 
@@ -19,10 +13,8 @@ depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
-    """Add user identity via the NOT NULL three-step for tables with existing
-    rows: add nullable → backfill → tighten (direct NOT NULL would fail)."""
-    # users.clerk_id: links a verified Clerk token to our row. Unique so two
-    # rows can never claim the same account; nullable so unlinked rows are ok.
+    """NOT NULL three-step for populated tables: add nullable → backfill → tighten."""
+    # users.clerk_id links a Clerk token to our row; unique, nullable until linked.
     op.add_column("users", sa.Column("clerk_id", sa.String(), nullable=True))
     op.create_unique_constraint("uq_users_clerk_id", "users", ["clerk_id"])
 

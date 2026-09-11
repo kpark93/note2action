@@ -1,5 +1,4 @@
-/** Contract for /api/meetings — a "capture" is a saved meeting (raw notes +
- * extracted items). Mirrored by hand in app/schemas/meetings.py. */
+/** /api/meetings contract (a capture = notes + items); mirrored in schemas/meetings.py. */
 
 import { z } from "zod";
 
@@ -39,8 +38,7 @@ export const MeetingsPage = z.object({
 });
 export type MeetingsPage = z.infer<typeof MeetingsPage>;
 
-/** GET /api/meetings/{id} — a Meeting plus its transcript and the items
- * extracted from it, said as the relationship (extend), not a restated shape. */
+/** GET /api/meetings/{id} — Meeting plus transcript and items, said via extend. */
 export const MeetingDetail = Meeting.extend({
   rawNotes: z.string(),
   items: z.array(ActionItem),

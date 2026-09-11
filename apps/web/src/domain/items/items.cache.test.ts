@@ -5,9 +5,11 @@ import {
   applyPatch,
   applySummaryDelta,
   findInPages,
+  clearPending,
+  insertByIdOrder,
   keptOnSettle,
-  markAllSaved,
   patchPages,
+  removeFromPages,
   removeItem,
   summaryAfterCapture,
   summaryAfterSaveAll,
@@ -45,6 +47,23 @@ describe("keptOnSettle", () => {
     expect(keptOnSettle(["items", "review"], keep)).toBe(true);
     expect(keptOnSettle(["items", "tasks", "All", "All"], keep)).toBe(false);
     expect(keptOnSettle(["items", "history"], keep)).toBe(false);
+  });
+
+  it("history flag keeps the history walk and nothing else", () => {
+    const keep = { history: true };
+    expect(keptOnSettle(["items", "history"], keep)).toBe(true);
+    expect(keptOnSettle(["items", "tasks", "All", "All"], keep)).toBe(false);
+    expect(keptOnSettle(["items", "review"], keep)).toBe(false);
+  });
+
+  it("tasks flag keeps every tasks walk, filtered or not", () => {
+    const keep = { tasks: true };
+    expect(keptOnSettle(["items", "tasks", "All", "All"], keep)).toBe(true);
+    expect(keptOnSettle(["items", "tasks", "Blocked", "High"], keep)).toBe(
+      true,
+    );
+    expect(keptOnSettle(["items", "history"], keep)).toBe(false);
+    expect(keptOnSettle(["items", "review"], keep)).toBe(false);
   });
 
   it("keeps nothing without flags", () => {
@@ -182,6 +201,39 @@ describe("patchPages", () => {
   });
 });
 
+describe("removeFromPages", () => {
+  it("removes the item from its page; other pages and cursors keep", () => {
+    const bystander = makeItem();
+    const target = makeItem();
+    const data = {
+      pages: [
+        { items: [bystander], nextCursor: "c1" },
+        { items: [target], nextCursor: null },
+      ],
+      pageParams: [null, "c1"],
+    };
+
+    const next = removeFromPages(data, target.id);
+
+    expect(next.pages[1].items).toEqual([]);
+    expect(next.pages[0].items).toEqual([bystander]);
+    expect(next.pageParams).toEqual([null, "c1"]);
+  });
+
+  it("keeps a page's cursor even when its anchor row is removed", () => {
+    const target = makeItem();
+    const data = {
+      pages: [{ items: [target], nextCursor: "points-at-target" }],
+      pageParams: [null],
+    };
+
+    const next = removeFromPages(data, target.id);
+
+    // Keyset WHEREs are strict — a vanished anchor still partitions correctly.
+    expect(next.pages[0].nextCursor).toBe("points-at-target");
+  });
+});
+
 describe("applyPatch", () => {
   it("applies field changes to the matching item only", () => {
     const a = makeItem({ title: "Alpha" });
@@ -240,8 +292,44 @@ describe("removeItem", () => {
   });
 });
 
-describe("markAllSaved", () => {
-  it("saves pending items but not Done or already-saved ones", () => {
+describe("insertByIdOrder", () => {
+  it("inserts at the ascending-id position", () => {
+    const a = makeItem({ saved: false });
+    const b = makeItem({ saved: false });
+    const c = makeItem({ saved: false });
+
+    expect(insertByIdOrder([a, c], b)).toEqual([a, b, c]);
+  });
+
+  it("appends when the id is largest", () => {
+    const a = makeItem({ saved: false });
+    const b = makeItem({ saved: false });
+
+    expect(insertByIdOrder([a], b)).toEqual([a, b]);
+  });
+
+  it("is a no-op when the item is already present", () => {
+    const a = makeItem({ saved: false });
+    const items = [a];
+
+    expect(insertByIdOrder(items, { ...a, title: "Edited" })).toBe(items);
+  });
+
+  it("refuses non-members — saved or Done items never join Review", () => {
+    const items = [makeItem({ saved: false })];
+
+    expect(insertByIdOrder(items, makeItem({ saved: true }))).toBe(items);
+    expect(
+      insertByIdOrder(
+        items,
+        makeItem({ saved: false, status: "Done", completed: todayISO() }),
+      ),
+    ).toBe(items);
+  });
+});
+
+describe("clearPending", () => {
+  it("drops pending items; saved and Done rows stay", () => {
     const pending = makeItem({ saved: false, status: "In progress" });
     const done = makeItem({
       saved: false,
@@ -250,10 +338,9 @@ describe("markAllSaved", () => {
     });
     const alreadySaved = makeItem({ saved: true, status: "Not started" });
 
-    const next = markAllSaved([pending, done, alreadySaved]);
-
-    expect(next[0].saved).toBe(true);
-    expect(next[1]).toBe(done);
-    expect(next[2]).toBe(alreadySaved);
+    expect(clearPending([pending, done, alreadySaved])).toEqual([
+      done,
+      alreadySaved,
+    ]);
   });
 });

@@ -1,5 +1,4 @@
-"""The common ancestor every table model inherits from — one shared base collects
-all table metadata, which Alembic uses to autogenerate migrations."""
+"""Shared declarative base; its metadata is what Alembic autogenerates from."""
 
 from sqlalchemy.orm import DeclarativeBase
 

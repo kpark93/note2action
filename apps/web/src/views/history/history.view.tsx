@@ -1,5 +1,4 @@
-/** History screen: completed items grouped by week, plus summary stats.
- * Read only — data from the TanStack cache. */
+/** History screen: completed items grouped by week, plus summary stats. Read-only. */
 import {
   useHistoryInfinite,
   useSummaryQuery,
@@ -19,8 +18,7 @@ export function HistoryView() {
   const groups = historyGroups(
     historyQuery.data?.pages.flatMap((page) => page.items) ?? [],
   );
-  // Stat tiles come from the summary counts — loaded pages grow as the user
-  // scrolls, so they can never be the denominator.
+  // Stat tiles come from summary counts — loaded pages can't be the denominator.
   const summary = useSummaryQuery().data;
   const stats = summary ? historyStats(summary) : [];
 

@@ -1,5 +1,4 @@
-/** The golden path, in order: capture → Review edits → Save to Tasks.
- * Serial by design — each test continues the previous one's state. */
+/** The golden path in order; serial — each test continues the previous state. */
 import { test, expect, STUB_ITEMS } from "./fixtures";
 
 test.describe.serial("golden path", () => {
@@ -7,8 +6,7 @@ test.describe.serial("golden path", () => {
     await page.goto("/capture");
     await page.getByPlaceholder("Meeting title").fill("Sprint sync");
     await page.getByPlaceholder("Paste your meeting notes here…").fill(
-      // >12 words: clears NotesEditor's word-count gate on the Extract
-      // button. Content is irrelevant otherwise — extraction is stubbed.
+      // >12 words clears the Extract gate; content is otherwise irrelevant (stubbed).
       "Kyle to ship pricing copy this week. Someone should also remember to book the venue for the offsite.",
     );
     await page.getByRole("button", { name: "Extract action items" }).click();
@@ -19,8 +17,7 @@ test.describe.serial("golden path", () => {
 
   test("edit due date and priority on a review card", async ({ page }) => {
     await page.goto("/review");
-    // ReviewCard renders as <article> — the review grid's wrapping <div>s
-    // contain every card's text, so a "div" filter can't scope to one card.
+    // ReviewCard renders as <article>; a "div" filter can't scope to one card.
     const card = page
       .getByRole("article")
       .filter({ hasText: STUB_ITEMS[0].title });
@@ -34,8 +31,7 @@ test.describe.serial("golden path", () => {
 
   test("save all to Tasks; items appear there", async ({ page }) => {
     await page.goto("/review");
-    // Wait for the bulk PATCH to land before navigating — /tasks reads the
-    // same rows the mutation is still writing.
+    // Wait for the bulk PATCH before navigating — /tasks reads the same rows.
     const patched = page.waitForResponse(
       (r) => r.request().method() === "PATCH" && r.url().includes("/api/items"),
     );
@@ -44,8 +40,7 @@ test.describe.serial("golden path", () => {
     await page.goto("/tasks");
     await expect(page.getByText(STUB_ITEMS[0].title)).toBeVisible();
     await expect(page.getByText(STUB_ITEMS[1].title)).toBeVisible();
-    // Proves the Review edit (Medium, due Dec 31) persisted server-side,
-    // not just in the optimistic cache the review test asserted against.
+    // Proves the Review edit persisted server-side, not just optimistically.
     const editedRow = page
       .getByRole("button")
       .filter({ hasText: STUB_ITEMS[0].title })
@@ -63,8 +58,7 @@ test.describe.serial("golden path", () => {
       .filter({ hasText: STUB_ITEMS[0].title })
       .last();
     await row.getByRole("combobox").click();
-    // The status PATCH fires from onAnimationEnd, after this click — register
-    // the wait first so the response can't land before we start listening.
+    // The PATCH fires from onAnimationEnd — register the wait before clicking.
     const patched = page.waitForResponse(
       (r) => r.request().method() === "PATCH" && r.url().includes("/api/items"),
     );
@@ -75,8 +69,7 @@ test.describe.serial("golden path", () => {
     await patched;
 
     await page.goto("/history");
-    // TODAY in history.utils.ts is pinned for seeded demo data, so a live
-    // completion may land under "Week of <date>" instead of "This week".
+    // TODAY is pinned for demo data, so a live completion may land under "Week of".
     await expect(page.getByRole("heading", { level: 2 })).toContainText(
       /This week|Week of/,
     );
@@ -85,8 +78,7 @@ test.describe.serial("golden path", () => {
 
   test("summary stats reflect the completion", async ({ page }) => {
     await page.goto("/history");
-    // data-slot="card" scopes to one tile — a bare "div" filter's deepest
-    // match is the label-only <div>, missing the value.
+    // data-slot="card" scopes to one tile; a bare "div" filter misses the value.
     const completed = page
       .locator('[data-slot="card"]')
       .filter({ hasText: "Completed all time" });

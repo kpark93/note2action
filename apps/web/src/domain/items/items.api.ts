@@ -1,5 +1,4 @@
-/** Typed API calls for action items — the wire↔view border: API `null` ⇄ UI ""
- * translations live here only. Path §1 [hop 4/15]: → lib/http.ts (hop 5). */
+/** Typed item API calls — the wire↔view border: null ⇄ "" translations live here. */
 import {
   ActionItem as WireActionItem,
   ItemsPage,
@@ -11,20 +10,17 @@ import { request } from "@/lib/http";
 import { todayISO } from "@/lib/dates";
 import type { ActionItem } from "@/domain/items/items.types";
 
-/** Wire → view-model: `null` becomes "" (due) / undefined (note). Exported
- * for the capture mutation, which seeds Review from the create response. */
+/** Wire → view-model: null becomes "" (due) / undefined (note). */
 export function fromWire(item: WireActionItem): ActionItem {
   return { ...item, due: item.due ?? "", note: item.note ?? undefined };
 }
 
-/** View-model patch: `due: ""` means "clear the date" (wire: `null`).
- * `completedOn` is excluded — only toWirePatch derives it, from the clock. */
+/** View-model patch: due "" clears the date; completedOn only toWirePatch derives. */
 export type ItemPatch = Omit<ActionItemPatch, "due" | "completedOn"> & {
   due?: string;
 };
 
-/** View-model patch → wire: `due: ""` goes out as `null`; a flip to Done
- * carries the viewer's calendar day for the server's `completed` stamp. */
+/** Patch → wire: "" due goes out null; a flip to Done carries the viewer's day. */
 export function toWirePatch(patch: ItemPatch): ActionItemPatch {
   const { due, ...rest } = patch;
   const stamped =
@@ -111,8 +107,7 @@ export async function deleteItem(id: number): Promise<void> {
   await request(`/api/items/${id}`, { method: "DELETE" });
 }
 
-/** "Save N to Tasks": one bulk PATCH over the review view; returns how
- * many items were saved. */
+/** "Save N to Tasks": one bulk PATCH over review; returns how many saved. */
 export async function saveAllToTasks(): Promise<number> {
   const { updated } = await request("/api/items?view=review", {
     method: "PATCH",

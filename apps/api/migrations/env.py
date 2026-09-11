@@ -9,8 +9,7 @@ config = context.config
 
 from app.core.config import settings
 
-# Migrations run as the admin role (DDL powers); the app runs as the
-# low-privilege RLS-bound role. Two URLs, two jobs.
+# Migrations run as the admin role; the app runs as the RLS-bound role.
 config.set_main_option(
     "sqlalchemy.url", settings.migrations_database_url or settings.database_url
 )
@@ -24,8 +23,7 @@ target_metadata = Base.metadata
 
 
 def run_migrations_offline() -> None:
-    """Run migrations in 'offline' mode: configure with just a URL (no Engine)
-    and emit the SQL as script output — no DBAPI needed."""
+    """Offline mode: configure with just a URL and emit SQL as script output."""
     url = config.get_main_option("sqlalchemy.url")
     context.configure(
         url=url,
@@ -39,8 +37,7 @@ def run_migrations_offline() -> None:
 
 
 def run_migrations_online() -> None:
-    """Run migrations in 'online' mode: create an Engine and run them over a
-    live connection."""
+    """Online mode: create an Engine and run over a live connection."""
     connectable = engine_from_config(
         config.get_section(config.config_ini_section, {}),
         prefix="sqlalchemy.",

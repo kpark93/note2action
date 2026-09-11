@@ -1,5 +1,4 @@
-/** The workspace nav links inside the sidebar — reads useItemsQuery itself so
- * the Review badge updates from the shared cache, no props from Sidebar. */
+/** Sidebar nav links — the Review badge reads the shared cache itself, no props. */
 import { NavLink } from "react-router-dom";
 import { useSummaryQuery } from "@/domain/items/items.queries";
 import { Badge } from "@/components/ui/badge";
@@ -25,6 +24,7 @@ export function SidebarNav() {
       <nav className="flex flex-col gap-1">
         {NAV.map(({ to, label }) => (
           <NavLink
+            data-testid={`sidebar-nav`}
             key={to}
             to={to}
             end={to === "/"}

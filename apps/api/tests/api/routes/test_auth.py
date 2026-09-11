@@ -1,5 +1,4 @@
-"""Auth middleware + per-user data isolation. The bearer token in tests IS the
-Clerk user id (conftest.FakeVerifier), so another user = another header."""
+"""Auth middleware + per-user isolation; the test bearer token IS the Clerk user id."""
 
 import app.main as main_module
 import pytest
@@ -109,8 +108,7 @@ def test_created_data_belongs_to_its_creator() -> None:
     )
     assert response.status_code == 201
 
-    # The stranger sees exactly their capture; the seeded user still sees
-    # exactly the seeds. Neither list leaks into the other.
+    # Each user sees exactly their own rows; neither list leaks into the other.
     stranger_items = client.get("/api/items?view=review", headers=STRANGER).json()[
         "items"
     ]

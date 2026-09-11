@@ -1,5 +1,4 @@
-/** Reusable "nothing here" placeholder shown by every list view when its list
- * is empty or loading. Leaf — renders only markup. */
+/** Reusable "nothing here" placeholder for empty or loading lists. Leaf. */
 import type { ReactNode } from "react";
 
 interface EmptyStateProps {

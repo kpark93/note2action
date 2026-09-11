@@ -1,5 +1,4 @@
-/** Pure view-model builders for the Review screen — the server's view=review
- * already returns exactly the pending queue; this only adds display fields. */
+/** Pure Review view-model builders — the server sends the queue; this decorates. */
 import type { ActionItem } from "@/domain/items/items.types";
 
 export interface ReviewItemVM extends ActionItem {

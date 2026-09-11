@@ -1,12 +1,10 @@
-/** Contract for the ai app's POST /api/extract, plus the ExtractedItem shape —
- * used by apps/ai and apps/web; `.describe()` strings reach the model. */
+/** POST /api/extract contract (ai + web); `.describe()` strings reach the model. */
 
 import { z } from "zod";
 
 import { IsoDay, Priority } from "./items";
 
-/** One extracted action item. The `.describe()` calls below are sent to the
- * model as instructions — keep them accurate. */
+/** One extracted item; the `.describe()`s are model instructions — keep them accurate. */
 export const ExtractedItem = z.object({
   title: z
     .string()

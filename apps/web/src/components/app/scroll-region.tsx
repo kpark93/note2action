@@ -1,10 +1,8 @@
-/** Generic scroll container used by every view's list/grid area, so the scroll
- * mechanics live in one place. Leaf — no further calls. */
+/** Generic scroll container for every view's list area — one home for the mechanics. */
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
-/** Scrollable fill area with the scrollbar inset off the content edge — layout
- * classes come from the caller. */
+/** Scrollable fill area, scrollbar inset; layout classes come from the caller. */
 export function ScrollRegion({
   className,
   children,

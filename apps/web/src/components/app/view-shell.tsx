@@ -1,10 +1,8 @@
-/** Outermost wrapper every view's JSX starts with, so entrance animation and
- * column-fill layout aren't repeated per screen. */
+/** Outermost wrapper for every view: shared entrance animation + column fill. */
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
-/** Entrance animation + fills the layout column; callers pass extra classes for
- * scroll/width (tailwind-merge). */
+/** Entrance animation + column fill; callers pass extra classes (tailwind-merge). */
 export function ViewShell({
   className,
   children,

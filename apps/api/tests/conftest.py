@@ -1,6 +1,4 @@
-"""Shared test setup — every test runs against a real throwaway Postgres
-(note2action_test): create → migrate (real RLS) → truncate + reseed per test.
-The in-memory fake is gone (ADR-0004); one implementation, one behavior."""
+"""Shared test setup — a real throwaway Postgres: create → migrate → reseed per test."""
 
 import os
 import subprocess
@@ -27,13 +25,11 @@ ADMIN_URL = f"postgresql+psycopg://postgres:postgres@{SERVER}"
 # App role: what production connects as — RLS applies (owners bypass it).
 APP_URL = f"postgresql+psycopg://note2action_app:note2action_app_dev@{SERVER}/{TEST_DB}"
 
-# The seeded account every plain-AUTH test acts as. With the fake verifier
-# below, the bearer token simply IS the Clerk user id — no crypto involved.
+# The seeded account for plain-AUTH tests; the bearer token IS the Clerk user id.
 SEED_CLERK_ID = "user_seed"
 AUTH = {"Authorization": f"Bearer {SEED_CLERK_ID}"}
 
-# Reseeded before every test (after TRUNCATE … RESTART IDENTITY, so the ids
-# are always: user 1, meeting 1, items 1 and 2).
+# Reseeded per test after TRUNCATE … RESTART IDENTITY: user 1, meeting 1, items 1-2.
 SEED_SQL = """
 INSERT INTO users (name, clerk_id) VALUES ('Seed User', 'user_seed');
 INSERT INTO meetings (user_id, title, raw_notes, captured_at) VALUES
@@ -51,8 +47,7 @@ INSERT INTO action_items
 
 
 class FakeVerifier:
-    """Test twin of ClerkJWKSVerifier — no keys, no network. "user_…" tokens
-    verify as that user (optional name after a pipe); anything else rejects."""
+    """Test twin of ClerkJWKSVerifier: "user_…" tokens verify as that user."""
 
     def verify(self, token: str) -> VerifiedUser:
         if not token.startswith("user_"):
@@ -63,8 +58,7 @@ class FakeVerifier:
 
 @pytest.fixture(scope="session")
 def test_db():
-    """Once per run: rebuild note2action_test and migrate it; yields the
-    app-role sessionmaker + an admin engine for truncation."""
+    """Once per run: rebuild + migrate note2action_test; yields sessionmaker + admin."""
     admin = create_engine(f"{ADMIN_URL}/postgres", isolation_level="AUTOCOMMIT")
     try:
         with admin.connect() as conn:
@@ -78,8 +72,7 @@ def test_db():
             pytrace=False,
         )
 
-    # The real migrations build the schema AND the RLS policies — the test
-    # database matches production law exactly, not a hand-copied schema.
+    # Real migrations build schema AND RLS — the test DB matches production law.
     subprocess.run(
         [str(API_DIR / ".venv" / "bin" / "alembic"), "upgrade", "head"],
         cwd=API_DIR,
@@ -102,18 +95,15 @@ def test_db():
 
 @pytest.fixture(autouse=True)
 def fresh_database(test_db, monkeypatch):
-    """Point the app at the test DB, wipe it, reseed, install the fake
-    verifier — every test starts from the same three seeded rows."""
+    """Point the app at the test DB, wipe, reseed, fake verifier — same rows each test."""
     test_sessionmaker, admin = test_db
-    # Each module imported SessionLocal by name at import time — patch the
-    # copy each one actually calls, not just the original in core/db.py.
+    # Patch the SessionLocal copy each module imported, not just core/db.py's.
     monkeypatch.setattr(core_db, "SessionLocal", test_sessionmaker)
     monkeypatch.setattr(pg_session, "SessionLocal", test_sessionmaker)
     monkeypatch.setattr(pg_users, "SessionLocal", test_sessionmaker)
     main_module.app.state.repositories = build_postgres_repositories()
     main_module.app.state.token_verifier = FakeVerifier()
-    # Admin truncate (RLS doesn't bind admins); RESTART IDENTITY makes row
-    # ids deterministic (1, 2, …) in every test.
+    # Admin truncate; RESTART IDENTITY makes row ids deterministic per test.
     with admin.connect() as conn:
         conn.execute(
             text("TRUNCATE action_items, meetings, users RESTART IDENTITY CASCADE")

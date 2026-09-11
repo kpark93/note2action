@@ -1,5 +1,4 @@
-"""Pins the request-id middleware: every response carries X-Request-ID and
-emits one structured access-log line — the 'how do you debug prod' answer."""
+"""Pins request-id middleware: X-Request-ID on every response, one access-log line."""
 
 import logging
 

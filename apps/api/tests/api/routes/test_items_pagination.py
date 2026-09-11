@@ -9,8 +9,7 @@ client = TestClient(app, headers=AUTH)
 
 
 def seed_tasks() -> None:
-    """Capture 5 items with mixed due dates (two undated), then promote all
-    of them to Tasks — the fixture every tasks-view walk starts from."""
+    """Capture 5 items with mixed dues (two undated), promoted to Tasks — the fixture."""
     client.post(
         "/api/meetings",
         json={
@@ -77,8 +76,7 @@ def walk(view: str, params: str = "") -> list[str]:
 def test_tasks_view_pages_in_due_order_with_undated_last() -> None:
     seed_tasks()
     titles = walk("tasks")
-    # save-to-tasks also promoted the two seeded pending items — undated,
-    # ids 1-2, so they lead the undated tail (id ASC within NULL dues).
+    # The two seeded pending items (undated, ids 1-2) lead the undated tail.
     assert titles == [
         "c-early",
         "b-mid",
@@ -128,8 +126,7 @@ def test_summary_counts_without_rows() -> None:
     seed_tasks()
     client.patch("/api/items/3", json={"status": "Done"})
     body = client.get("/api/items/summary").json()
-    # save-to-tasks promoted the 2 seeded pending items too → review empty.
-    # The Done item's due (2126) is after today → it counts as on time.
+    # Review is empty after the sweep; the Done item's far-future due counts on time.
     assert body == {
         "done": 1,
         "open": 6,

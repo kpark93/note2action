@@ -1,5 +1,4 @@
-"""Meeting routes — capture a meeting with AI-extracted items, browse past
-captures. Next hop: services/meetings.py → repositories/."""
+"""Meeting routes — capture and browse. Next hop: services/meetings.py → repositories/."""
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
@@ -23,8 +22,7 @@ def create_meeting(
     user_id: int = Depends(current_user_id),
     repos: Repositories = Depends(get_repositories),
 ) -> CreateMeetingResponse:
-    """POST /api/meetings: delegates to services/meetings.py
-    create_meeting (meeting + extracted items, one call)."""
+    """POST /api/meetings: meeting + extracted items in one call."""
     return meetings_service.create_meeting(repos.meetings, user_id, request)
 
 
@@ -35,8 +33,7 @@ def list_meetings(
     user_id: int = Depends(current_user_id),
     repos: Repositories = Depends(get_repositories),
 ) -> MeetingsPage:
-    """GET /api/meetings: one keyset page, newest first (default 3 — the
-    RECENT strip's size). nextCursor rides along; legacy callers ignore it."""
+    """GET /api/meetings: one keyset page, newest first (default 3 = RECENT strip)."""
     try:
         return meetings_service.list_meetings_page(
             repos.meetings, user_id, cursor, limit
@@ -51,8 +48,7 @@ def get_meeting(
     user_id: int = Depends(current_user_id),
     repos: Repositories = Depends(get_repositories),
 ) -> MeetingDetail:
-    """GET /api/meetings/{id}: delegates to services/meetings.py;
-    404s not 403s when not the caller's — no leak."""
+    """GET /api/meetings/{id}: 404 not 403 when not the caller's — no leak."""
     meeting = meetings_service.get_meeting(repos.meetings, user_id, meeting_id)
     if meeting is None:
         raise HTTPException(status_code=404, detail="Meeting not found")

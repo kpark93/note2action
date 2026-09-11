@@ -1,5 +1,4 @@
-/** Light/dark theme in a tiny Zustand store; the initial value reads the `.dark`
- * class index.html sets before paint — no flash, no double source of truth. */
+/** Light/dark theme in Zustand; seeds from index.html's pre-paint `.dark` class. */
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
 

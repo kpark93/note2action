@@ -1,5 +1,4 @@
-"""Pydantic schemas for items — the wire contract, mirrored in packages/shared.
-Path §1 [hop 13/15]: mappers → here → FastAPI JSON → lib/http.ts."""
+"""Pydantic item schemas — the wire contract, mirrored in packages/shared."""
 
 from datetime import date
 from typing import Literal
@@ -11,8 +10,7 @@ Status = Literal["Not started", "In progress", "Blocked", "Done"]
 
 
 class ActionItem(BaseModel):
-    """One persisted action item — full wire shape, mirrored in
-    packages/shared. All fields required; some are nullable (`| None`)."""
+    """One persisted item — full wire shape; all fields required, some nullable."""
 
     id: int
     meetingId: int
@@ -29,8 +27,7 @@ class ActionItem(BaseModel):
 
 
 class ActionItemPatch(BaseModel):
-    """Partial update for PATCH /api/items/{id}. `completed` is absent
-    — the server stamps it from `status` (Done ⟺ completed set)."""
+    """Partial update for PATCH /api/items/{id}; `completed` is server-stamped."""
 
     title: str | None = None
     owner: str | None = None
@@ -40,14 +37,12 @@ class ActionItemPatch(BaseModel):
     status: Status | None = None
     saved: bool | None = None
     note: str | None = None
-    # The client's local "YYYY-MM-DD" on a flip to Done — advisory input to
-    # the `completed` stamp, clamped to ±1 day of UTC today (no backdating).
+    # Client's local day for the Done stamp; clamped to ±1 day of UTC today.
     completedOn: str | None = None
 
 
 class ItemsBulkPatch(BaseModel):
-    """PATCH /api/items body. Literal[True]: promoting the review queue is
-    the only bulk transition — widen the type when a second one exists."""
+    """PATCH /api/items body; Literal[True] because promote is the only bulk move."""
 
     saved: Literal[True]
 
@@ -59,17 +54,14 @@ class BulkUpdateResponse(BaseModel):
 
 
 class ItemsPage(BaseModel):
-    """One keyset page — mirrors packages/shared ItemsPage. nextCursor is
-    opaque base64 (core/cursor.py); None = no more pages."""
+    """One keyset page; opaque nextCursor, None = no more pages."""
 
     items: list[ActionItem]
     nextCursor: str | None
 
 
 class ItemSummary(BaseModel):
-    """GET /api/items/summary — sidebar + History-stat counts, mirrors
-    packages/shared. onTime: Done items closed on/before due (undated = on
-    time); meetings: how many captures the caller owns."""
+    """Summary counts; onTime = Done on/before due (undated counts as on time)."""
 
     done: int
     open: int

@@ -1,5 +1,4 @@
-"""Request-id + access-log middleware — one structured line per request.
-Registered outermost in app/main.py, so even auth 401s get an id and a line."""
+"""Request-id + access-log middleware; outermost, so even auth 401s get a line."""
 
 import logging
 import time

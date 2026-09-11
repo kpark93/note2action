@@ -1,10 +1,4 @@
-"""covering indexes for the keyset pagination walks
-
-Revision ID: f3a8d51c7b22
-Revises: e7f2b9c04a11
-Create Date: 2026-09-03 14:00:00.000000
-
-"""
+"""covering indexes for the keyset pagination walks"""
 
 from collections.abc import Sequence
 
@@ -18,8 +12,7 @@ depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
-    """One btree per keyset: (user_id, sort key, id) lets each page walk
-    seek straight to the cursor instead of scanning skipped rows."""
+    """One btree per keyset: (user_id, sort key, id) seeks straight to the cursor."""
     op.create_index(
         "ix_action_items_user_due_id", "action_items", ["user_id", "due", "id"]
     )

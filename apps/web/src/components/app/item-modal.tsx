@@ -1,5 +1,4 @@
-/** Detail dialog for one action item, opened by clicking a Tasks row —
- * every edit is an optimistic write. Next hop: usePatchItem. */
+/** Detail dialog for one item; every edit is an optimistic write via usePatchItem. */
 import { useRef } from "react";
 import { useItemQuery, usePatchItem } from "@/domain/items/items.queries";
 import { PRIORITIES, STATUSES } from "@/domain/items/items.constants";
@@ -32,9 +31,7 @@ const FIELD_LABEL = "text-label font-medium text-muted-foreground";
 const FIELD_TRIGGER =
   "w-full rounded-control border-border bg-secondary px-2 text-body text-foreground data-[size=default]:h-8";
 
-/** Shell: owns the Dialog. The body (and its query) mounts only while open —
- * no parked null query. The ref keeps the last id through the exit
- * animation; Radix unmounts the whole subtree once the fade finishes. */
+/** Shell owns the Dialog; body mounts only while open, ref holds the id through exit. */
 export function ItemModal({ itemId, onClose }: ItemModalProps) {
   const lastId = useRef<number | null>(null);
   if (itemId !== null) lastId.current = itemId;
@@ -54,9 +51,7 @@ function ItemModalBody({ id }: { id: number }) {
   const patchItem = usePatchItem();
   const item = useItemQuery(id).data ?? null;
 
-  // Text fields save on blur (one PATCH per edit, not per keystroke);
-  // selects and the date input save immediately — same optimistic write
-  // Review cards use, with rollback + toast on failure.
+  // Text fields save on blur; selects/date save immediately — same optimistic write.
   const patch = (
     patchBody: Parameters<typeof patchItem.mutate>[0]["patch"],
   ) => {

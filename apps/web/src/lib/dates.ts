@@ -1,5 +1,4 @@
-/** Date formatting and comparison helpers, used by items.cache.ts and the view
- * *.utils.ts files — leaf, no network. */
+/** Date formatting and comparison helpers — leaf, no network. */
 
 /** "Aug 14", or "—" for an empty date. */
 export function formatDate(d: string): string {
@@ -10,15 +9,13 @@ export function formatDate(d: string): string {
   });
 }
 
-/** A Date's local calendar day as "YYYY-MM-DD" — never toISOString, which
- * answers with UTC's calendar, a day off near midnight for non-UTC viewers. */
+/** A Date's local calendar day as "YYYY-MM-DD" — never toISOString (UTC's calendar). */
 function localDayISO(d: Date): string {
   const pad = (n: number) => String(n).padStart(2, "0");
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 
-/** "Aug 14" for an ISO timestamp — the instant's day on the viewer's
- * calendar, not UTC's (which slice(0, 10) on the raw string would give). */
+/** "Aug 14" for an ISO timestamp — the instant's day on the viewer's calendar. */
 export function formatInstantDate(iso: string): string {
   return formatDate(localDayISO(new Date(iso)));
 }

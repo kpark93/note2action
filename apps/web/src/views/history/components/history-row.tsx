@@ -1,5 +1,4 @@
-/** One completed-item row on History — read-only stamped truth, with Reopen
- * as the single exit. Next hop: usePatchItem (status → In progress). */
+/** One completed row on History — read-only, with Reopen as the single exit. */
 import { usePatchItem } from "@/domain/items/items.queries";
 import type { ActionItem } from "@/domain/items/items.types";
 import { Button } from "@/components/ui/button";

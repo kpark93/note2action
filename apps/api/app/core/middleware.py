@@ -1,5 +1,4 @@
-"""Auth middleware — the checkpoint before any endpoint runs; stores the verified
-identity on request.state. Path §1 [hop 7/15]: → security.py → routes."""
+"""Auth middleware — verifies the caller, stores the identity on request.state."""
 
 from fastapi import Request
 from fastapi.responses import JSONResponse
@@ -12,8 +11,7 @@ PUBLIC_PATHS = {"/api/health", "/docs", "/openapi.json"}
 
 
 async def require_verified_user(request: Request, call_next):
-    """Verify the caller before any endpoint runs; the verified identity
-    rides on request.state for handlers."""
+    """Verify the caller before any endpoint runs; identity rides on request.state."""
     if request.url.path in PUBLIC_PATHS:
         return await call_next(request)
 
@@ -36,8 +34,7 @@ async def require_verified_user(request: Request, call_next):
     try:
         request.state.identity = verifier.verify(token)
     except PyJWTError:
-        # Forged, expired, or malformed — 401 "who are you?", never details
-        # an attacker could learn from.
+        # Forged/expired/malformed — 401, never details an attacker could learn from.
         return JSONResponse(
             {"detail": "Invalid or expired token"},
             status_code=401,

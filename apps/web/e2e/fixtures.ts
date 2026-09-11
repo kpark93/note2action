@@ -1,5 +1,4 @@
-/** Shared test base: intercepts the browser's /ai-api/extract call with a
- * canned payload — deterministic capture, the AI service never runs. */
+/** Shared test base: stubs /ai-api/extract with a canned payload — deterministic. */
 import { test as base, expect } from "@playwright/test";
 import type { ExtractedItem } from "@note2action/shared";
 

@@ -1,6 +1,4 @@
-/** TanStack mutation for the capture flow — extract via the AI app, persist
- * as a meeting; drafts stay in extraction.store.ts. Next hop: extraction.api
- * → meetings.api. */
+/** Capture mutation — extract via the AI app, persist as a meeting; drafts in store. */
 import {
   useMutation,
   useMutationState,
@@ -20,12 +18,7 @@ import type { ActionItem } from "@/domain/items/items.types";
 import { extractKey, itemsKey, meetingsKey } from "@/lib/query-keys";
 import type { ItemSummary } from "@note2action/shared";
 
-/**
- * The capture mutation: notes in, extracted items persisted as a meeting.
- * Hook-level onSuccess (invalidate + clear draft) runs even if Capture
- * unmounted mid-flight; navigation belongs in the caller's mutate() callback,
- * which correctly skips when the user has already left.
- */
+/** Notes in, items persisted as a meeting; hook-level onSuccess survives unmounts. */
 export function useExtractCapture() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -34,8 +27,7 @@ export function useExtractCapture() {
       payload: ExtractRequest,
     ): Promise<CreateMeetingResponse> => {
       const items = await extractActionItems(payload);
-      // Persist at extraction: the capture becomes database rows NOW, so
-      // the Review queue survives refresh.
+      // Persist at extraction: database rows NOW, so Review survives refresh.
       return createMeeting({
         title: payload.meetingTitle,
         rawNotes: payload.notes,
@@ -44,20 +36,15 @@ export function useExtractCapture() {
     },
     onSuccess: (data) => {
       useActionItems.getState().clearDraft();
-      // Seed from the response — the server just told us everything a
-      // capture changes, so nothing here needs a refetch:
-      // counters move by delta…
+      // Seed from the response — the server just said everything a capture changes.
       queryClient.setQueryData<ItemSummary>(itemsKey.summary, (summary) =>
         summary ? summaryAfterCapture(summary, data.items.length) : summary,
       );
-      // …the new items join the Review queue (id-ordered; these are the
-      // newest ids, so append)…
+      // The new items join Review (id-ordered; newest ids, so append).
       queryClient.setQueryData<ActionItem[]>(itemsKey.review, (items) =>
         items ? [...items, ...data.items.map(fromWire)] : items,
       );
-      // What's left: the paginated walks (items pages, meetings infinite) —
-      // their page boundaries are the server's call — all lazily marked;
-      // details unchanged by an ADD, review/summary/strip seeded above.
+      // What's left: the paginated walks — page boundaries are the server's call.
       void queryClient.invalidateQueries({
         queryKey: itemsKey.all,
         predicate: (query) =>
@@ -73,8 +60,7 @@ export function useExtractCapture() {
   });
 }
 
-/** Live capture-flow status from the shared mutation cache — unlike a hook
- * instance's isPending, this survives Capture unmounting and remounting. */
+/** Capture status from the shared mutation cache — survives unmount and remount. */
 export function useExtractionStatus() {
   const states = useMutationState({
     filters: { mutationKey: extractKey },
