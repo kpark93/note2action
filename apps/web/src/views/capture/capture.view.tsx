@@ -1,5 +1,4 @@
-/** Step 1 of the capture flow: paste notes, AI-extract action items. The
- * extraction is a TanStack mutation; NotesEditor owns the trigger. */
+/** Capture step 1: paste notes, AI-extract items; NotesEditor owns the trigger. */
 import { NotesEditor } from "./components/notes-editor";
 import { StepLabel } from "@/components/app/step-label";
 import { ViewShell } from "@/components/app/view-shell";

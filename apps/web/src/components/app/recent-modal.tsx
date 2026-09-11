@@ -1,5 +1,4 @@
-/** Capture-detail dialog, mounted by the Meetings screen — same prop shape
- * as ItemModal. */
+/** Capture-detail dialog on the Meetings screen — same prop shape as ItemModal. */
 import { useRef } from "react";
 import { useMeetingQuery } from "@/domain/meetings/meetings.queries";
 import { STATUS_STYLE } from "@/domain/items/items.constants";
@@ -21,9 +20,7 @@ interface RecentModalProps {
   onClose: () => void;
 }
 
-/** Shell: owns the Dialog. The body (and its query) mounts only while open —
- * no parked null query. The ref keeps the last id through the exit
- * animation; Radix unmounts the whole subtree once the fade finishes. */
+/** Shell owns the Dialog; body mounts only while open, ref holds the id through exit. */
 export function RecentModal({ meetingId, onClose }: RecentModalProps) {
   const lastId = useRef<number | null>(null);
   if (meetingId !== null) lastId.current = meetingId;
@@ -47,11 +44,9 @@ export function RecentModal({ meetingId, onClose }: RecentModalProps) {
   );
 }
 
-/** Transcript plus this meeting's extracted items with read-only status
- * pills, both from GET /api/meetings/{id}. */
+/** Transcript + this capture's items with read-only status pills. */
 function RecentModalBody({ meetingId }: { meetingId: number }) {
-  // placeholderData paints the header from the clicked row's cached summary
-  // while the transcript + items fetch.
+  // placeholderData paints the header from the clicked row while the rest fetches.
   const meeting = useMeetingQuery(meetingId).data ?? null;
   const items = meeting?.items ?? [];
   const words = meeting?.rawNotes.trim()

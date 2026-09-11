@@ -1,5 +1,4 @@
-/** Landing screen: greeting, one-line summary, four RecapCard tiles. Read-only
- * — everything comes from the shared summary cache, no fetches of its own. */
+/** Landing screen: greeting, summary line, RecapCard tiles — all from shared cache. */
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "@clerk/clerk-react";
@@ -8,8 +7,7 @@ import { Button } from "@/components/ui/button";
 import { ViewShell } from "@/components/app/view-shell";
 import { RecapCard } from "./components/recap-card";
 
-/** Welcome messages, one picked at random per mount — templates, not strings:
- * the name comes from the signed-in Clerk user. */
+/** Welcome templates, one picked per mount; the name comes from the Clerk user. */
 const GREETINGS = [
   (name: string) => `Hello ${name}, welcome back!`,
   (name: string) => `Good to see you again, ${name}`,

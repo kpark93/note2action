@@ -3,8 +3,7 @@ import { reviewItems, reviewSentence } from "./review.utils";
 import { makeItem } from "@/test/fixtures";
 
 describe("reviewItems", () => {
-  // Filtering to the pending queue moved server-side (view=review) —
-  // this only decorates whatever the server sent, in its order.
+  // Filtering moved server-side — this decorates what the server sent, in order.
   it("maps items to view models without filtering or reordering", () => {
     const a = makeItem({ saved: false });
     const b = makeItem({ saved: false });

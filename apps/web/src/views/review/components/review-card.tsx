@@ -1,5 +1,4 @@
-/** One item's editable card in the Review grid — every edit is an optimistic
- * write. Next hop: usePatchItem / useDeleteItem. */
+/** One editable card in the Review grid — every edit is an optimistic write. */
 import type { CSSProperties } from "react";
 import { useDeleteItem, usePatchItem } from "@/domain/items/items.queries";
 import { PRIORITY_STYLE } from "@/domain/items/items.constants";
@@ -18,13 +17,11 @@ import {
 
 /** Title, owner/due/priority fields, AI rationale, discard. */
 export function ReviewCard({ item }: { item: ReviewItemVM }) {
-  // Both mutations are OPTIMISTIC: edits show immediately, then PATCH/
-  // DELETE confirms — rollback + toast on failure. (request-paths.md §2)
+  // Both mutations are optimistic; rollback + toast on failure.
   const patchItem = usePatchItem();
   const deleteItem = useDeleteItem();
 
-  // Text fields save on blur (one PATCH per edit, not per keystroke);
-  // selects and buttons save immediately.
+  // Text fields save on blur; selects and buttons save immediately.
   const patch = (patchBody: Parameters<typeof patchItem.mutate>[0]["patch"]) =>
     patchItem.mutate({ id: item.id, patch: patchBody });
 
@@ -111,9 +108,7 @@ export function ReviewCard({ item }: { item: ReviewItemVM }) {
         </div>
       </div>
 
-      {/* mt-auto pins this footer to the card's bottom edge; the note is a
-          fixed two-line block (clamped + min-height) so the divider and
-          Discard sit at identical heights on every card. */}
+      {/* mt-auto + two-line clamped note keep every card's footer at one height. */}
       <div className="mt-auto flex items-center gap-[10px] border-t border-border pt-[10px]">
         <span
           title={item.note}

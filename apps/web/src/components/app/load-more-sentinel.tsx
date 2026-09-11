@@ -1,10 +1,8 @@
-/** The infinite-scroll trigger: an invisible row at the bottom of a list that
- * asks for the next page when it scrolls into view. Leaf — no further calls. */
+/** Infinite-scroll trigger: asks for the next page when it scrolls into view. */
 import { useEffect, useRef } from "react";
 
 interface LoadMoreSentinelProps {
-  /** Called when the sentinel becomes visible; the view guards it with
-   * hasNextPage/isFetching before actually fetching. */
+  /** Called when visible; the view guards with hasNextPage/isFetching. */
   onVisible: () => void;
   /** True while there is nothing further to load — unobserves entirely. */
   disabled: boolean;
@@ -12,11 +10,7 @@ interface LoadMoreSentinelProps {
   loading: boolean;
 }
 
-/** IntersectionObserver-driven: purely event-based, no scroll math, no
- * timers. One subtlety: the observer only fires on visibility *transitions*,
- * so a sentinel that stays on screen after a short page loads would stall
- * the walk — the loading→idle effect below re-asks in that case, chaining
- * pages until the sentinel finally scrolls out of view or pages run out. */
+/** IntersectionObserver-driven; the loading→idle effect re-asks when a short page settles. */
 export function LoadMoreSentinel({
   onVisible,
   disabled,
@@ -44,8 +38,7 @@ export function LoadMoreSentinel({
   }, [disabled]);
 
   useEffect(() => {
-    // A page just settled (loading flipped false) with the sentinel still
-    // visible: no intersection transition is coming — request the next page.
+    // A page settled with the sentinel still visible: no transition is coming — re-ask.
     if (!disabled && !loading && intersectingRef.current) {
       onVisibleRef.current();
     }

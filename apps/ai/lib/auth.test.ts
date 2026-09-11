@@ -1,5 +1,4 @@
-/** Pins the auth boundary: disabled mode passes a dev identity; enabled mode
- * rejects missing/garbage tokens. Signature checks live in Clerk's JWKS. */
+/** Auth boundary: disabled mode passes a dev identity; enabled rejects bad tokens. */
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { verifyRequest } from "./auth";
 

@@ -1,5 +1,4 @@
-/** Tests prompt assembly with `generateText` mocked (no key, no network):
- * every request field reaches the prompt; the model's output returns unchanged. */
+/** Prompt assembly with generateText mocked: fields reach the prompt, output returns. */
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("ai", () => ({

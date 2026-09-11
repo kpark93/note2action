@@ -1,5 +1,4 @@
-/** View-model types for action items. The wire contract uses `null` for "none";
- * the UI's date input holds strings, so "" here — items.api.ts translates. */
+/** View-model item types: wire null becomes "" here — items.api.ts translates. */
 import type { ActionItem as WireActionItem } from "@note2action/shared";
 
 export type { Priority, Status } from "@note2action/shared";

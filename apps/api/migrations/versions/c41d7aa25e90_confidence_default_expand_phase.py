@@ -1,10 +1,4 @@
-"""confidence server default — expand phase of the two-step removal
-
-Revision ID: c41d7aa25e90
-Revises: ba1b688e106a
-Create Date: 2026-09-03 10:00:00.000000
-
-"""
+"""confidence server default — expand phase of the two-step removal"""
 
 from collections.abc import Sequence
 
@@ -19,10 +13,7 @@ depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
-    """Expand step: app code no longer reads or writes confidence, but the
-    column must survive one deploy so still-running old tasks stay valid.
-    The default lets new confidence-free INSERTs satisfy NOT NULL; a
-    follow-up contract migration drops the column once this is deployed."""
+    """Expand: the column survives one deploy; the default satisfies NOT NULL."""
     op.alter_column("action_items", "confidence", server_default=sa.text("0"))
 
 

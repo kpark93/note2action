@@ -1,5 +1,4 @@
-/** Sidebar widget showing completion progress — reads useItemsQuery itself so
- * it shares every other screen's cache, no props needed. */
+/** Sidebar completion widget — reads the shared summary cache itself, no props. */
 import { useSummaryQuery } from "@/domain/items/items.queries";
 
 /** "Completion all time" widget: percent, progress bar, closed/open counts. */

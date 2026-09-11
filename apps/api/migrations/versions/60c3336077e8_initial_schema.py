@@ -1,10 +1,4 @@
-"""initial schema
-
-Revision ID: 60c3336077e8
-Revises:
-Create Date: 2026-08-17 16:47:44.474533
-
-"""
+"""initial schema"""
 
 from collections.abc import Sequence
 

@@ -1,5 +1,4 @@
-"""Endpoint tests against real Postgres — the whole server-side path:
-middleware → route → service → repository → RLS → back out as JSON."""
+"""Endpoint tests against real Postgres — the whole path, middleware to JSON."""
 
 from app.main import app
 from fastapi.testclient import TestClient
@@ -33,8 +32,7 @@ client = TestClient(app)
 
 
 def test_capture_then_done_full_path():
-    """POST a capture, PATCH an item to Done, read it back — the exact
-    journey that 500'd before the build-response-before-commit fix."""
+    """POST capture, PATCH to Done, read back — the journey that once 500'd."""
     created = client.post("/api/meetings", json=CAPTURE, headers=ALICE)
     assert created.status_code == 201
     item_id = created.json()["items"][0]["id"]
@@ -52,8 +50,7 @@ def test_capture_then_done_full_path():
 
 
 def test_cross_user_access_is_404_and_invisible():
-    """Bob touching Alice's rows gets 404 (never 403 — a 403 would leak
-    that the row exists) and sees an empty world of his own."""
+    """Bob touching Alice's rows gets 404 (never 403) and sees an empty world."""
     created = client.post("/api/meetings", json=CAPTURE, headers=ALICE)
     item_id = created.json()["items"][0]["id"]
     meeting_id = created.json()["meeting"]["id"]
@@ -85,8 +82,7 @@ def test_no_token_is_401():
 
 
 def test_tasks_keyset_walk_crosses_dated_undated_boundary():
-    """Real-SQL page walk over the tasks view with limit=2: dated rows in
-    due order, then the NULL-due tail, no overlaps, terminating cursor."""
+    """limit=2 walk crosses the dated/undated boundary: no overlaps, cursor ends."""
     capture = {
         "title": "Pagination capture",
         "rawNotes": "notes",
@@ -120,8 +116,7 @@ def test_tasks_keyset_walk_crosses_dated_undated_boundary():
 
 
 def test_pagination_views_are_user_scoped():
-    """Bob's tasks view never shows Alice's rows, and his summary is empty —
-    keyset queries ride the same RLS + user_id filters as everything else."""
+    """Bob's tasks and summary stay empty — keyset queries ride RLS + user_id too."""
     client.post(
         "/api/meetings",
         json={

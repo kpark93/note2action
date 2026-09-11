@@ -1,5 +1,4 @@
-"""The real ItemRepository — backed by meetings and action_items. Path §1
-[hop 11/15]: services/items.py → here → session.py → Postgres → to_wire."""
+"""The real ItemRepository. Next hop: session.py → Postgres → to_wire."""
 
 from datetime import date, datetime, timezone
 
@@ -16,8 +15,7 @@ from .session import rls_session
 
 
 def _stamp_completed(client_day: str | None) -> date:
-    """Done stamp: the client's calendar day when within ±1 of UTC today —
-    real timezone skew is at most a day; anything else falls back to UTC."""
+    """Done stamp: the client's day when within ±1 of UTC today, else UTC today."""
     today = datetime.now(timezone.utc).date()
     if client_day is None:
         return today
@@ -29,8 +27,7 @@ def _stamp_completed(client_day: str | None) -> date:
 
 
 class PostgresItemRepository:
-    """Every method opens an rls_session (session.py) so RLS scopes
-    each query; user_id also filters here — two layers of isolation."""
+    """Every method opens an rls_session; user_id also filters — two isolation layers."""
 
     def list_tasks_page(
         self,
@@ -40,8 +37,7 @@ class PostgresItemRepository:
         cursor: dict | None,
         limit: int,
     ) -> tuple[list[ActionItem], dict | None]:
-        """Keyset page over (due ASC NULLS LAST, id ASC). Fetches limit+1
-        rows: the extra row's existence is what proves there's a next page."""
+        """Keyset page over (due ASC NULLS LAST, id ASC); limit+1 proves a next page."""
         with rls_session(user_id) as session:
             q = (
                 select(ActionItemRow, MeetingRow.title)
@@ -65,8 +61,7 @@ class PostgresItemRepository:
                     )
                 else:
                     d = date.fromisoformat(cursor["d"])
-                    # Strictly after (d, id) among dated rows — or any undated
-                    # row, since NULLS LAST puts the whole tail after them.
+                    # After (d, id) among dated rows, or any undated row (NULLS LAST).
                     q = q.where(
                         or_(
                             ActionItemRow.due > d,
@@ -94,8 +89,7 @@ class PostgresItemRepository:
         cursor: dict | None,
         limit: int,
     ) -> tuple[list[ActionItem], dict | None]:
-        """Keyset page over (completed DESC, id DESC); completed is never
-        NULL for Done rows (ck_action_items_completed_iff_done)."""
+        """Keyset page over (completed DESC, id DESC); completed never NULL when Done."""
         with rls_session(user_id) as session:
             q = (
                 select(ActionItemRow, MeetingRow.title)
@@ -161,8 +155,7 @@ class PostgresItemRepository:
             return to_wire(row, title)
 
     def count_summary(self, user_id: int) -> ItemSummary:
-        """One round trip for every count — FILTER clauses for the item
-        buckets, a scalar subquery for the meetings total."""
+        """All counts in one round trip: FILTER buckets + a meetings subquery."""
         with rls_session(user_id) as session:
             done_f = ActionItemRow.status == "Done"
             meetings_sq = (
@@ -199,18 +192,15 @@ class PostgresItemRepository:
     def update_item(
         self, user_id: int, item_id: int, patch: ActionItemPatch
     ) -> ActionItem | None:
-        """Applies a partial edit; None if missing or not the caller's.
-        Built before commit(): SET LOCAL identity dies at commit."""
+        """Partial edit; None if missing or not the caller's."""
         with rls_session(user_id) as session:
-            # One trip: the row with its meeting title joined in, instead of
-            # two session.get()s.
+            # One trip: the row with its meeting title joined in.
             hit = session.execute(
                 select(ActionItemRow, MeetingRow.title)
                 .join(MeetingRow, ActionItemRow.meeting_id == MeetingRow.id)
                 .where(ActionItemRow.id == item_id)
             ).first()
-            # Someone else's row looks exactly like a missing one (→ 404) —
-            # admitting otherwise would leak whose it is.
+            # Someone else's row looks exactly like a missing one (→ 404) — no leak.
             if hit is None or hit[0].user_id != user_id:
                 return None
             row, meeting_title = hit
@@ -223,16 +213,13 @@ class PostgresItemRepository:
                 row.completed = (
                     _stamp_completed(completed_on) if row.status == "Done" else None
                 )
-            # Before commit(): SET LOCAL identity dies at commit, so a
-            # later read here would re-SELECT under no identity → RLS-denied.
+            # Built before commit(): the SET LOCAL identity dies at commit.
             result = to_wire(row, meeting_title)
             session.commit()
             return result
 
     def delete_item(self, user_id: int, item_id: int) -> bool:
-        """Delete one item; False if missing or not the caller's. One trip:
-        the WHERE answers ownership (RLS filters independently on top), and
-        the rowcount says whether anything was there to delete."""
+        """Delete one item; False if missing or not the caller's (rowcount answers)."""
         with rls_session(user_id) as session:
             result = session.execute(
                 sql_delete(ActionItemRow).where(
@@ -244,8 +231,7 @@ class PostgresItemRepository:
             return result.rowcount > 0
 
     def save_all_to_tasks(self, user_id: int) -> int:
-        """Mark every not-yet-saved, not-Done item as saved in one bulk
-        UPDATE; returns the row count changed."""
+        """One bulk UPDATE saves every unsaved, not-Done item; returns rows changed."""
         with rls_session(user_id) as session:
             result = session.execute(
                 sql_update(ActionItemRow)

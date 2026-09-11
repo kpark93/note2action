@@ -1,5 +1,4 @@
-/** One clickable summary tile on Home ("N to review", "N meetings captured").
- * Leaf — no further calls. */
+/** One clickable summary tile on Home ("N to review"). Leaf. */
 interface RecapCardProps {
   value: number;
   label: string;

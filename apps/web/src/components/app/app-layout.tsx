@@ -1,5 +1,4 @@
-/** App shell: the chrome around every authenticated screen — rendered by
- * app.tsx as the layout route, inside <RequireAuth>. */
+/** App shell: the chrome around every authenticated screen, inside <RequireAuth>. */
 import { Outlet } from "react-router-dom";
 import { Sidebar } from "./sidebar";
 

@@ -1,5 +1,4 @@
-"""The SQLAlchemy engine and session factory for every Postgres repo, built once
-from settings.database_url. Next hop: Postgres (DATABASE_URL)."""
+"""The SQLAlchemy engine + session factory, built once. Next hop: Postgres."""
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker

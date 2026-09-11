@@ -1,5 +1,4 @@
-"""Re-exports every SQLAlchemy model so `from app.models import X` works from
-one place; also used by migrations/env.py (Alembic)."""
+"""Re-exports every SQLAlchemy model; also used by migrations/env.py (Alembic)."""
 
 from .action_item import ActionItem
 from .base import Base

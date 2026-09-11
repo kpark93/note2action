@@ -1,5 +1,4 @@
-/** Small labeled divider above grouped rows — Tasks status sections and History
- * week groups. */
+/** Small labeled divider above grouped rows (Tasks sections, History weeks). */
 interface SectionHeadingProps {
   label: string;
   /** Count at the hairline's right end — a bare number or text like "3 items". */

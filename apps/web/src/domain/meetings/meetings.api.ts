@@ -1,5 +1,4 @@
-/** Typed API calls for meetings (captures), used by meetings.queries.ts and
- * extraction.store.ts. Next hop: lib/http.ts → API. */
+/** Typed API calls for meetings (captures). Next hop: lib/http.ts → API. */
 import {
   CreateMeetingResponse,
   MeetingDetail,

@@ -1,5 +1,4 @@
-/** Tests the /api/extract HTTP border: unauthenticated → 401, valid bodies
- * reach extractItems (mocked), malformed ones get a 400 — never a 500. */
+/** /api/extract border: no auth → 401, valid body → extractItems, malformed → 400. */
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/lib/extraction", () => ({

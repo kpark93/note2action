@@ -1,5 +1,4 @@
-"""Router aggregator — combines every resource's routes into the one router
-app/main.py mounts. Next hop: api/routes/{health,items,meetings}.py."""
+"""Router aggregator — the one router app/main.py mounts. Next hop: api/routes/."""
 
 from fastapi import APIRouter
 

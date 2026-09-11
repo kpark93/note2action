@@ -1,5 +1,4 @@
-"""The meetings table — one row per captured meeting; RLS restricts every query
-to the caller's rows (see postgres/session.py)."""
+"""The meetings table — one row per capture; RLS scopes every query to the caller."""
 
 from datetime import datetime
 

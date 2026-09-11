@@ -1,5 +1,4 @@
-/** Full list of saved captures (the Capture screen's RECENT strip caps at 3;
- * this has no limit). Next hop: meetings.queries + its own RecentModal. */
+/** Full list of saved captures — unlike the RECENT strip's cap of 3, no limit. */
 import { useState } from "react";
 import { useMeetingsInfinite } from "@/domain/meetings/meetings.queries";
 import { RecentModal } from "@/components/app/recent-modal";
@@ -10,8 +9,7 @@ import { ViewHeader } from "@/components/app/view-header";
 import { ScrollRegion } from "@/components/app/scroll-region";
 import { EmptyState } from "@/components/app/empty-state";
 
-/** All saved captures, newest first, as full-width cards — clicking one opens
- * this view's RecentModal. */
+/** All captures, newest first; clicking one opens this view's RecentModal. */
 export function MeetingsView() {
   // Real paging now: pages of 20, newest first, loaded as the user scrolls.
   const meetingsQuery = useMeetingsInfinite();
@@ -45,8 +43,7 @@ export function MeetingsView() {
               key={meeting.id}
               onClick={() => setOpenMeetingId(meeting.id)}
               className="n2a-row recent-btn flex w-full cursor-pointer items-center gap-4 rounded-[14px] border border-border bg-card px-4 py-[13px] text-left text-foreground"
-              // Capped: idx spans every loaded page — uncapped, deep rows
-              // of the infinite walk would wait seconds to appear.
+              // Capped: uncapped idx would make deep rows wait seconds to appear.
               style={{ animationDelay: Math.min(idx, 8) * 30 + "ms" }}
             >
               <span className="flex min-w-0 flex-1 flex-col gap-[3px]">
@@ -58,8 +55,7 @@ export function MeetingsView() {
                   {meeting.itemCount === 1 ? "item" : "items"} extracted
                 </span>
               </span>
-              {/* Hover swaps "1d ago" for the date; both labels share one
-                  grid cell so the hover target never moves (no flicker). */}
+              {/* Hover swaps "1d ago" for the date; one grid cell, so no flicker. */}
               <span className="group/when grid flex-none text-right text-meta tabular-nums text-muted-foreground">
                 <span className="col-start-1 row-start-1 transition-opacity duration-150 group-hover/when:opacity-0">
                   {timeAgo(meeting.capturedAt)}

@@ -1,5 +1,4 @@
-/** Barrel file for @note2action/shared — one import site for every contract.
- * Python's schemas mirror these shapes by hand and can drift if unsynced. */
+/** Barrel for @note2action/shared — Python mirrors these shapes by hand. */
 export * from "./app";
 export * from "./items";
 export * from "./extraction";

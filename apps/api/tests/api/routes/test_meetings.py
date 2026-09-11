@@ -3,8 +3,7 @@ from fastapi.testclient import TestClient
 
 from tests.conftest import AUTH
 
-# A fresh in-memory repository per test comes from conftest.py (autouse).
-# Default headers authenticate every request as the seeded user.
+# Fresh repository per test (conftest autouse); headers auth as the seeded user.
 client = TestClient(app, headers=AUTH)
 
 
@@ -130,8 +129,7 @@ def test_get_unknown_meeting_returns_404() -> None:
 
 
 def test_create_meeting_malformed_item_due_returns_422() -> None:
-    # The extractor promises YYYY-MM-DD or "" — anything else dies at
-    # validation, not as a 500 in the repository's fromisoformat.
+    # YYYY-MM-DD or "" only — anything else dies at validation, not as a 500.
     response = client.post(
         "/api/meetings",
         json={

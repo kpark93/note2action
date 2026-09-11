@@ -1,5 +1,4 @@
-/** Pure view-model builders for the History screen — filtering and ordering
- * moved server-side (view=history keyset); grouping and stat tiles live here. */
+/** Pure History view-model builders — grouping and stat tiles; ordering is server-side. */
 import type { ItemSummary } from "@note2action/shared";
 import type { ActionItem } from "@/domain/items/items.types";
 import { formatDate, todayISO, weekOf } from "@/lib/dates";
@@ -11,9 +10,7 @@ export interface HistoryGroupVM {
   items: (ActionItem & { completedLabel: string })[];
 }
 
-/** Server-ordered Done items → week buckets, newest bucket first; each item
- * carries a pre-formatted completedLabel. Arrival order is preserved inside
- * a bucket — the server already sorted by completion. */
+/** Done items → week buckets, newest first; arrival order kept (server-sorted). */
 export function historyGroups(items: ActionItem[]): HistoryGroupVM[] {
   const today = todayISO();
   const groupMap: Record<string, ActionItem[]> = {};
@@ -46,8 +43,7 @@ export interface StatVM {
   delta: string;
 }
 
-/** The three StatCard tiles, computed from the server's summary counts —
- * loaded pages can't be the basis, they grow as the user scrolls. */
+/** The three StatCard tiles from summary counts — loaded pages grow, so never them. */
 export function historyStats(summary: ItemSummary): StatVM[] {
   const donePct = summary.total
     ? Math.round((summary.done / summary.total) * 100)

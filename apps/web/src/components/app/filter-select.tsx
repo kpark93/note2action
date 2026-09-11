@@ -1,5 +1,4 @@
-/** Generic "All X / one of these" filter dropdown used by Tasks and History —
- * wraps components/ui/select. */
+/** Generic "All X / one of these" filter dropdown; wraps components/ui/select. */
 import { cn } from "@/lib/utils";
 import {
   Select,
@@ -27,8 +26,7 @@ export function FilterSelect<T extends string>({
   className,
 }: FilterSelectProps<T>) {
   return (
-    // The only rendered values are "All" and `options` members, so the
-    // narrowing cast from Radix's plain string is sound.
+    // Only "All" and `options` members render, so the narrowing cast is sound.
     <Select value={value} onValueChange={(v) => onValueChange(v as T | "All")}>
       <SelectTrigger
         className={cn(

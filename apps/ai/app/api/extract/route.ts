@@ -1,6 +1,4 @@
-/** POST /api/extract — thin HTTP adapter: verifies the Clerk token, validates
- * the body against the shared ExtractRequest schema, then hands off to
- * lib/extraction.ts `extractItems()`. */
+/** POST /api/extract: verify the Clerk token, validate the body, hand off to extractItems(). */
 import { ExtractRequest } from "@note2action/shared";
 import { extractItems } from "@/lib/extraction";
 import { verifyRequest } from "@/lib/auth";

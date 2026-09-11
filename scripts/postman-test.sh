@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
-# Hermetic Postman E2E: scratch Postgres DB + self-signed JWKS + throwaway
-# uvicorn, then the collection via newman. Needs the compose postgres running.
+# Hermetic Postman E2E: scratch DB + self-signed JWKS + uvicorn + newman. Needs postgres.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -35,8 +34,7 @@ trap cleanup EXIT
   > /dev/null 2>&1 &
 JWKS_PID=$!
 
-# Same provisioning shape as tests/integration/conftest.py: the admin role
-# creates and migrates the scratch DB; the API connects as the RLS-bound app role.
+# Admin role creates + migrates the scratch DB; the API connects as the app role.
 "$PY" - <<EOF
 import psycopg
 with psycopg.connect("$ADMIN/postgres", autocommit=True) as conn:
@@ -49,8 +47,7 @@ EOF
   MIGRATIONS_DATABASE_URL="postgresql+psycopg://postgres:postgres@localhost:5432/$DB" \
   .venv/bin/alembic upgrade head)
 
-# cwd stays at the repo root so apps/api/.env is NOT loaded — every setting the
-# server sees is the explicit hermetic one below.
+# cwd stays at repo root so apps/api/.env is NOT loaded — settings are explicit.
 DATABASE_URL="postgresql+psycopg://note2action_app:note2action_app_dev@localhost:5432/$DB" \
   CLERK_JWKS_URL="http://127.0.0.1:$JWKS_PORT/jwks.json" \
   "$API_DIR/.venv/bin/uvicorn" app.main:app --app-dir "$API_DIR" \

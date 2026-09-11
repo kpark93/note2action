@@ -1,5 +1,4 @@
-"""Re-exports every pydantic schema so `from app.schemas import X` works from
-one place."""
+"""Re-exports every pydantic schema from one place."""
 
 from .health import HealthResponse
 from .items import (

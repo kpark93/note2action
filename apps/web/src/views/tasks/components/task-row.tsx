@@ -1,5 +1,4 @@
-/** One task row: owner, title, due, priority, status dropdown, send-back icon.
- * Next hop: usePatchItem for send-back; status changes call onStatusChange. */
+/** One task row: owner, title, due, priority, status dropdown, send-back icon. */
 import { usePatchItem } from "@/domain/items/items.queries";
 import { STATUSES, STATUS_STYLE } from "@/domain/items/items.constants";
 import type { TaskRowVM } from "@/views/tasks/tasks.utils";
@@ -15,9 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-/** Shared grid template so every row's columns line up without a header row. */
-/** Metadata cells sized to their content so the cluster hugs the right edge
- * and the 1fr title keeps every remaining pixel. */
+/** Shared grid template so columns line up; content-sized cells, 1fr title. */
 export const COLS = "grid-cols-[minmax(0,1fr)_68px_72px_118px_30px]";
 
 interface TaskRowProps {
@@ -48,8 +45,7 @@ export function TaskRow({
       role="button"
       tabIndex={0}
       onClick={(e) => {
-        // Clicks inside the status Select's portaled dropdown bubble here
-        // through the React tree — only clicks on the row's own DOM open.
+        // Portaled dropdown clicks bubble here — only the row's own DOM opens.
         if (!(e.target instanceof Node) || !e.currentTarget.contains(e.target))
           return;
         onOpen(row.id);
@@ -62,8 +58,7 @@ export function TaskRow({
         isCompleting ? "task-complete" : "n2a-row"
       }`}
       style={isCompleting ? undefined : { animationDelay: row.delay }}
-      // animationend bubbles (the task-burst child fires one too) — the name
-      // guard makes sure only the row's own animation triggers the patch.
+      // animationend bubbles — the name guard keeps child bursts from patching.
       onAnimationEnd={(e) => {
         if (isCompleting && e.animationName === "taskComplete")
           onCompleted(row.id);

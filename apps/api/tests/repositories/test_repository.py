@@ -68,8 +68,7 @@ def test_get_or_create_user_name_laws() -> None:
     # Same clerk id always maps to the same user…
     assert repo.get_or_create_user("user_jane", "Jane Doe") == jane
 
-    # …a changed claim refreshes the name (Clerk is the profile's source of
-    # truth), and a missing claim never erases what we have.
+    # …a changed claim refreshes the name; a missing claim never erases it.
     repo.get_or_create_user("user_jane", "Jane Smith")
     assert _stored_name("user_jane") == "Jane Smith"
     repo.get_or_create_user("user_jane", None)

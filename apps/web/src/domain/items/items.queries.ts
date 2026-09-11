@@ -1,8 +1,4 @@
-// TanStack Query hooks — the app's window onto server state. Reads are
-// cached per view (review list, keyset pages, counts, detail); writes are
-// OPTIMISTIC where speed is felt (Review, the modal, tasks rows) and settle by
-// invalidating the paginated lists — pages refetch instead of being
-// surgically patched. Path §1 [hop 3/15]: → items.api.ts (hop 4).
+// TanStack Query hooks: reads cached per view; writes optimistic, settled by refetch.
 import {
   useInfiniteQuery,
   useMutation,
@@ -70,8 +66,7 @@ export function useSummaryQuery() {
   return useQuery({ queryKey: itemsKey.summary, queryFn: fetchSummary });
 }
 
-/** A cached copy of an item from review or any page cache, stamped with its
- * source's fetch time so staleness carries over instead of resetting. */
+/** Cached copy of an item from any list cache, stamped with its source's fetch time. */
 function findCachedItem(
   queryClient: QueryClient,
   id: number,
@@ -100,9 +95,7 @@ function findCachedItem(
   return undefined;
 }
 
-/** One item for the detail modal; starts from the row's cached copy (a fresh
- * page means zero fetches on open) and only hits the API once that's stale.
- * Only mounted while a modal is open, so the id is always real. */
+/** Detail-modal item: seeded from the row's cached copy, fetched only once stale. */
 export function useItemQuery(id: number) {
   const queryClient = useQueryClient();
   return useQuery({
@@ -131,8 +124,7 @@ interface Snapshot {
   meetingId?: number;
 }
 
-/** Cancel in-flight item fetches (so they can't overwrite the optimistic
- * state), snapshot the Review cache for rollback, apply the transform. */
+/** Cancel in-flight fetches, snapshot Review for rollback, apply the transform. */
 async function optimistically(
   queryClient: QueryClient,
   transform: (items: ActionItem[]) => ActionItem[],
@@ -145,8 +137,7 @@ async function optimistically(
   return { previous };
 }
 
-/** Restore the snapshot and toast; the settle-time invalidate below heals
- * whatever the optimistic write touched with the database's truth. */
+/** Restore the snapshot and toast; the settle-time invalidate heals the rest. */
 function rollback(
   queryClient: QueryClient,
   snapshot: Snapshot | undefined,
@@ -158,9 +149,7 @@ function rollback(
   toast.error(message);
 }
 
-/** Settle a write: item caches refetch — membership and order are the
- * server's call. `keep` (items.cache.ts keptOnSettle) skips entries already
- * made true client-side; they still heal on natural staleness. */
+/** Settle a write: caches refetch; `keep` skips entries already true client-side. */
 function settleItems(queryClient: QueryClient, keep?: SettleKeep) {
   void queryClient.invalidateQueries({
     queryKey: itemsKey.all,
@@ -168,8 +157,7 @@ function settleItems(queryClient: QueryClient, keep?: SettleKeep) {
   });
 }
 
-/** Optimistically shift the summary counts for one item's change; returns
- * false (→ settle refetches instead) when the prior state isn't cached. */
+/** Shift summary counts for one change; false = prior state uncached, refetch. */
 function adjustSummary(
   queryClient: QueryClient,
   before: ActionItem | undefined,
@@ -182,8 +170,7 @@ function adjustSummary(
   return true;
 }
 
-/** Patch an item in place across every cached tasks/history page — state flips
- * instantly; position corrects when the settle-time refetch lands. */
+/** Patch an item across cached pages — state flips now, position corrects on refetch. */
 function patchPageCaches(
   queryClient: QueryClient,
   id: number,
@@ -197,18 +184,11 @@ function patchPageCaches(
   }
 }
 
-/**
- * PATCH one item. Optimistic on the Review cache, the modal's detail cache,
- * and across tasks/history pages — exits (send-back, Done, reopen) remove
- * rows in place; entries into paginated walks settle by refetch.
- * Meetings: only detail payloads carry item state, so only those invalidate.
- */
+/** PATCH one item — optimistic on Review, detail, and pages; exits remove rows in place. */
 export function usePatchItem() {
   const queryClient = useQueryClient();
   return useMutation({
-    // Same-scope mutations run in serial (docs: mutation scopes) — two fast
-    // edits can't reconcile out of order, where a slow older response would
-    // overwrite the detail cache after a newer one landed.
+    // Same-scope mutations serialize, so a slow old response can't overwrite a newer one.
     scope: { id: "item-patch" },
     mutationFn: ({ id, patch }: { id: number; patch: ItemPatch }) =>
       patchItem(id, patch),
@@ -217,8 +197,7 @@ export function usePatchItem() {
       const snapshot = await optimistically(queryClient, (items) =>
         applyPatch(items, id, patch),
       );
-      // A send-back and a Done both exit every tasks walk — the patch alone
-      // dictates the exit, so the rows leave here instead of via refetch.
+      // Send-back and Done exit every tasks walk — rows leave here, not via refetch.
       if (patch.saved === false || patch.status === "Done") {
         queryClient.setQueriesData<InfiniteData<ItemsPageVM>>(
           { queryKey: itemsKey.tasksAll },
@@ -226,8 +205,7 @@ export function usePatchItem() {
         );
         snapshot.tasksAdjusted = true;
       }
-      // Send-back only: the patched copy joins Review at its id-order slot,
-      // when the before-state is cached to build it from.
+      // Send-back only: the patched copy joins Review at its id-order slot.
       if (patch.saved === false && before && snapshot.previous) {
         const patched = applyPatch([before], id, patch)[0];
         queryClient.setQueryData<ActionItem[]>(itemsKey.review, (items) =>
@@ -239,8 +217,7 @@ export function usePatchItem() {
         item ? applyPatch([item], id, patch)[0] : item,
       );
       patchPageCaches(queryClient, id, patch);
-      // Reopen (Done → open): the row exits History here — removal leaves the
-      // remaining pages ordered and every stored cursor valid (anchor-free).
+      // Reopen: the row exits History here; removal keeps pages ordered, cursors valid.
       if (
         before?.status === "Done" &&
         patch.status !== undefined &&
@@ -264,19 +241,14 @@ export function usePatchItem() {
     onSuccess: (serverItem) => {
       // The server's copy is the truth (it stamps `completed`).
       queryClient.setQueryData(itemsKey.detail(serverItem.id), serverItem);
-      // Its Review row (optimistic insert included) gets the same truth;
-      // an undefined updater result is a no-op.
+      // Its Review row gets the same truth; an undefined updater result is a no-op.
       queryClient.setQueryData<ActionItem[]>(itemsKey.review, (items) =>
         items?.map((item) => (item.id === serverItem.id ? serverItem : item)),
       );
     },
     onError: (_error, _vars, snapshot) =>
       rollback(queryClient, snapshot, "Couldn't save the change — reverted."),
-    // On success the reconciled detail and delta'd summary are already
-    // truth — keep both; a status-only change between non-Done states also
-    // keeps every walk it can't have moved the item in or out of; a reopen's
-    // History removal and a send-back's tasks removal each keep the walks
-    // whose exit already happened client-side. On error the refetch heals all.
+    // On success, keep whatever the optimistic writes already made true; errors refetch all.
     onSettled: (_data, error, { id, patch }, snapshot) => {
       const knownNotDone =
         snapshot?.beforeStatus !== undefined &&
@@ -286,9 +258,7 @@ export function usePatchItem() {
         patch.status !== undefined &&
         patch.status !== "Done" &&
         knownNotDone;
-      // Review keeps when the send-back insert already did the move, or when
-      // the patch can't move the item in or out: a still-saved item is never
-      // in Review; an unsaved item's membership only changes on Done crossing.
+      // Review keeps when the insert already moved it, or the patch can't change membership.
       const review =
         snapshot?.reviewAdjusted === true ||
         (!("saved" in patch) &&
@@ -312,10 +282,7 @@ export function usePatchItem() {
   });
 }
 
-/**
- * Delete one item. Optimistic on the Review cache; a failed call restores
- * it and toasts. Meetings refetch too — itemCounts changed.
- */
+/** Delete one item — optimistic on Review; meetings refetch too (itemCounts changed). */
 export function useDeleteItem() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -331,16 +298,13 @@ export function useDeleteItem() {
     },
     onError: (_error, _id, snapshot) =>
       rollback(queryClient, snapshot, "Couldn't delete the item — restored."),
-    // Deletes change one meeting's itemCount: lists refetch, but only that
-    // meeting's detail is dirty — others keep. Unknown meeting = refetch all.
+    // Only the deleted item's meeting detail is dirty; unknown meeting = refetch all.
     onSettled: (_data, error, id, snapshot) => {
       if (error === null) {
-        // The row is gone for good — drop its detail entry rather than
-        // marking it stale (a refetch would just 404).
+        // Drop the detail entry rather than mark it stale — a refetch would just 404.
         queryClient.removeQueries({ queryKey: itemsKey.detail(id) });
       }
-      // Review keeps: the optimistic removal IS the membership change, the
-      // 204 confirmed it, and id-order means positions can't have shifted.
+      // Review keeps: the optimistic removal IS the membership change (204 confirmed).
       settleItems(
         queryClient,
         error
@@ -360,11 +324,7 @@ export function useDeleteItem() {
   });
 }
 
-/**
- * "Save N to Tasks": the Review cache empties optimistically (the batch
- * rule's exact result); the settle-time invalidate brings the promoted rows
- * into the Tasks pages.
- */
+/** "Save N to Tasks": Review empties optimistically; settle pulls rows into Tasks. */
 export function useSaveToTasks() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -380,8 +340,7 @@ export function useSaveToTasks() {
     },
     onError: (_error, _vars, snapshot) =>
       rollback(queryClient, snapshot, "Couldn't save to Tasks — reverted."),
-    // Review keeps: the optimistic clear IS the exit — a fresh view=review
-    // fetch returns []. Tasks refetch (the entry); meetings detail refreshes.
+    // Review keeps: the clear IS the exit; Tasks refetch the entry, meetings refresh.
     onSettled: (_data, error, _vars, snapshot) => {
       settleItems(
         queryClient,

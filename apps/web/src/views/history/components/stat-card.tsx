@@ -1,5 +1,4 @@
-/** One of the three metric tiles atop History — pure presentation; all numbers
- * come pre-computed from historyStats(). */
+/** One metric tile atop History — pure presentation, numbers from historyStats(). */
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 

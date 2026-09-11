@@ -1,5 +1,4 @@
-"""Opens a DB session stamped with the caller's identity so Postgres RLS
-enforces ownership even if app code has a bug. Next hop: core/db.py → Postgres."""
+"""DB session stamped with the caller's identity so RLS enforces ownership."""
 
 from collections.abc import Iterator
 from contextlib import contextmanager
@@ -12,8 +11,7 @@ from app.core.db import SessionLocal
 
 @contextmanager
 def rls_session(user_id: int) -> Iterator[Session]:
-    """Session carrying identity for RLS via SET LOCAL, scoped to this
-    transaction; unset means RLS sees NULL — fails closed."""
+    """Identity via set_config for RLS, transaction-scoped; unset = NULL = fails closed."""
     with SessionLocal() as session:
         session.execute(
             text("SELECT set_config('app.user_id', :uid, true)"),

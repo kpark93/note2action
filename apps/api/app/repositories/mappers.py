@@ -1,5 +1,4 @@
-"""Shape-shifting helpers for the Postgres repositories: DB rows in, wire
-schemas out. Path §1 [hop 12/15]: postgres rows → here → schemas/items.py."""
+"""Postgres repo helpers: DB rows in, wire schemas out."""
 
 from app.models import ActionItem as ActionItemRow
 from app.schemas.items import ActionItem
@@ -26,8 +25,7 @@ def to_wire(row: ActionItemRow, meeting_title: str) -> ActionItem:
 def new_item(
     item_id: int, meeting_id: int, meeting_title: str, extracted: ExtractedItem
 ) -> ActionItem:
-    """A freshly captured item with the api-design.md birth defaults; `or None`
-    translates the extractor's '' ("none") into a wire null."""
+    """Freshly captured item with birth defaults; `or None` maps '' to a wire null."""
     return ActionItem(
         id=item_id,
         meetingId=meeting_id,

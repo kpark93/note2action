@@ -229,8 +229,7 @@ describe("removeFromPages", () => {
 
     const next = removeFromPages(data, target.id);
 
-    // Keyset WHEREs are strict inequalities — a vanished anchor still
-    // partitions the walk correctly.
+    // Keyset WHEREs are strict — a vanished anchor still partitions correctly.
     expect(next.pages[0].nextCursor).toBe("points-at-target");
   });
 });

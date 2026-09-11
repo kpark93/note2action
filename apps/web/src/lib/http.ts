@@ -1,5 +1,4 @@
-/** Thin, typed fetch wrapper shared by the domain `*.api.ts` modules; relative
- * paths keep the Vite proxy working. Path §1 [hop 5/15]: → fetch → proxy → API. */
+/** Thin typed fetch wrapper for the `*.api.ts` modules; relative paths keep the proxy. */
 
 import { getAuthToken } from "./auth-token";
 
@@ -27,16 +26,14 @@ interface RequestOptions<T> {
   schema?: Parser<T>;
 }
 
-/** Sends one request: attaches the Clerk token, throws HttpError on non-2xx,
- * validates and types the JSON reply via `opts.schema`. */
+/** One request: attach the Clerk token, throw HttpError on non-2xx, parse via schema. */
 export async function request<T = unknown>(
   path: string,
   opts: RequestOptions<T> = {},
 ): Promise<T> {
   const method = opts.method ?? (opts.body !== undefined ? "POST" : "GET");
 
-  // Null (signed out / tests) omits the header — the API 401s if the
-  // endpoint requires identity.
+  // Null (signed out / tests) omits the header — the API 401s where identity matters.
   const token = await getAuthToken();
 
   const headers: Record<string, string> = {};

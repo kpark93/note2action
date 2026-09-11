@@ -1,5 +1,4 @@
-/** Left-hand app chrome: logo, nav, completion widget, theme switch, account.
- * Rendered once by app-layout.tsx — the only home for these cross-screen bits. */
+/** Left-hand chrome: logo, nav, completion widget, theme switch, account. */
 import { UserButton, useUser } from "@clerk/clerk-react";
 import { useTheme } from "@/lib/theme.store";
 import { Button } from "@/components/ui/button";
@@ -11,14 +10,16 @@ export function Sidebar() {
   const theme = useTheme((s) => s.theme);
   const setTheme = useTheme((s) => s.setTheme);
 
-  // The real signed-in account, from Clerk. The sidebar only renders inside
-  // <RequireAuth>, so `user` is loaded — the fallbacks are just type safety.
+  // Renders inside <RequireAuth>, so `user` is loaded — fallbacks are type safety.
   const { user } = useUser();
   const displayName = user?.fullName ?? user?.username ?? "Account";
   const email = user?.primaryEmailAddress?.emailAddress ?? "";
 
   return (
-    <aside className="flex w-[198px] flex-none flex-col overflow-hidden rounded-[20px] bg-background px-4 py-[18px]">
+    <aside
+      data-testid="sidebar"
+      className="flex w-[198px] flex-none flex-col overflow-hidden rounded-[20px] bg-background px-4 py-[18px]"
+    >
       <div className="mb-[22px] flex items-center gap-[10px]">
         <span className="flex h-[30px] w-[30px] flex-none items-center justify-center rounded-control bg-primary text-label font-extrabold tracking-[-0.02em] text-primary-foreground">
           n2a

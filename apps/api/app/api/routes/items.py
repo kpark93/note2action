@@ -1,5 +1,4 @@
-"""Action item routes — list, edit, delete, bulk-save. Each handler resolves the
-user (api/deps.py), then delegates. Path §1 [hop 8/15]: → services/items.py."""
+"""Action item routes; handlers resolve the user then delegate to services/items.py."""
 
 from typing import Literal
 
@@ -31,8 +30,7 @@ def list_items(
     user_id: int = Depends(current_user_id),
     repos: Repositories = Depends(get_repositories),
 ) -> ItemsPage:
-    """GET /api/items: one keyset page of the required `view`'s walk
-    (services/items.py list_page). A cursor we didn't mint is a 422."""
+    """GET /api/items: one keyset page of the view's walk; a foreign cursor is a 422."""
     try:
         return items_service.list_page(
             repos.items, user_id, view, status, priority, cursor, limit
@@ -41,8 +39,7 @@ def list_items(
         raise HTTPException(status_code=422, detail="Invalid cursor") from exc
 
 
-# Declared before /api/items/{item_id}: route order decides whether "summary"
-# is a path segment or a (failing) integer item id.
+# Before /api/items/{item_id}: route order keeps "summary" from parsing as an id.
 @router.get("/api/items/summary", response_model=ItemSummary)
 def item_summary(
     user_id: int = Depends(current_user_id),
@@ -72,8 +69,7 @@ def update_item(
     user_id: int = Depends(current_user_id),
     repos: Repositories = Depends(get_repositories),
 ) -> ActionItem:
-    """PATCH /api/items/{id}: delegates to services/items.py
-    update_item; 404s not 403s when missing/not theirs — no leak."""
+    """PATCH /api/items/{id}: 404 not 403 when missing or not theirs — no leak."""
     item = items_service.update_item(repos.items, user_id, item_id, patch)
     if item is None:
         raise HTTPException(status_code=404, detail="Item not found")
@@ -86,8 +82,7 @@ def delete_item(
     user_id: int = Depends(current_user_id),
     repos: Repositories = Depends(get_repositories),
 ) -> None:
-    """DELETE /api/items/{id}: delegates to services/items.py
-    delete_item; same 404-not-403 rule as update_item."""
+    """DELETE /api/items/{id}: same 404-not-403 rule as update_item."""
     if not items_service.delete_item(repos.items, user_id, item_id):
         raise HTTPException(status_code=404, detail="Item not found")
 
@@ -99,11 +94,7 @@ def bulk_update_items(
     user_id: int = Depends(current_user_id),
     repos: Repositories = Depends(get_repositories),
 ) -> BulkUpdateResponse:
-    """PATCH /api/items?view=review {"saved": true}: promote the whole
-    review queue. The URL names the data, the method names the operation —
-    same partial-update verb as PATCH /api/items/{id}, applied to a view.
-    The pydantic/Literal types 422 any other view or body (delegates to
-    services/items.py save_all_to_tasks)."""
+    """PATCH /api/items?view=review: promote the review queue; other views/bodies 422."""
     return BulkUpdateResponse(
         updated=items_service.save_all_to_tasks(repos.items, user_id)
     )

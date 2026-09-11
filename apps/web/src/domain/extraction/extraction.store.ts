@@ -1,6 +1,4 @@
-/** Client-only capture state: the draft text + title, shared by NotesEditor
- * and the capture mutation. The extraction itself is a TanStack mutation
- * (extraction.queries.ts) — this store never touches network or cache. */
+/** Client-only capture draft (text + title); never touches network or cache. */
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
 

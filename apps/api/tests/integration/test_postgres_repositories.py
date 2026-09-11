@@ -1,5 +1,4 @@
-"""Real-Postgres repository tests — the in-memory fake's blind spots: RLS
-enforcement, commit ordering, SQL truth. Needs Postgres running."""
+"""Real-Postgres repository tests: RLS, commit ordering, SQL truth. Needs Postgres."""
 
 from datetime import datetime, timezone
 
@@ -45,8 +44,7 @@ def seed(repos, clerk_id: str = "user_alice", items: int = 2):
 
 
 def test_done_patch_survives_commit(repos):
-    """The 500-on-Done regression: to_wire must run BEFORE commit(),
-    because the SET LOCAL RLS identity dies with the transaction."""
+    """500-on-Done regression: to_wire must run BEFORE commit() kills the identity."""
     user_id, item_ids = seed(repos)
 
     result = repos.items.update_item(
@@ -106,8 +104,7 @@ def test_save_all_to_tasks_counts_only_pending(repos):
 
 
 def test_rls_fails_closed_on_fresh_connection(repos):
-    """A connection that never ran SET LOCAL sees ZERO rows — RLS compares
-    user_id to NULL, and NULL matches nothing. Forgetting = no data leak."""
+    """A connection that never set the identity sees ZERO rows — fails closed."""
     seed(repos)
 
     fresh = create_engine(APP_URL, poolclass=NullPool)
@@ -120,8 +117,7 @@ def test_rls_fails_closed_on_fresh_connection(repos):
 
 
 def test_dead_identity_errors_instead_of_leaking(repos):
-    """After commit, SET LOCAL's value degrades to '' and the policy's ::int
-    cast ERRORS (the 500-on-Done mechanism) — loud, zero rows, fails closed."""
+    """After commit the identity degrades to '' and the ::int cast ERRORS — loud."""
     seed(repos)
 
     with pg_session.SessionLocal() as session:
