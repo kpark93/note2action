@@ -1,5 +1,4 @@
-/** Step 2 of the flow: the queue of extracted-but-unsaved items, editable
- * inline, with a batch "Save to Tasks". Next hop: items.queries → ReviewCard. */
+/** Step 2: the unsaved-items queue, editable inline, with batch "Save to Tasks". */
 import { useNavigate } from "react-router-dom";
 import { useReviewQuery, useSaveToTasks } from "@/domain/items/items.queries";
 import { reviewItems, reviewSentence } from "./review.utils";
@@ -87,8 +86,7 @@ export function ReviewView() {
           </EmptyState>
         </div>
       ) : (
-        // Rows size to the tallest card; siblings stretch to match, so every
-        // card's pinned footer lands at the same height.
+        // Rows size to the tallest card, so every pinned footer lands level.
         <ScrollRegion className="grid grid-cols-[repeat(auto-fill,minmax(300px,1fr))] content-start gap-[10px]">
           {all.map((item) => (
             <ReviewCard key={item.id} item={item} />

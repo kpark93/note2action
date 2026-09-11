@@ -1,5 +1,4 @@
-"""The real MeetingRepository — backed by meetings and action_items.
-Next hop: services/meetings.py → here → session.py → Postgres."""
+"""The real MeetingRepository. Next hop: session.py → Postgres."""
 
 from datetime import datetime, timezone
 
@@ -19,17 +18,14 @@ from .session import rls_session
 
 
 class PostgresMeetingRepository:
-    """Every method opens an rls_session (session.py) so RLS scopes
-    queries to the caller's rows; user_id also filters here."""
+    """Every method opens an rls_session; user_id also filters here."""
 
     def create_meeting(
         self, user_id: int, request: CreateMeetingRequest
     ) -> CreateMeetingResponse:
-        """Insert the meeting and its extracted items in one
-        transaction; nothing is durable until commit() at the end."""
+        """Meeting + items in one transaction; durable only at commit()."""
         with rls_session(user_id) as session:
-            # user_id arrives from the verified token via the route — never
-            # from the request body, and no more "first user in the table".
+            # user_id comes from the verified token, never the request body.
             captured_at = datetime.now(timezone.utc)
 
             meeting = MeetingRow(
@@ -39,8 +35,7 @@ class PostgresMeetingRepository:
                 captured_at=captured_at,
             )
             session.add(meeting)
-            # flush() sends the INSERT so Postgres assigns meeting.id, but the
-            # transaction stays open — nothing is durable until commit().
+            # flush() sends the INSERT so Postgres assigns meeting.id; commit() = durable.
             session.flush()
 
             rows = [
@@ -76,8 +71,7 @@ class PostgresMeetingRepository:
     def list_meetings_page(
         self, user_id: int, cursor: dict | None, limit: int
     ) -> tuple[list[Meeting], dict | None]:
-        """Keyset page, newest first by (captured_at DESC, id DESC); item
-        counts by outer-joined COUNT (no N+1). limit+1 detects a next page."""
+        """Keyset page by (captured_at, id) DESC; COUNT join, no N+1; limit+1 probes."""
         with rls_session(user_id) as session:
             q = (
                 select(MeetingRow, func.count(ActionItemRow.id))
@@ -118,8 +112,7 @@ class PostgresMeetingRepository:
             return page, next_cursor
 
     def get_meeting(self, user_id: int, meeting_id: int) -> MeetingDetail | None:
-        """One full meeting, transcript included; None if missing or
-        not the caller's."""
+        """One full meeting with transcript; None if missing or not the caller's."""
         with rls_session(user_id) as session:
             row = session.get(MeetingRow, meeting_id)
             if row is None or row.user_id != user_id:

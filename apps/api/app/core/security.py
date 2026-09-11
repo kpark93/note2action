@@ -1,5 +1,4 @@
-"""Verifies Clerk session JWTs locally against Clerk's JWKS keys — no network
-call per request, no shared secret. Called by core/middleware.py every request."""
+"""Verifies Clerk JWTs locally against JWKS — no per-request network, no shared secret."""
 
 from __future__ import annotations
 
@@ -13,8 +12,7 @@ from jwt.exceptions import InvalidTokenError
 
 @dataclass(frozen=True)
 class VerifiedUser:
-    """Identity proven by a token: who (always) and their name (if the token
-    carries the optional custom `name` session claim)."""
+    """Identity proven by a token: who, plus the optional `name` session claim."""
 
     clerk_id: str
     name: str | None
@@ -24,14 +22,12 @@ class TokenVerifier(Protocol):
     """The auth boundary: token in, verified identity out."""
 
     def verify(self, token: str) -> VerifiedUser:
-        """Return the token's verified identity; raises
-        jwt.exceptions.PyJWTError (subclass) if forged/expired/malformed."""
+        """Verified identity; raises a PyJWTError subclass if forged/expired/malformed."""
         ...
 
 
 def identity_from_claims(payload: dict[str, Any]) -> VerifiedUser:
-    """Pure function: verified claims → identity. `name` is an optional
-    custom session claim — absent/empty means "token doesn't say"."""
+    """Verified claims → identity; absent/empty `name` means "token doesn't say"."""
     sub = payload.get("sub")
     if not isinstance(sub, str) or not sub:
         raise InvalidTokenError("token has no subject claim")
@@ -44,8 +40,7 @@ class ClerkJWKSVerifier:
     """Verifies Clerk session JWTs against the app's published JWKS."""
 
     def __init__(self, jwks_url: str) -> None:
-        # Fetches the key set on first use and caches it (with the resolved
-        # signing keys), so steady-state verification is pure local crypto.
+        # Key set fetched on first use and cached; steady state is pure local crypto.
         self._jwks = PyJWKClient(jwks_url, cache_keys=True)
 
     def verify(self, token: str) -> VerifiedUser:

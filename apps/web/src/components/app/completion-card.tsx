@@ -1,8 +1,7 @@
-/** Sidebar widget showing completion progress — reads useItemsQuery itself so
- * it shares every other screen's cache, no props needed. */
+/** Sidebar completion widget — reads the shared summary cache itself, no props. */
 import { useSummaryQuery } from "@/domain/items/items.queries";
 
-/** "Completion this month" widget: percent, progress bar, closed/open counts. */
+/** "Completion all time" widget: percent, progress bar, closed/open counts. */
 export function CompletionCard() {
   const s = useSummaryQuery().data;
   const doneCount = s?.done ?? 0;
@@ -12,7 +11,7 @@ export function CompletionCard() {
   return (
     <div className="rounded-card bg-secondary p-[14px]">
       <div className="text-[11.5px] text-muted-foreground">
-        Completion this month
+        Completion all time
       </div>
       <div className="mt-[7px] text-[24px] font-bold tracking-[-0.03em] tabular-nums">
         {/* key remounts the span when the value changes, replaying the fade. */}

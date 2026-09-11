@@ -1,13 +1,11 @@
-/** Once per run: load Clerk's testing token, then create → migrate →
- * truncate the e2e database via the API's venv (mirrors conftest.py). */
+/** Once per run: Clerk testing token, then create → migrate → truncate the e2e DB. */
 import { clerkSetup } from "@clerk/testing/playwright";
 import { test as setup } from "@playwright/test";
 import { execFileSync } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-// apps/web is an ESM package ("type": "module"), so __dirname isn't
-// available here — derive it from import.meta.url instead.
+// ESM package: __dirname doesn't exist — derive it from import.meta.url.
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const API_DIR = path.resolve(__dirname, "../../api");
 const PY = path.join(API_DIR, ".venv/bin/python");

@@ -1,5 +1,4 @@
-/** Verifies Clerk session JWTs against the JWKS at CLERK_JWKS_URL — cached
- * keys, local crypto per request. Unset URL: auth off in dev/test, 401 in prod. */
+/** Verifies Clerk JWTs against CLERK_JWKS_URL; unset URL: auth off in dev, 401 in prod. */
 import { createRemoteJWKSet, jwtVerify } from "jose";
 
 export interface VerifiedUser {
@@ -11,9 +10,7 @@ export interface VerifiedUser {
 let jwks: ReturnType<typeof createRemoteJWKSet> | null = null;
 let jwksUrlInUse: string | null = null;
 
-/** Returns the verified identity, or null when the token is missing/forged/
- * expired. Null with auth *enabled* means the caller should 401.
- * Known gap: no rate limiting — verified users can still spend freely. */
+/** Verified identity, or null (→ 401 when auth is enabled). No rate limiting yet. */
 export async function verifyRequest(
   req: Request,
 ): Promise<VerifiedUser | null> {

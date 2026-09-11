@@ -1,5 +1,4 @@
-"""Opaque keyset-pagination cursors: base64url(JSON) out, strict parse in.
-Routes turn CursorError into a 422 — a tampered cursor is a bad request."""
+"""Opaque keyset cursors: base64url(JSON) out, strict parse in; tampered = 422."""
 
 import base64
 import binascii

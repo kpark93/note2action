@@ -1,11 +1,9 @@
-/** The extraction prompt + model call — turns raw notes into structured items.
- * Next hop: lib/provider.ts `extractModel()` → Anthropic API. */
+/** Extraction prompt + model call. Next hop: provider.ts extractModel() → Anthropic API. */
 import { generateText, Output } from "ai";
 import { ExtractResponse, type ExtractRequest } from "@note2action/shared";
 import { extractModel } from "@/lib/provider";
 
-/** Runs `generateText` with an `Output.object` spec of the ExtractResponse
- * schema — its `.describe()` strings double as model instructions. */
+/** generateText + Output.object(ExtractResponse); .describe()s double as instructions. */
 export async function extractItems(
   request: ExtractRequest,
 ): Promise<ExtractResponse> {

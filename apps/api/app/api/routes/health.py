@@ -1,5 +1,4 @@
-"""Health check route — the one endpoint that skips auth (PUBLIC_PATHS in
-core/middleware.py). No service, no repository."""
+"""Health check — the one endpoint that skips auth; no service, no repository."""
 
 from datetime import datetime, timezone
 

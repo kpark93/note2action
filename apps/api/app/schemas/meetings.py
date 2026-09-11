@@ -1,5 +1,4 @@
-"""Pydantic schemas for meetings — the wire contract, mirrored in
-packages/shared (TS). Next hop: api/routes/meetings.py → JSON response."""
+"""Pydantic meeting schemas — the wire contract, mirrored in packages/shared."""
 
 from datetime import date
 from typing import Literal
@@ -10,8 +9,7 @@ from .items import ActionItem, Priority
 
 
 class ExtractedItem(BaseModel):
-    """One item as the AI extractor produces it — no id yet; '' means
-    'none' (translated to NULL in the repository)."""
+    """One extractor item — no id yet; '' means none (NULL in the repository)."""
 
     title: str
     owner: str
@@ -46,8 +44,7 @@ class CreateMeetingResponse(BaseModel):
 
 
 class MeetingDetail(BaseModel):
-    """GET /api/meetings/{id} — one full capture: transcript plus the
-    items extracted from it (the modal's status pills)."""
+    """GET /api/meetings/{id} — one full capture: transcript plus its items."""
 
     id: int
     title: str
@@ -58,8 +55,7 @@ class MeetingDetail(BaseModel):
 
 
 class MeetingsPage(BaseModel):
-    """GET /api/meetings — one keyset page, newest first; mirrors
-    packages/shared MeetingsPage. nextCursor None = no more pages."""
+    """GET /api/meetings — one keyset page, newest first; None cursor = no more."""
 
     meetings: list[Meeting]
     nextCursor: str | None

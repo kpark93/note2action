@@ -1,5 +1,4 @@
-/** Client-only UI state for Tasks — the three filter dropdowns. The tasks
- * themselves are server state, read via useItemsQuery. */
+/** Client-only Tasks UI state (the filter dropdowns); tasks are server state. */
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
 import type { Priority, Status } from "@/domain/items/items.types";

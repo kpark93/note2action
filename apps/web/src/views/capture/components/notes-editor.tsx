@@ -1,5 +1,4 @@
-/** The title + textarea card on Capture, plus its Extract button. Next hop:
- * useExtractCapture() → POST /ai-api/extract, then /api/meetings. */
+/** The title + textarea card on Capture, plus its Extract button. */
 import { useRef, useState, type ChangeEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { useActionItems } from "@/domain/extraction/extraction.store";
@@ -16,16 +15,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 
-/** Editor card: title input, notes textarea, and the footer (.txt upload,
- * status, Extract button). Reads/writes the store directly. */
+/** Editor card: title, notes, footer (.txt upload, status, Extract); uses the store. */
 export function NotesEditor() {
   const raw = useActionItems((s) => s.raw);
   const meetingTitle = useActionItems((s) => s.meetingTitle);
   const setRaw = useActionItems((s) => s.setRaw);
   const setMeetingTitle = useActionItems((s) => s.setMeetingTitle);
   const extract = useExtractCapture();
-  // Cache-wide status, not extract.isPending — survives leaving and
-  // returning to Capture mid-extraction.
+  // Cache-wide status — survives leaving and returning mid-extraction.
   const { extracting: busy, extractError } = useExtractionStatus();
   const navigate = useNavigate();
 
@@ -37,8 +34,7 @@ export function NotesEditor() {
   const canExtract = ready && !busy;
 
   const shownError = extractError
-    ? // Surface the real error: it names which leg failed (the AI
-      // app on :3000, or the API on :8001 persisting the capture).
+    ? // Surface the real error: it names which leg failed (AI app or API).
       `${extractError} — check the AI app and API terminals.`
     : busy
       ? null
@@ -70,8 +66,7 @@ export function NotesEditor() {
         meetingTitle,
         today: todayISO(),
       },
-      // mutate-level callback: skipped if the user already left Capture,
-      // so the save always lands but the redirect only fires when relevant.
+      // Mutate-level: skipped if the user left Capture — only the redirect is dropped.
       { onSuccess: () => navigate("/review") },
     );
 

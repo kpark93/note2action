@@ -1,5 +1,4 @@
-/** Pure transforms for optimistic updates — each mirrors a server rule, applied
- * to the cache before the server answers; the mutation hooks roll back on failure. */
+/** Pure optimistic-update transforms — each mirrors a server rule; hooks roll back. */
 import { todayISO } from "@/lib/dates";
 import type { ItemSummary } from "@note2action/shared";
 import type { ItemPatch } from "./items.api";
@@ -23,8 +22,7 @@ export function applyPatch(
   });
 }
 
-/** applyPatch lifted over infinite pages — state updates in place; position
- * stays stale until the settle-time refetch reorders it (server's call). */
+/** applyPatch over pages — state updates in place; the settle refetch reorders. */
 export function patchPages<P extends { items: ActionItem[] }>(
   data: { pages: P[]; pageParams: unknown[] },
   id: number,
@@ -39,8 +37,21 @@ export function patchPages<P extends { items: ActionItem[] }>(
   };
 }
 
-/** Which summary buckets one item occupies — mirrors count_summary's SQL
- * FILTER clauses (onTime: undated counts as on time). */
+/** removeItem over pages — stored cursors stay valid: keyset WHEREs are anchor-free. */
+export function removeFromPages<P extends { items: ActionItem[] }>(
+  data: { pages: P[]; pageParams: unknown[] },
+  id: number,
+): { pages: P[]; pageParams: unknown[] } {
+  return {
+    ...data,
+    pages: data.pages.map((page) => ({
+      ...page,
+      items: removeItem(page.items, id),
+    })),
+  };
+}
+
+/** Which summary buckets one item occupies — mirrors count_summary's FILTERs. */
 function buckets(item: ActionItem) {
   const done = item.status === "Done";
   return {
@@ -52,8 +63,7 @@ function buckets(item: ActionItem) {
   };
 }
 
-/** Summary counts after one item moves from `before` to `after` (null =
- * deleted) — the optimistic twin of the server's aggregate query. */
+/** Summary counts after one item moves before → after (null = deleted). */
 export function applySummaryDelta(
   summary: ItemSummary,
   before: ActionItem,
@@ -71,8 +81,7 @@ export function applySummaryDelta(
   };
 }
 
-/** Mirrors a capture: n new items are born open + unsaved (never Done), and
- * one meeting joins the count. */
+/** Mirrors a capture: n items born open + unsaved, one meeting joins the count. */
 export function summaryAfterCapture(
   summary: ItemSummary,
   newItems: number,
@@ -96,18 +105,17 @@ export interface SettleKeep {
   detailId?: number;
   /** Summary already shifted by delta. */
   summary?: boolean;
-  /** Non-Done ↔ non-Done status-only patch: membership can only change in
-   * status-filtered tasks walks. SAFE ONLY while tasks order ignores status
-   * (it's due-date order) — revisit if ordering ever becomes status-aware. */
+  /** Status-only non-Done patch; SAFE ONLY while tasks order ignores status. */
   statusOnly?: boolean;
-  /** Patch that can't move the item in or out of Review: no `saved` change,
-   * no Done crossing. SAFE ONLY while review is id-ordered — no editable
-   * field participates in its sort. */
+  /** Review already true client-side; SAFE ONLY while review is id-ordered. */
   review?: boolean;
+  /** Reopen whose History removal already applied — the exit happened client-side. */
+  history?: boolean;
+  /** Send-back whose tasks removal applied — saved:false exits every walk. */
+  tasks?: boolean;
 }
 
-/** Whether one item cache key survives a write's settle-time invalidation —
- * true = already made true client-side, skip the refetch. */
+/** Whether a cache key survives settle — true = already correct, skip the refetch. */
 export function keptOnSettle(
   key: readonly unknown[],
   keep: SettleKeep,
@@ -118,14 +126,17 @@ export function keptOnSettle(
   if (kind === "review") {
     return keep.review === true || keep.statusOnly === true;
   }
-  if (!keep.statusOnly) return false;
-  if (kind === "history") return true;
+  if (kind === "history") {
+    return keep.history === true || keep.statusOnly === true;
+  }
   // ["items", "tasks", status, priority] — key[2] is the status filter.
-  return kind === "tasks" && key[2] === "All";
+  return (
+    kind === "tasks" &&
+    (keep.tasks === true || (keep.statusOnly === true && key[2] === "All"))
+  );
 }
 
-/** First copy of an item found across a pages structure, or undefined —
- * lets the detail query start from cache instead of fetching. */
+/** First copy of an item across pages, or undefined — seeds the detail query. */
 export function findInPages<P extends { items: ActionItem[] }>(
   data: { pages: P[] } | undefined,
   id: number,
@@ -142,9 +153,20 @@ export function removeItem(items: ActionItem[], id: number): ActionItem[] {
   return items.filter((item) => item.id !== id);
 }
 
-/** Mirrors the server's batch rule: only pending (unsaved, not Done) items. */
-export function markAllSaved(items: ActionItem[]): ActionItem[] {
-  return items.map((item) =>
-    !item.saved && item.status !== "Done" ? { ...item, saved: true } : item,
-  );
+/** Insert at the id-order slot (mirrors list_review); no-op if present or non-member. */
+export function insertByIdOrder(
+  items: ActionItem[],
+  item: ActionItem,
+): ActionItem[] {
+  if (item.saved || item.status === "Done") return items;
+  if (items.some((existing) => existing.id === item.id)) return items;
+  const at = items.findIndex((existing) => existing.id > item.id);
+  return at === -1
+    ? [...items, item]
+    : [...items.slice(0, at), item, ...items.slice(at)];
+}
+
+/** Mirrors the batch rule: every unsaved open item saves and leaves Review. */
+export function clearPending(items: ActionItem[]): ActionItem[] {
+  return items.filter((item) => item.saved || item.status === "Done");
 }

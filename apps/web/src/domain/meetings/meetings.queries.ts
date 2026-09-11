@@ -1,5 +1,4 @@
-/** TanStack Query hooks for meetings (captures) — cached server state.
- * Next hop: meetings.api.ts → lib/http.ts. */
+/** TanStack Query hooks for meetings (captures) — cached server state. */
 import {
   useInfiniteQuery,
   useQuery,
@@ -38,10 +37,7 @@ function findCachedMeeting(
   return undefined;
 }
 
-/** One meeting's detail; only mounted while a modal is open, so the id is
- * always real. The clicked row's cached summary becomes placeholderData
- * (docs: placeholder query data) — header renders instantly, transcript +
- * items fill in when the fetch lands; never written to the cache. */
+/** One meeting's detail; the clicked row's summary is placeholderData, never cached. */
 export function useMeetingQuery(id: number) {
   const queryClient = useQueryClient();
   return useQuery({

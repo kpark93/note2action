@@ -1,10 +1,4 @@
-"""row-level security: app role + owner policies
-
-Revision ID: ba1b688e106a
-Revises: 3337459970d8
-Create Date: 2026-08-19 20:14:38.180506
-
-"""
+"""row-level security: app role + owner policies"""
 
 from collections.abc import Sequence
 
@@ -18,10 +12,8 @@ depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
-    """Row-Level Security: the database itself enforces per-user visibility. RLS
-    skips superusers/table owners, and an unset app.user_id fails CLOSED."""
-    # 1. The app's role. Dev-only password, committed knowingly for the local
-    #    course setup — production credentials live in a secret manager, not git.
+    """RLS: the database enforces per-user visibility; unset app.user_id fails CLOSED."""
+    # 1. The app's role — dev-only password; prod credentials live in a secret manager.
     op.execute(
         """
         DO $$
@@ -33,8 +25,7 @@ def upgrade() -> None:
         $$
         """
     )
-    # Table access (RLS filters rows; grants still gate the tables at all),
-    # and sequences so INSERTs can draw ids.
+    # Table grants still gate access; sequence usage lets INSERTs draw ids.
     op.execute(
         "GRANT SELECT, INSERT, UPDATE, DELETE ON users, meetings, action_items "
         "TO note2action_app"
@@ -43,8 +34,7 @@ def upgrade() -> None:
         "GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO note2action_app"
     )
 
-    # 2 + 3. Enable RLS + owner-only policies: USING gates reads, WITH CHECK
-    # gates writes. `users` has no policy — identity lookup runs pre-user_id.
+    # 2+3. RLS + owner policies (USING reads, WITH CHECK writes); users has none.
     for table in ("meetings", "action_items"):
         op.execute(f"ALTER TABLE {table} ENABLE ROW LEVEL SECURITY")
         op.execute(

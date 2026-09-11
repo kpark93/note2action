@@ -1,5 +1,4 @@
-"""Item use-cases — thin today; business rules land here, not routes. Services
-never import FastAPI. Path §1 [hop 10/15]: route → here → ItemRepository."""
+"""Item use-cases — business rules land here, not routes; never imports FastAPI."""
 
 from datetime import date
 
@@ -14,8 +13,7 @@ from app.schemas.items import (
 
 
 def _tasks_cursor(raw: str) -> dict:
-    """Decode + shape-check a tasks cursor: {"d": ISO date | None, "i": id}.
-    Anything else is a tampered/foreign cursor → CursorError → 422."""
+    """Decode + shape-check a {"d": date|None, "i": id} cursor; else CursorError → 422."""
     payload = decode_cursor(raw)
     d, i = payload.get("d"), payload.get("i")
     if not isinstance(i, int) or not (d is None or isinstance(d, str)):
@@ -50,8 +48,7 @@ def list_page(
     cursor_raw: str | None,
     limit: int,
 ) -> ItemsPage:
-    """One page of the given view. Review is a bounded queue — always the
-    whole thing; tasks/history walk their keysets via opaque cursors."""
+    """One page of the view; review is whole, tasks/history walk keysets by cursor."""
     if view == "review":
         return ItemsPage(items=items.list_review(user_id), nextCursor=None)
     if view == "tasks":
@@ -76,8 +73,7 @@ def summarize(items: ItemRepository, user_id: int) -> ItemSummary:
 def update_item(
     items: ItemRepository, user_id: int, item_id: int, patch: ActionItemPatch
 ) -> ActionItem | None:
-    """Calls ItemRepository.update_item; None if missing or not
-    theirs (route turns that into a 404)."""
+    """update_item; None if missing or not theirs (route → 404)."""
     return items.update_item(user_id, item_id, patch)
 
 
@@ -87,6 +83,5 @@ def delete_item(items: ItemRepository, user_id: int, item_id: int) -> bool:
 
 
 def save_all_to_tasks(items: ItemRepository, user_id: int) -> int:
-    """Calls ItemRepository.save_all_to_tasks; returns the count
-    changed."""
+    """Calls ItemRepository.save_all_to_tasks; returns the count changed."""
     return items.save_all_to_tasks(user_id)

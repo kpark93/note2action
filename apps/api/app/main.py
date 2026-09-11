@@ -1,5 +1,4 @@
-"""FastAPI application factory — wiring only: builds the repositories and token
-verifier, wires auth middleware, mounts routes. Next hop: api/main.py."""
+"""FastAPI wiring only: repositories, verifier, middleware, routes. Next: api/main.py."""
 
 from fastapi import FastAPI
 
@@ -12,12 +11,10 @@ from .repositories.postgres import build_postgres_repositories
 
 app = FastAPI(title="note2action API")
 
-# Persistence for users, meetings, and action items. Each method opens an
-# RLS-scoped Postgres session; routes pull this bundle via get_repositories().
+# Each repo method opens an RLS-scoped session; routes pull this via get_repositories().
 app.state.repositories = build_postgres_repositories()
 
-# The verifier lives on app.state (not a global) so tests can swap in a fake,
-# mirroring the repository seam. None = CLERK_JWKS_URL missing → loud 500s.
+# On app.state so tests can swap a fake; None = CLERK_JWKS_URL missing → loud 500s.
 app.state.token_verifier = (
     ClerkJWKSVerifier(settings.clerk_jwks_url) if settings.clerk_jwks_url else None
 )

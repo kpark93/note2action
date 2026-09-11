@@ -5,8 +5,7 @@ from fastapi.testclient import TestClient
 
 from tests.conftest import AUTH
 
-# A fresh in-memory repository per test comes from conftest.py (autouse).
-# Default headers authenticate every request as the seeded user.
+# Fresh repository per test (conftest autouse); headers auth as the seeded user.
 client = TestClient(app, headers=AUTH)
 
 
@@ -55,8 +54,7 @@ def test_patch_done_stamps_completed_server_side() -> None:
 
 
 def test_patch_done_honors_client_completed_on_within_skew() -> None:
-    # A viewer west of UTC finishes in the evening: their calendar day is one
-    # behind UTC's. The stamp must be theirs, not the server's.
+    # West of UTC the user's day is one behind; the stamp must be theirs.
     today = datetime.now(timezone.utc).date()
     yesterday = (today - timedelta(days=1)).isoformat()
     response = client.patch(
@@ -75,8 +73,7 @@ def test_patch_done_honors_client_completed_on_within_skew() -> None:
 
 
 def test_patch_done_clamps_completed_on_beyond_skew() -> None:
-    # More than a day from UTC today can't be timezone skew — backdating is
-    # refused; the server stamps its own day instead.
+    # Beyond ±1 day can't be timezone skew — backdating refused, server day stamped.
     response = client.patch(
         "/api/items/1", json={"status": "Done", "completedOn": "2020-01-01"}
     )

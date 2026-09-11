@@ -1,5 +1,4 @@
-"""Persistence behind a small interface: Postgres (production) or in-memory
-(tests/dev) — app/main.py picks one, nothing else knows which."""
+"""Persistence behind a small interface; app/main.py picks the implementation."""
 
 from dataclasses import dataclass
 from typing import Protocol
@@ -17,14 +16,12 @@ class UserRepository(Protocol):
     """Maps a verified Clerk id onto our users.id, creating on first visit."""
 
     def get_or_create_user(self, clerk_id: str, name: str | None) -> int:
-        """Maps Clerk id to users.id. Name: set at creation ("New user"
-        if absent), refreshed on change; None never erases it."""
+        """Clerk id → users.id; name refreshed on change, None never erases it."""
         ...
 
 
 class ItemRepository(Protocol):
-    """Persistence boundary for action items; someone else's row looks
-    like a missing one (None/False → 404) — never leaking existence."""
+    """Item persistence; someone else's row looks missing (None/False → 404)."""
 
     def list_tasks_page(
         self,
@@ -34,8 +31,7 @@ class ItemRepository(Protocol):
         cursor: dict | None,
         limit: int,
     ) -> tuple[list[ActionItem], dict | None]:
-        """Saved, still-open items in (due ASC NULLS LAST, id ASC) order.
-        Cursor/next-cursor are decoded keyset payloads, not base64."""
+        """Saved open items, (due ASC NULLS LAST, id ASC); cursors are decoded dicts."""
         ...
 
     def list_history_page(
@@ -65,8 +61,7 @@ class ItemRepository(Protocol):
 
 
 class MeetingRepository(Protocol):
-    """Persistence boundary for meetings; same 404-not-403 law as
-    ItemRepository — no existence leaks."""
+    """Meeting persistence; same 404-not-403 law as ItemRepository."""
 
     def create_meeting(
         self, user_id: int, request: CreateMeetingRequest
@@ -83,8 +78,7 @@ class MeetingRepository(Protocol):
 
 @dataclass(frozen=True)
 class Repositories:
-    """The three repositories bundled together; built once in app/main.py
-    and reached by routes through api/deps.py's get_repositories()."""
+    """The three repositories bundled; built once, reached via get_repositories()."""
 
     users: UserRepository
     items: ItemRepository

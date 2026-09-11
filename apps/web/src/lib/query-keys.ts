@@ -1,8 +1,6 @@
-/** Every TanStack cache key in one place — keys are addresses, not behavior, so
- * cross-domain invalidation never imports another domain's hook module. */
+/** Every TanStack cache key — keys are addresses, so domains never cross-import. */
 
-/** Items cache holds several shapes (review list, per-view pages, counts,
- * detail) — all under one "items" root so one invalidate reaches them all. */
+/** Several item shapes under one "items" root so one invalidate reaches them all. */
 export const itemsKey = {
   all: ["items"] as const,
   review: ["items", "review"] as const,
@@ -16,17 +14,14 @@ export const itemsKey = {
   detail: (id: number) => ["items", "detail", id] as const,
 };
 
-/** Mutation key for the capture flow — lets useMutationState find in-flight
- * extractions across remounts. */
+/** Capture mutation key — lets useMutationState find in-flight extractions. */
 export const extractKey = ["extract-capture"] as const;
 
-/** Meetings cache three shapes (capped lists, infinite pages, per-id detail);
- * keys namespace by kind so a limit-3 list never collides with detail id 3. */
+/** Three meeting shapes; keys namespace by kind so list 3 never collides with id 3. */
 export const meetingsKey = {
   all: ["meetings"] as const,
   infinite: ["meetings", "infinite"] as const,
   detail: (id: number | null) => [...meetingsKey.all, "detail", id] as const,
-  /** Prefix for every cached meeting detail — the only meetings shape that
-   * carries item state (the modal's status pills). */
+  /** Prefix for every cached meeting detail — the only meetings shape with item state. */
   detailAll: ["meetings", "detail"] as const,
 };
