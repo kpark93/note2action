@@ -117,7 +117,7 @@ export function TasksView() {
         <Button
           variant="ghost"
           onClick={clearFilters}
-          className="h-[38px] rounded-[12px] px-[13px] text-[13px] font-medium text-muted-foreground"
+          className="h-[38px] rounded-[12px] px-[13px] text-body-lg font-medium text-muted-foreground"
         >
           Clear
         </Button>
@@ -125,7 +125,7 @@ export function TasksView() {
 
       <ScrollRegion className="flex flex-col gap-4">
         {rows.length === 0 ? (
-          <div className="rounded-[16px] bg-card px-5 py-[52px] text-center text-[13.5px] text-muted-foreground">
+          <div className="rounded-card bg-card px-5 py-[52px] text-center text-subtitle text-muted-foreground">
             {tasksQuery.isPending
               ? "Loading tasks…"
               : savedCount === 0

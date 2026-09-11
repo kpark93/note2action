@@ -30,7 +30,7 @@ export function ReviewCard({ item }: { item: ReviewItemVM }) {
 
   return (
     <article
-      className="review-card n2a-card flex h-full flex-col rounded-[16px] border border-border bg-card px-[13px] py-3"
+      className="review-card n2a-card flex h-full flex-col rounded-card border border-border bg-card px-[13px] py-3"
       style={
         {
           animationDelay: item.delay,
@@ -51,12 +51,12 @@ export function ReviewCard({ item }: { item: ReviewItemVM }) {
           if (e.target.value !== item.title) patch({ title: e.target.value });
         }}
         rows={2}
-        className="review-title mb-[9px] block field-sizing-fixed min-h-[38px] w-full resize-none overflow-hidden rounded-[11px] border-transparent bg-transparent px-[7px] py-[5px] text-[14.5px] leading-[1.35] font-semibold tracking-[-0.02em] text-foreground shadow-none md:text-[14.5px] dark:bg-transparent"
+        className="review-title mb-[9px] block field-sizing-fixed min-h-[38px] w-full resize-none overflow-hidden rounded-[11px] border-transparent bg-transparent px-[7px] py-[5px] text-title leading-[1.35] font-semibold tracking-[-0.02em] text-foreground shadow-none md:text-title dark:bg-transparent"
       />
 
       <div className="mb-[11px] grid grid-cols-[minmax(0,1fr)] gap-[9px]">
         <label className="flex flex-col gap-[6px]">
-          <span className="text-[11px] font-medium text-muted-foreground">
+          <span className="text-label font-medium text-muted-foreground">
             Owner
           </span>
           {/* Free text — the AI infers names from the notes; fix them here. */}
@@ -66,12 +66,12 @@ export function ReviewCard({ item }: { item: ReviewItemVM }) {
               const owner = e.target.value.trim() || "Unassigned";
               if (owner !== item.owner) patch({ owner });
             }}
-            className="h-8 w-full rounded-[10px] border-border bg-secondary px-2 text-[12.5px] text-foreground shadow-none md:text-[12.5px] dark:bg-secondary"
+            className="h-8 w-full rounded-control border-border bg-secondary px-2 text-body text-foreground shadow-none md:text-body dark:bg-secondary"
           />
         </label>
         <div className="grid grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] gap-[9px]">
           <label className="flex min-w-0 flex-col gap-[6px]">
-            <span className="text-[11px] font-medium text-muted-foreground">
+            <span className="text-label font-medium text-muted-foreground">
               Due
             </span>
             <Input
@@ -80,11 +80,11 @@ export function ReviewCard({ item }: { item: ReviewItemVM }) {
               onBlur={(e) => {
                 if (e.target.value !== item.due) patch({ due: e.target.value });
               }}
-              className="h-8 rounded-[10px] border-border bg-secondary px-2 text-[12.5px] text-foreground shadow-none md:text-[12.5px] dark:bg-secondary"
+              className="h-8 rounded-control border-border bg-secondary px-2 text-body text-foreground shadow-none md:text-body dark:bg-secondary"
             />
           </label>
           <label className="flex min-w-0 flex-col gap-[6px]">
-            <span className="text-[11px] font-medium text-muted-foreground">
+            <span className="text-label font-medium text-muted-foreground">
               Priority
             </span>
             <Select
@@ -93,7 +93,7 @@ export function ReviewCard({ item }: { item: ReviewItemVM }) {
             >
               {/* Same colors as Tasks' priority pills (PRIORITY_STYLE). */}
               <SelectTrigger
-                className="w-full rounded-[10px] border-0 px-2 text-[12.5px] font-semibold data-[size=default]:h-8 [&_svg]:!text-current"
+                className="w-full rounded-control border-0 px-2 text-body font-semibold data-[size=default]:h-8 [&_svg]:!text-current"
                 style={{
                   background: PRIORITY_STYLE[item.priority].bg,
                   color: PRIORITY_STYLE[item.priority].fg,
@@ -117,14 +117,14 @@ export function ReviewCard({ item }: { item: ReviewItemVM }) {
       <div className="mt-auto flex items-center gap-[10px] border-t border-border pt-[10px]">
         <span
           title={item.note}
-          className="line-clamp-3 min-h-[57px] min-w-0 flex-1 text-[12.5px] leading-[1.5] text-muted-foreground"
+          className="line-clamp-3 min-h-[57px] min-w-0 flex-1 text-body leading-[1.5] text-muted-foreground"
         >
           {item.note}
         </span>
         <Button
           variant="outline"
           onClick={() => deleteItem.mutate(item.id)}
-          className="h-[29px] w-[82px] flex-none rounded-[9px] border-border bg-transparent px-0 text-[12.5px] font-medium text-muted-foreground shadow-none dark:border-border dark:bg-transparent"
+          className="h-[29px] w-[82px] flex-none rounded-[9px] border-border bg-transparent px-0 text-body font-medium text-muted-foreground shadow-none dark:border-border dark:bg-transparent"
         >
           Discard
         </Button>

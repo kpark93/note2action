@@ -66,6 +66,19 @@
   }
 }
 
+/* The type/radius scale — static tokens, so each generates a utility
+   (text-body, rounded-control, …) and the value has exactly one home. */
+@theme {
+  --text-label: 11px;
+  --text-meta: 12px;
+  --text-body: 12.5px;
+  --text-body-lg: 13px;
+  --text-subtitle: 13.5px;
+  --text-title: 14.5px;
+  --radius-control: 10px;
+  --radius-card: 16px;
+}
+
 /* Expose the tokens as Tailwind utilities (bg-background, text-foreground,
    bg-panel, border-border, bg-primary, …). `inline` keeps them referencing the
    CSS vars so they switch with the .dark class. */

@@ -28,9 +28,9 @@ interface ItemModalProps {
   onClose: () => void;
 }
 
-const FIELD_LABEL = "text-[11px] font-medium text-muted-foreground";
+const FIELD_LABEL = "text-label font-medium text-muted-foreground";
 const FIELD_TRIGGER =
-  "w-full rounded-[10px] border-border bg-secondary px-2 text-[12.5px] text-foreground data-[size=default]:h-8";
+  "w-full rounded-control border-border bg-secondary px-2 text-body text-foreground data-[size=default]:h-8";
 
 /** Shell: owns the Dialog. The body (and its query) mounts only while open —
  * no parked null query. The ref keeps the last id through the exit
@@ -70,7 +70,7 @@ function ItemModalBody({ id }: { id: number }) {
     <div key={item.id} className="flex flex-col gap-4">
       <DialogHeader>
         <DialogTitle className="text-[15px]">Edit action item</DialogTitle>
-        <DialogDescription className="text-[12.5px]">
+        <DialogDescription className="text-body">
           From “{item.meeting}”
           {item.completed ? ` · completed ${formatDate(item.completed)}` : ""}
         </DialogDescription>
@@ -97,7 +97,7 @@ function ItemModalBody({ id }: { id: number }) {
               const owner = e.target.value.trim() || "Unassigned";
               if (owner !== item.owner) patch({ owner });
             }}
-            className="h-8 rounded-[10px] border-border bg-secondary px-2 text-[12.5px] text-foreground shadow-none md:text-[12.5px] dark:bg-secondary"
+            className="h-8 rounded-control border-border bg-secondary px-2 text-body text-foreground shadow-none md:text-body dark:bg-secondary"
           />
         </label>
         <label className="flex min-w-0 flex-col gap-[6px]">
@@ -108,7 +108,7 @@ function ItemModalBody({ id }: { id: number }) {
             onBlur={(e) => {
               if (e.target.value !== item.due) patch({ due: e.target.value });
             }}
-            className="h-8 rounded-[10px] border-border bg-secondary px-2 text-[12.5px] text-foreground shadow-none md:text-[12.5px] dark:bg-secondary"
+            className="h-8 rounded-control border-border bg-secondary px-2 text-body text-foreground shadow-none md:text-body dark:bg-secondary"
           />
         </label>
         <label className="flex min-w-0 flex-col gap-[6px]">
@@ -160,7 +160,7 @@ function ItemModalBody({ id }: { id: number }) {
               patch({ note: e.target.value });
           }}
           rows={3}
-          className="block field-sizing-fixed w-full resize-none rounded-[11px] border-border bg-secondary px-[9px] py-[6px] text-[12.5px] leading-[1.5] text-foreground shadow-none md:text-[12.5px] dark:bg-secondary"
+          className="block field-sizing-fixed w-full resize-none rounded-[11px] border-border bg-secondary px-[9px] py-[6px] text-body leading-[1.5] text-foreground shadow-none md:text-body dark:bg-secondary"
         />
       </label>
 

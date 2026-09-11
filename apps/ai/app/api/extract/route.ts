@@ -17,5 +17,11 @@ export async function POST(req: Request) {
   if (!parsed.success) {
     return Response.json({ error: "Invalid request body" }, { status: 400 });
   }
-  return Response.json(await extractItems(parsed.data));
+  try {
+    return Response.json(await extractItems(parsed.data));
+  } catch (error) {
+    // Provider/model failures are upstream trouble, not a bug here: 502.
+    console.error("extraction failed:", error);
+    return Response.json({ error: "Extraction failed" }, { status: 502 });
+  }
 }

@@ -16,10 +16,10 @@ export function EmptyState({ title, children }: EmptyStateProps) {
       {title ? (
         <>
           <div className="text-[15px] font-semibold">{title}</div>
-          <p className="mt-2 text-[13px] text-muted-foreground">{children}</p>
+          <p className="mt-2 text-body-lg text-muted-foreground">{children}</p>
         </>
       ) : (
-        <p className="text-[13.5px] text-muted-foreground">{children}</p>
+        <p className="text-subtitle text-muted-foreground">{children}</p>
       )}
     </div>
   );

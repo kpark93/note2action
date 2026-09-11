@@ -3,6 +3,11 @@
 
 import { z } from "zod";
 
+/** "YYYY-MM-DD" — the wire's only date shape; anything else fails parse. */
+export const IsoDay = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/, "expected YYYY-MM-DD");
+
 /** Task priority, shared by the extractor and the web UI. */
 export const Priority = z.enum(["High", "Medium", "Low"]);
 export type Priority = z.infer<typeof Priority>;
@@ -19,7 +24,7 @@ export const ActionItem = z.object({
   meeting: z.string(),
   title: z.string(),
   owner: z.string(),
-  due: z.string().nullable(),
+  due: IsoDay.nullable(),
   priority: Priority,
   saved: z.boolean(),
   note: z.string().nullable(),

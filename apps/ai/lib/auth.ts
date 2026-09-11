@@ -1,5 +1,5 @@
 /** Verifies Clerk session JWTs against the JWKS at CLERK_JWKS_URL — cached
- * keys, local crypto per request. Unset URL = auth disabled (dev/test). */
+ * keys, local crypto per request. Unset URL: auth off in dev/test, 401 in prod. */
 import { createRemoteJWKSet, jwtVerify } from "jose";
 
 export interface VerifiedUser {
@@ -18,7 +18,11 @@ export async function verifyRequest(
   req: Request,
 ): Promise<VerifiedUser | null> {
   const jwksUrl = process.env.CLERK_JWKS_URL;
-  if (!jwksUrl) return { clerkId: "dev", name: null };
+  if (!jwksUrl) {
+    // A missing URL must never open the endpoint in production — fail closed.
+    if (process.env.NODE_ENV === "production") return null;
+    return { clerkId: "dev", name: null };
+  }
 
   const token = req.headers.get("authorization")?.replace(/^Bearer /, "");
   if (!token) return null;

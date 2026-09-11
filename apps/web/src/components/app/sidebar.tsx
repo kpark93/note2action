@@ -20,7 +20,7 @@ export function Sidebar() {
   return (
     <aside className="flex w-[198px] flex-none flex-col overflow-hidden rounded-[20px] bg-background px-4 py-[18px]">
       <div className="mb-[22px] flex items-center gap-[10px]">
-        <span className="flex h-[30px] w-[30px] flex-none items-center justify-center rounded-[10px] bg-primary text-[11px] font-extrabold tracking-[-0.02em] text-primary-foreground">
+        <span className="flex h-[30px] w-[30px] flex-none items-center justify-center rounded-control bg-primary text-label font-extrabold tracking-[-0.02em] text-primary-foreground">
           n2a
         </span>
         <span className="text-[15px] font-bold tracking-[-0.02em]">
@@ -43,7 +43,7 @@ export function Sidebar() {
               variant="ghost"
               onClick={() => setTheme(mode)}
               aria-pressed={active}
-              className="h-auto w-full gap-[6px] rounded-[9px] px-0 py-[6px] text-[12px] font-medium"
+              className="h-auto w-full gap-[6px] rounded-[9px] px-0 py-[6px] text-meta font-medium"
               style={{
                 background: active ? "hsl(var(--secondary))" : "transparent",
                 color: active
@@ -64,10 +64,10 @@ export function Sidebar() {
           appearance={{ elements: { avatarBox: "h-8 w-8 rounded-[11px]" } }}
         />
         <span className="flex min-w-0 flex-col leading-[1.3]">
-          <span className="truncate text-[13px] font-semibold">
+          <span className="truncate text-body-lg font-semibold">
             {displayName}
           </span>
-          <span className="truncate text-[11px] text-muted-foreground">
+          <span className="truncate text-label text-muted-foreground">
             {email}
           </span>
         </span>

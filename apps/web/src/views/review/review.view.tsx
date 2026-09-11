@@ -36,7 +36,7 @@ export function ReviewView() {
             <Button
               variant="outline"
               onClick={() => navigate("/capture")}
-              className="h-10 rounded-[13px] border-border bg-transparent px-4 text-[13.5px] font-medium text-foreground shadow-none dark:border-border dark:bg-transparent"
+              className="h-10 rounded-[13px] border-border bg-transparent px-4 text-subtitle font-medium text-foreground shadow-none dark:border-border dark:bg-transparent"
             >
               Back to notes
             </Button>
@@ -67,11 +67,11 @@ export function ReviewView() {
       />
 
       <Toolbar className="gap-[14px]">
-        <span className="text-[13px] text-muted-foreground">
+        <span className="text-body-lg text-muted-foreground">
           {all.length} in the queue
         </span>
         <span className="flex-1" />
-        <span className="text-[12.5px] text-muted-foreground">
+        <span className="text-body text-muted-foreground">
           Edit any field inline · saves when you leave a field
         </span>
       </Toolbar>
@@ -97,7 +97,7 @@ export function ReviewView() {
       )}
 
       {all.length > 0 && (
-        <p className="mt-3 text-[12px] text-muted-foreground">
+        <p className="mt-3 text-meta text-muted-foreground">
           {all.length} extracted · owners and dates inferred · edits save when
           you leave a field
         </p>

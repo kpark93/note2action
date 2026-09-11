@@ -67,7 +67,7 @@ function RecentModalBody({ meetingId }: { meetingId: number }) {
           <DialogTitle className="text-[17px] font-bold tracking-[-0.02em]">
             {meeting.title}
           </DialogTitle>
-          <DialogDescription className="mt-[5px] text-[12px] text-muted-foreground">
+          <DialogDescription className="mt-[5px] text-meta text-muted-foreground">
             {meeting.itemCount} extracted · captured{" "}
             {timeAgo(meeting.capturedAt)}
           </DialogDescription>
@@ -77,14 +77,14 @@ function RecentModalBody({ meetingId }: { meetingId: number }) {
         </DialogClose>
       </DialogHeader>
       <div className="min-h-0 flex-1 overflow-y-auto px-5 py-[18px]">
-        <p className="text-[13.5px] leading-[1.75] whitespace-pre-wrap text-foreground">
+        <p className="text-subtitle leading-[1.75] whitespace-pre-wrap text-foreground">
           {meeting.rawNotes}
         </p>
-        <h3 className="mt-[22px] mb-[10px] text-[11px] font-semibold tracking-[0.08em] text-muted-foreground uppercase">
+        <h3 className="mt-[22px] mb-[10px] text-label font-semibold tracking-[0.08em] text-muted-foreground uppercase">
           Extracted items
         </h3>
         {items.length === 0 ? (
-          <p className="text-[12.5px] text-muted-foreground">
+          <p className="text-body text-muted-foreground">
             No items from this meeting are still around.
           </p>
         ) : (
@@ -96,12 +96,12 @@ function RecentModalBody({ meetingId }: { meetingId: number }) {
         )}
       </div>
       <DialogFooter className="flex flex-row items-center gap-[10px] border-t border-border px-5 py-[14px] sm:justify-start">
-        <span className="text-[12px] text-muted-foreground">{words} words</span>
+        <span className="text-meta text-muted-foreground">{words} words</span>
         <span className="flex-1" />
         <DialogClose asChild>
           <Button
             variant="outline"
-            className="h-9 rounded-[11px] border-border bg-transparent px-[15px] text-[13px] font-medium text-muted-foreground shadow-none dark:border-border dark:bg-transparent"
+            className="h-9 rounded-[11px] border-border bg-transparent px-[15px] text-body-lg font-medium text-muted-foreground shadow-none dark:border-border dark:bg-transparent"
           >
             Close
           </Button>
@@ -121,12 +121,12 @@ function ItemRow({
 }) {
   const sc = STATUS_STYLE[status];
   return (
-    <li className="flex items-center gap-3 rounded-[10px] border border-border px-3 py-[8px]">
-      <span className="min-w-0 flex-1 truncate text-[13px] text-foreground">
+    <li className="flex items-center gap-3 rounded-control border border-border px-3 py-[8px]">
+      <span className="min-w-0 flex-1 truncate text-body-lg text-foreground">
         {title}
       </span>
       <span
-        className="flex-none rounded-full border px-[9px] py-[2px] text-[11px] font-medium"
+        className="flex-none rounded-full border px-[9px] py-[2px] text-label font-medium"
         style={{
           background: sc.bg,
           color: sc.fg,

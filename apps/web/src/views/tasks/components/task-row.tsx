@@ -79,15 +79,15 @@ export function TaskRow({
           {row.initials}
         </span>
         <span className="flex min-w-0 flex-col gap-[3px]">
-          <span className="overflow-hidden text-[14.5px] font-semibold tracking-[-0.015em] text-ellipsis whitespace-nowrap">
+          <span className="overflow-hidden text-title font-semibold tracking-[-0.015em] text-ellipsis whitespace-nowrap">
             {row.title}
           </span>
-          <span className="overflow-hidden text-[12px] text-ellipsis whitespace-nowrap text-muted-foreground">
+          <span className="overflow-hidden text-meta text-ellipsis whitespace-nowrap text-muted-foreground">
             {row.owner}
           </span>
         </span>
       </span>
-      <span className="text-[12px] tabular-nums whitespace-nowrap text-muted-foreground">
+      <span className="text-meta tabular-nums whitespace-nowrap text-muted-foreground">
         {row.dueLabel}
       </span>
       <PriorityBadge priority={row.priority} className="justify-self-start" />
@@ -97,7 +97,7 @@ export function TaskRow({
       >
         <SelectTrigger
           onClick={(e) => e.stopPropagation()}
-          className="w-full rounded-[11px] px-[11px] text-[12.5px] font-semibold shadow-none data-[size=default]:h-[34px] [&_svg]:!text-current"
+          className="w-full rounded-[11px] px-[11px] text-body font-semibold shadow-none data-[size=default]:h-[34px] [&_svg]:!text-current"
           style={{ background: sc.bg, color: sc.fg, borderColor: sc.border }}
         >
           <SelectValue />

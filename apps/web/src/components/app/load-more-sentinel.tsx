@@ -54,7 +54,7 @@ export function LoadMoreSentinel({
   if (disabled) return null;
   return (
     <div ref={ref} className="flex justify-center py-3" aria-hidden="true">
-      <span className="text-[12px] text-muted-foreground">
+      <span className="text-meta text-muted-foreground">
         {loading ? "Loading more…" : ""}
       </span>
     </div>

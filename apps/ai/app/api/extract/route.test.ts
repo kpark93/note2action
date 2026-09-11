@@ -59,4 +59,12 @@ describe("POST /api/extract", () => {
 
     expect(response.status).toBe(400);
   });
+
+  it("maps an extraction failure to 502, not an unhandled crash", async () => {
+    vi.mocked(extractItems).mockRejectedValueOnce(new Error("provider down"));
+
+    const response = await POST(post(VALID));
+
+    expect(response.status).toBe(502);
+  });
 });

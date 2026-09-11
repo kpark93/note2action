@@ -40,7 +40,7 @@ const buttonVariants = cva(
       {
         variant: "cta",
         size: "default",
-        class: "h-10 px-[18px] text-[13.5px]",
+        class: "h-10 px-[18px] text-subtitle",
       },
     ],
   },

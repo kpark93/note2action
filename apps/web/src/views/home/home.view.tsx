@@ -46,7 +46,7 @@ export function HomeView() {
       <h1 className="mt-[7px] text-[28px] font-bold leading-[1.1] tracking-[-0.03em]">
         {greeting}
       </h1>
-      <p className="mt-[9px] max-w-[60ch] text-[13.5px] leading-[1.5] text-muted-foreground">
+      <p className="mt-[9px] max-w-[60ch] text-subtitle leading-[1.5] text-muted-foreground">
         {summaryLine}
       </p>
 
